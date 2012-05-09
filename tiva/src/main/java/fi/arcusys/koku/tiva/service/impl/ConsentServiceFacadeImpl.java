@@ -789,7 +789,7 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
         consentTO.setReceipientUserInfos(getUserInfos(consent.getReceipients()));
 
         // default values
-        consentTO.setApprovalStatus(ConsentApprovalStatus.Approved);
+        consentTO.setApprovalStatus(ConsentApprovalStatus.Undecided); // KOKULT-8: Default consent status should be undefined
         consentTO.setStatus(ConsentStatus.Open);
         consentTO.setValidTill(CalendarUtil.getXmlDate(consent.getValidTill()));
         consentTO.setReplyTill(CalendarUtil.getXmlDate(consent.getReplyTill()));
@@ -814,6 +814,12 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
         if (consentTO.getStatus() == ConsentStatus.Declined) {
             consentTO.setApprovalStatus(ConsentApprovalStatus.Declined);
         }
+        
+        // KOKULT-8: Only set consent status to approved if its status is Valid or PartiallyGiven after processing
+        if (consentTO.getStatus() == ConsentStatus.Valid || consentTO.getStatus() == ConsentStatus.PartiallyGiven) {
+        	consentTO.setApprovalStatus(ConsentApprovalStatus.Approved);
+        }
+       
     }
     
     private List<UserInfo> getUserInfos(final Collection<User> users) {
