@@ -95,10 +95,8 @@ public class ConsentDAOImpl extends AbstractEntityDAOImpl<Consent> implements Co
         }
         final String receipientUid = criteria.getReceipientUid();
         if (receipientUid != null && !"".equals(receipientUid.trim())) {
-            query.append(" AND (EXISTS (SELECT cr FROM ConsentReply cr WHERE cr.consent = cn and cr.replier.uid = :replierUid )) ");
+            query.append(" AND (EXISTS (SELECT cr FROM ConsentReply cr WHERE cr.replier.uid = :replierUid )) ");
             params.put("replierUid", receipientUid);
-        } else {
-            query.append(" AND (EXISTS (SELECT cr FROM ConsentReply cr WHERE cr.consent = cn)) ");
         }
         return params;
     }

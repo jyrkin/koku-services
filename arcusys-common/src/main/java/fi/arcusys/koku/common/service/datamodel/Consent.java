@@ -30,11 +30,9 @@ import javax.persistence.OneToMany;
             "(NOT EXISTS (SELECT cr FROM ConsentReply cr WHERE cr.consent = cn AND cr.replier.uid = :userUid))" +
             " AND rs.uid = :userUid"),
     @NamedQuery(name = "findProcessedConsentsBySender", query = "SELECT DISTINCT cn FROM Consent cn WHERE " +
-            "(EXISTS (SELECT cr FROM ConsentReply cr WHERE cr.consent = cn))" +
-            " AND cn.creator = :sender ORDER BY cn.id DESC"),
+            "cn.creator = :sender ORDER BY cn.id DESC"),
     @NamedQuery(name = "countProcessedConsentsBySender", query = "SELECT COUNT(DISTINCT cn) FROM Consent cn WHERE " +
-            "(EXISTS (SELECT cr FROM ConsentReply cr WHERE cr.consent = cn))" +
-            " AND cn.creator = :sender"),
+            "cn.creator = :sender"),
             
     @NamedQuery(name = "findOpenConsentsByReplyTillDate", query = "SELECT cn FROM Consent cn WHERE " +
 

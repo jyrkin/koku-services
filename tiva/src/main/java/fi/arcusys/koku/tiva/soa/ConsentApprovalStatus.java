@@ -12,7 +12,7 @@ import fi.arcusys.koku.common.service.datamodel.ConsentReplyStatus;
  * Aug 16, 2011
  */
 public enum ConsentApprovalStatus {
-    Approved(ConsentReplyStatus.Given), Declined(ConsentReplyStatus.Declined, ConsentReplyStatus.Revoked);
+    Approved(ConsentReplyStatus.Given), Declined(ConsentReplyStatus.Declined, ConsentReplyStatus.Revoked), Undecided();
 
     private final static Map<ConsentReplyStatus, ConsentApprovalStatus> dmToSoaMapping = new HashMap<ConsentReplyStatus, ConsentApprovalStatus>();
     
