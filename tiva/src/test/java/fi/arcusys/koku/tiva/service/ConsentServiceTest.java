@@ -94,8 +94,24 @@ public class ConsentServiceTest {
         final Long consentId = service.requestForConsent(templateId, employeeUid, 
                 "Lassi Lapsi", Arrays.asList(parentForApprove, parentForDecline), null, null, null, Boolean.FALSE, null);
 
-        assertNull(getById(consentId, service.getProcessedConsents(employeeUid, new ConsentQuery(1, 10))));
+        ConsentQuery processedConcentsQuery = new ConsentQuery(1, 10);
         
+        // KOKULT-8: Sent Consents should be visible in Loora after creation (previously not visible by design)
+        assertNotNull(getById(consentId, service.getProcessedConsents(employeeUid, processedConcentsQuery)));
+        
+        // KOKULT-8: Filtered results should have the sent consents
+        ConsentCriteria templateCriteria = new ConsentCriteria();
+        templateCriteria.setConsentTemplateId(templateId);
+        processedConcentsQuery.setCriteria(templateCriteria);
+        assertNotNull(getById(consentId, service.getProcessedConsents(employeeUid, processedConcentsQuery)));
+        
+        // KOKULT-8: Check that consent has right data for displaying
+        List<ConsentSummary> summaryList = service.getProcessedConsents(employeeUid, processedConcentsQuery);
+        assertEquals(1, summaryList.size());
+        ConsentSummary summary = summaryList.get(0);
+        assertEquals("New Consents should be Open", ConsentStatus.Open, summary.getStatus());
+        assertEquals("New Consent's approval status should be Undecided", ConsentApprovalStatus.Undecided, summary.getApprovalStatus());
+                
         // first parent's approval
         final List<ConsentShortSummary> consentsForApprove = service.getAssignedConsents(parentForApprove, 1, 10);
         assertNotNull(getById(consentId, consentsForApprove));
@@ -108,7 +124,8 @@ public class ConsentServiceTest {
         assertNotNull(getById(consentId, service.getProcessedConsents(employeeUid, new ConsentQuery(1, 10))));
         final ConsentTO combinedAfterApprove = service.getCombinedConsentById(consentId);
         assertNotNull(combinedAfterApprove);
-        assertEquals(ConsentStatus.PartiallyGiven, combinedAfterApprove.getStatus());
+        assertEquals("Partually approved Consents should be PartiallyGiven", ConsentStatus.PartiallyGiven, combinedAfterApprove.getStatus());
+        assertEquals("PartiallyGiven Consent's approval status should be Approved", ConsentApprovalStatus.Approved, combinedAfterApprove.getApprovalStatus());
         
         // second parent's declining
         final List<ConsentShortSummary> consentsForDecline = service.getAssignedConsents(parentForDecline, 1, 10);
@@ -121,6 +138,7 @@ public class ConsentServiceTest {
         assertNotNull(getById(consentId, service.getOldConsents(parentForDecline, 1, 10)));
 
         assertEquals(ConsentStatus.Declined, service.getCombinedConsentById(consentId).getStatus());
+        assertEquals(ConsentApprovalStatus.Declined, service.getCombinedConsentById(consentId).getApprovalStatus());
         
         // first parent's update
         final List<ConsentSummary> ownConsents = service.getOwnConsents(parentForApprove, 1, 10);
@@ -165,15 +183,20 @@ public class ConsentServiceTest {
         final Long consentId = service.requestForConsent(templateId, employee, 
                 "Lassi Lapsi", Arrays.asList(parent), null, null, null, Boolean.FALSE, null);
         
+        ConsentCriteria totalProcessedCriteria = new ConsentCriteria();
+        totalProcessedCriteria.setConsentTemplateId(templateId);
+        
         assertEquals(1, service.getTotalAssignedConsents(parent));
         assertEquals(0, service.getTotalOwnConsents(parent));
-        assertEquals(0, service.getTotalProcessedConsents(employee, null));
+        assertEquals(1, service.getTotalProcessedConsents(employee, null)); // KOKULT-8: Sent Consents should be visible in Loora after creation
+        assertEquals(1, service.getTotalProcessedConsents(employee, totalProcessedCriteria));  // KOKULT-8
         
         service.giveConsent(consentId, parent, Collections.<ActionPermittedTO>emptyList(), null, "");
 
         assertEquals(0, service.getTotalAssignedConsents(parent));
         assertEquals(1, service.getTotalOwnConsents(parent));
         assertEquals(1, service.getTotalProcessedConsents(employee, null));
+        assertEquals(1, service.getTotalProcessedConsents(employee, totalProcessedCriteria));
     }
     
     @Test
@@ -187,8 +210,9 @@ public class ConsentServiceTest {
         final Long consentId = service.requestForConsent(templateId, employeeUid, 
                 "Lassi Lapsi", Arrays.asList(parent1, parent2), null, null, null, Boolean.FALSE, null);
         
+        // KOKULT-8: Sent Consents should be visible in Loora
         final ConsentQuery query = new ConsentQuery(1, 100);
-        assertNull(getById(consentId, service.getProcessedConsents(employeeUid, query)));
+        assertNotNull(getById(consentId, service.getProcessedConsents(employeeUid, query)));
         
         final ActionPermittedTO actionPermittedTO = new ActionPermittedTO();
         actionPermittedTO.setActionRequestNumber(1);
