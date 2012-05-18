@@ -42,6 +42,7 @@ public class KksServiceDAOBean implements KksServiceDAO {
 
   public static final String ACTIVE = "ACTIVE";
   public static final String LOCKED = "LOCKED";
+  public static final String DELETED = "DELETED";
   public static final String COMMENT_FIELD_TAG = "kks.kehitysasia.kommentti";
 
   @EJB
@@ -158,16 +159,16 @@ public class KksServiceDAOBean implements KksServiceDAO {
     Query q = null;
     if (registers.size() > 0 && consents.size() == 0) {
       q = em
-          .createQuery("SELECT c FROM KksCollection c WHERE c.customer =:customer AND (c.creator =:user OR c.collectionClass IN (SELECT DISTINCT g.collectionClassId FROM KksGroup g WHERE g.register IN (:registers)))  ");
+          .createQuery("SELECT c FROM KksCollection c WHERE c.status NOT LIKE 'DELETED' AND c.customer =:customer AND (c.creator =:user OR c.collectionClass IN (SELECT DISTINCT g.collectionClassId FROM KksGroup g WHERE g.register IN (:registers)))  ");
       q.setParameter("customer", pic).setParameter("user", user).setParameter("registers", registers);
     } else if (registers.size() > 0 && consents.size() > 0) {
       q = em
-          .createQuery("SELECT c FROM KksCollection c WHERE c.customer =:customer AND (c.creator =:user OR c.collectionClass IN (SELECT DISTINCT g.collectionClassId FROM KksGroup g WHERE g.register IN (:registers) OR c.collectionClass IN (SELECT DISTINCT kc.id FROM KksCollectionClass kc WHERE kc.consentType IN(:consents))))");
+          .createQuery("SELECT c FROM KksCollection c WHERE c.status NOT LIKE 'DELETED' AND c.customer =:customer AND (c.creator =:user OR c.collectionClass IN (SELECT DISTINCT g.collectionClassId FROM KksGroup g WHERE g.register IN (:registers) OR c.collectionClass IN (SELECT DISTINCT kc.id FROM KksCollectionClass kc WHERE kc.consentType IN(:consents))))");
       q.setParameter("customer", pic).setParameter("user", user).setParameter("registers", registers)
           .setParameter("consents", consents);
     } else if (registers.size() == 0 && consents.size() > 0) {
       q = em
-          .createQuery("SELECT c FROM KksCollection c WHERE c.customer =:customer AND (c.creator =:user OR c.collectionClass IN (SELECT DISTINCT kc.id FROM KksCollectionClass kc WHERE kc.consentType IN(:consents))");
+          .createQuery("SELECT c FROM KksCollection c WHERE c.status NOT LIKE 'DELETED' AND c.customer =:customer AND (c.creator =:user OR c.collectionClass IN (SELECT DISTINCT kc.id FROM KksCollectionClass kc WHERE kc.consentType IN(:consents))");
       q.setParameter("customer", pic).setParameter("user", user).setParameter("consents", consents);
     } else {
       q = em.createNamedQuery(KksCollection.NAMED_QUERY_GET_COLLECTIONS_BY_CUSTOMER_AND_CREATOR);
@@ -543,7 +544,7 @@ public class KksServiceDAOBean implements KksServiceDAO {
 
     if (registrys.size() > 0) {
       Query q = em
-          .createQuery("SELECT DISTINCT c.id FROM KksCollection c WHERE c.customer =:customer AND c.collectionClass IN (SELECT DISTINCT g.collectionClassId FROM KksGroup g WHERE g.register IN (:registers))");
+          .createQuery("SELECT DISTINCT c.id FROM KksCollection c WHERE c.status NOT LIKE 'DELETED' AND c.customer =:customer AND c.collectionClass IN (SELECT DISTINCT g.collectionClassId FROM KksGroup g WHERE g.register IN (:registers))");
       q.setParameter("customer", criteria.getPic()).setParameter("registers", registrys);
 
       @SuppressWarnings("unchecked")
@@ -601,15 +602,17 @@ public class KksServiceDAOBean implements KksServiceDAO {
     Set<KksCollection> collections = new HashSet<KksCollection>();
     for (KksCollection c : tmpCollections) {
       
-      KksCollection kc = new KksCollection(c);
-      List<KksEntry> entryList = new ArrayList<KksEntry>();
-      
-      for ( KksEntry e : entryMap.get(c.getId()) ) {
-        entryList.add(new KksEntry(e, kc));
+      if (!DELETED.equals(c.getStatus())) {
+        KksCollection kc = new KksCollection(c);
+        List<KksEntry> entryList = new ArrayList<KksEntry>();
+        
+        for ( KksEntry e : entryMap.get(c.getId()) ) {
+          entryList.add(new KksEntry(e, kc));
+        }
+        
+        kc.setEntries(entryList);   
+        collections.add(kc);
       }
-      
-      kc.setEntries(entryList);   
-      collections.add(kc);
     }
     return collections;
   }
