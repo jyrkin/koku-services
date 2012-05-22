@@ -12,7 +12,7 @@ import fi.arcusys.koku.common.soa.UserInfo;
  * Jul 22, 2011
  */
 @XmlType (name = "appointmentSummary", namespace = "http://soa.av.koku.arcusys.fi/",
-propOrder={"appointmentId", "status", "sender" , "senderUserInfo", "subject", "description"})
+propOrder={"appointmentId", "status", "sender", "senderRole", "senderUserInfo", "subject", "description"})
 public class AppointmentSummary {
 
 
