@@ -52,7 +52,9 @@ import fi.arcusys.koku.common.service.datamodel.AppointmentStatus;
 import fi.arcusys.koku.common.service.datamodel.TargetPerson;
 import fi.arcusys.koku.common.service.datamodel.User;
 import fi.arcusys.koku.common.service.dto.AppointmentDTOCriteria;
+import fi.arcusys.koku.common.soa.Role;
 import fi.arcusys.koku.common.soa.UserInfo;
+import fi.arcusys.koku.common.soa.UsersAndGroupsService;
 
 /**
  * Service facade implementation for all business methods in AV functional area.
@@ -96,6 +98,9 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
 	
 	@EJB
 	private UserDAO userDao;
+	
+	@EJB
+    private UsersAndGroupsService usersService;
 	
 	@EJB
 	private TargetPersonDAO targetPersonDao;
@@ -368,6 +373,7 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
 		appointmentSummary.setDescription(appointment.getDescription());
 		appointmentSummary.setSubject(appointment.getSubject());
 		appointmentSummary.setSender(getDisplayName(appointment.getSender()));
+		appointmentSummary.setSenderRole(appointment.getSenderRole());
 		appointmentSummary.setSenderUserInfo(getUserInfo(appointment.getSender()));
 		appointmentSummary.setStatus(AppointmentSummaryStatus.valueOf(appointment.getStatus()));
 		
@@ -404,6 +410,7 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
 		appointment.setDescription(appointmentTO.getDescription());
 		appointment.setSubject(appointmentTO.getSubject());
 		appointment.setSender(userDao.getOrCreateUser(appointmentTO.getSender()));
+		appointment.setSenderRole(appointmentTO.getSenderRole());
 		final Set<TargetPerson> recipients = new HashSet<TargetPerson>();
 		for (final AppointmentReceipientTO receipient : appointmentTO.getReceipients()) {
 			recipients.add(targetPersonDao.getOrCreateTargetPerson(receipient.getTargetPerson(), receipient.getReceipients()));
@@ -618,7 +625,19 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
      */
     @Override
     public int getTotalCreatedAppointments(String user, AppointmentCriteria criteria) {
-        return getIntValue(appointmentDAO.getTotalCreatedAppointments(userDao.getOrCreateUser(user), getDtoCriteria(criteria)));
+        return getIntValue(appointmentDAO.getTotalCreatedAppointments(userDao.getOrCreateUser(user), getUserRoles(user), getDtoCriteria(criteria)));
+    }
+    
+    /**
+     * @param userId
+     * @return
+     */
+    private List<String> getUserRoles(String userId) {
+        final List<String> roleUids = new ArrayList<String>();
+        for (final Role userRole : usersService.getUserRoles(userId)) {
+            roleUids.add(userRole.getRoleUid());
+        }
+        return roleUids;
     }
 
     /**
@@ -627,7 +646,7 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
      */
     @Override
     public int getTotalProcessedAppointments(String user, AppointmentCriteria criteria) {
-        return getIntValue(appointmentDAO.getTotalProcessedAppointments(userDao.getOrCreateUser(user), getDtoCriteria(criteria)));
+        return getIntValue(appointmentDAO.getTotalProcessedAppointments(userDao.getOrCreateUser(user), getUserRoles(user), getDtoCriteria(criteria)));
     }
 
     /**
@@ -638,7 +657,7 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
      */
     @Override
     public List<AppointmentSummary> getCreatedAppointments(String user, int startNum, int maxNum, AppointmentCriteria criteria) {
-        return getEmployeeSummaryByAppointments(appointmentDAO.getCreatedAppointments(userDao.getOrCreateUser(user), startNum, maxNum - startNum + 1, getDtoCriteria(criteria)));
+        return getEmployeeSummaryByAppointments(appointmentDAO.getCreatedAppointments(userDao.getOrCreateUser(user), getUserRoles(user), startNum, maxNum - startNum + 1, getDtoCriteria(criteria)));
     }
 
     private AppointmentDTOCriteria getDtoCriteria(AppointmentCriteria criteria) {
@@ -653,7 +672,7 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
      */
     @Override
     public List<AppointmentSummary> getProcessedAppointments(String user, int startNum, int maxNum, AppointmentCriteria criteria) {
-        return getEmployeeSummaryByAppointments(appointmentDAO.getProcessedAppointments(userDao.getOrCreateUser(user), startNum, maxNum - startNum + 1, getDtoCriteria(criteria)));
+        return getEmployeeSummaryByAppointments(appointmentDAO.getProcessedAppointments(userDao.getOrCreateUser(user), getUserRoles(user), startNum, maxNum - startNum + 1, getDtoCriteria(criteria)));
     }
 
     private List<AppointmentSummary> getEmployeeSummaryByAppointments(List<Appointment> appointments) {

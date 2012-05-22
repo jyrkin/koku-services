@@ -44,9 +44,15 @@ import javax.persistence.PrePersist;
     @NamedQuery(name = "findProcessedAppointmentsBySender", query = "SELECT DISTINCT ap FROM Appointment ap " +
             " WHERE (ap.status = :status_cancelled OR EXISTS ( SELECT ar FROM AppointmentResponse ar WHERE ar.appointment = ap ))" +
             "    AND :sender = ap.sender  ORDER BY ap.id DESC"),
+    @NamedQuery(name = "findProcessedAppointmentsBySenderAndRoles", query = "SELECT DISTINCT ap FROM Appointment ap " +
+            " WHERE (ap.status = :status_cancelled OR EXISTS ( SELECT ar FROM AppointmentResponse ar WHERE ar.appointment = ap ))" +
+            "    AND ( :sender = ap.sender OR ap.senderRole in ( :userRoles ) ) ORDER BY ap.id DESC"),
     @NamedQuery(name = "countProcessedAppointmentsBySender", query = "SELECT COUNT(DISTINCT ap) FROM Appointment ap " +
             " WHERE (ap.status = :status_cancelled OR EXISTS ( SELECT ar FROM AppointmentResponse ar WHERE ar.appointment = ap ))" +
             "    AND :sender = ap.sender "),
+    @NamedQuery(name = "countProcessedAppointmentsBySenderAndRoles", query = "SELECT COUNT(DISTINCT ap) FROM Appointment ap " +
+            " WHERE (ap.status = :status_cancelled OR EXISTS ( SELECT ar FROM AppointmentResponse ar WHERE ar.appointment = ap ))" +
+            "    AND ( :sender = ap.sender OR ap.senderRole in ( :userRoles ) )"),
 
 // Criteria search            
     @NamedQuery(name = "findProcessedAppointmentsBySenderAndTarget", query = "SELECT DISTINCT ap FROM Appointment ap JOIN ap.recipients AS tp " +
@@ -54,17 +60,32 @@ import javax.persistence.PrePersist;
             "    AND :sender = ap.sender " +
             "    AND tp.targetUser.uid = :targetUserUid " +
             " ORDER BY ap.id DESC"),
+    @NamedQuery(name = "findProcessedAppointmentsBySenderAndRolesAndTarget", query = "SELECT DISTINCT ap FROM Appointment ap JOIN ap.recipients AS tp " +
+            " WHERE (ap.status = :status_cancelled OR EXISTS ( SELECT ar FROM AppointmentResponse ar WHERE ar.appointment = ap ))" +
+            "    AND ( :sender = ap.sender OR ap.senderRole in ( :userRoles ) ) " +
+            "    AND tp.targetUser.uid = :targetUserUid " +
+            " ORDER BY ap.id DESC"),
     @NamedQuery(name = "countProcessedAppointmentsBySenderAndTarget", query = "SELECT COUNT(DISTINCT ap) FROM Appointment ap JOIN ap.recipients AS tp " +
             " WHERE (ap.status = :status_cancelled OR EXISTS ( SELECT ar FROM AppointmentResponse ar WHERE ar.appointment = ap ))" +
             "    AND :sender = ap.sender " +
+            "    AND tp.targetUser.uid = :targetUserUid "),
+    @NamedQuery(name = "countProcessedAppointmentsBySenderAndRolesAndTarget", query = "SELECT COUNT(DISTINCT ap) FROM Appointment ap JOIN ap.recipients AS tp " +
+            " WHERE (ap.status = :status_cancelled OR EXISTS ( SELECT ar FROM AppointmentResponse ar WHERE ar.appointment = ap ))" +
+            "    AND ( :sender = ap.sender OR ap.senderRole in ( :userRoles ) ) " +
             "    AND tp.targetUser.uid = :targetUserUid "),
                     
     @NamedQuery(name = "findCreatedAppointmentsBySender", query = "SELECT DISTINCT ap FROM Appointment ap " +
             " WHERE ap.status <> :status_cancelled AND NOT EXISTS ( SELECT ar FROM AppointmentResponse ar WHERE ar.appointment = ap )" +
             "    AND :sender = ap.sender  ORDER BY ap.id DESC"),
+    @NamedQuery(name = "findCreatedAppointmentsBySenderAndRoles", query = "SELECT DISTINCT ap FROM Appointment ap " +
+            " WHERE ap.status <> :status_cancelled AND NOT EXISTS ( SELECT ar FROM AppointmentResponse ar WHERE ar.appointment = ap )" +
+            "    AND ( :sender = ap.sender OR ap.senderRole in ( :userRoles ) ) ORDER BY ap.id DESC"),        
     @NamedQuery(name = "countCreatedAppointmentsBySender", query = "SELECT COUNT(DISTINCT ap) FROM Appointment ap " +
             " WHERE ap.status <> :status_cancelled AND NOT EXISTS ( SELECT ar FROM AppointmentResponse ar WHERE ar.appointment = ap )" +
-            "    AND :sender = ap.sender "),
+            "    AND :sender = ap.sender"),
+    @NamedQuery(name = "countCreatedAppointmentsBySenderAndRoles", query = "SELECT COUNT(DISTINCT ap) FROM Appointment ap " +
+            " WHERE ap.status <> :status_cancelled AND NOT EXISTS ( SELECT ar FROM AppointmentResponse ar WHERE ar.appointment = ap )" +
+            "    AND ( :sender = ap.sender OR ap.senderRole in ( :userRoles ) )"),
 
 // Criteria search            
     @NamedQuery(name = "findCreatedAppointmentsBySenderAndTarget", query = "SELECT DISTINCT ap FROM Appointment ap JOIN ap.recipients AS tp " +
@@ -72,10 +93,19 @@ import javax.persistence.PrePersist;
             "    AND :sender = ap.sender " +
             "    AND tp.targetUser.uid = :targetUserUid " +
             " ORDER BY ap.id DESC"),
+    @NamedQuery(name = "findCreatedAppointmentsBySenderAndRolesAndTarget", query = "SELECT DISTINCT ap FROM Appointment ap JOIN ap.recipients AS tp " +
+            " WHERE ap.status <> :status_cancelled AND NOT EXISTS ( SELECT ar FROM AppointmentResponse ar WHERE ar.appointment = ap )" +
+            "    AND ( :sender = ap.sender OR ap.senderRole in ( :userRoles ) ) " +
+            "    AND tp.targetUser.uid = :targetUserUid " +
+            " ORDER BY ap.id DESC"),
     @NamedQuery(name = "countCreatedAppointmentsBySenderAndTarget", query = "SELECT COUNT(DISTINCT ap) FROM Appointment ap JOIN ap.recipients AS tp " +
             " WHERE ap.status <> :status_cancelled AND NOT EXISTS ( SELECT ar FROM AppointmentResponse ar WHERE ar.appointment = ap )" +
             "    AND :sender = ap.sender " +
             "    AND tp.targetUser.uid = :targetUserUid "),
+    @NamedQuery(name = "countCreatedAppointmentsBySenderAndRolesAndTarget", query = "SELECT COUNT(DISTINCT ap) FROM Appointment ap JOIN ap.recipients AS tp " +
+            " WHERE ap.status <> :status_cancelled AND NOT EXISTS ( SELECT ar FROM AppointmentResponse ar WHERE ar.appointment = ap )" +
+            "    AND ( :sender = ap.sender OR ap.senderRole in ( :userRoles ) ) " +
+            "    AND tp.targetUser.uid = :targetUserUid "),        
     
     @NamedQuery(name = "findAppointmentResponsesByUser", query = "SELECT DISTINCT ar FROM AppointmentResponse ar " +
             " WHERE ar.replier = :user " +
@@ -96,6 +126,8 @@ public class Appointment extends AbstractEntity {
 
 	@ManyToOne
 	private User sender;
+	
+	private String senderRole;
 	
 	@ManyToMany(fetch = FetchType.EAGER)
 	private Set<TargetPerson> recipients;
@@ -142,6 +174,20 @@ public class Appointment extends AbstractEntity {
 	 */
 	public void setSender(User sender) {
 		this.sender = sender;
+	}
+	
+	/**
+	 * @return the senderRole
+	 */
+	public String getSenderRole() {
+		return senderRole;
+	}
+
+	/**
+	 * @param senderRole the senderRole to set
+	 */
+	public void setSenderRole(String senderRole) {
+		this.senderRole = senderRole;
 	}
 
 	/**
