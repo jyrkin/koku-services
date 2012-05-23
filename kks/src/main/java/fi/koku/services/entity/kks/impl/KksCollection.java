@@ -42,9 +42,9 @@ import javax.persistence.Version;
  */
 @Entity
 @NamedQueries({
-    @NamedQuery(name = KksCollection.NAMED_QUERY_GET_COLLECTIONS_BY_CUSTOMER_PIC, query = "FROM KksCollection k WHERE k.customer =:pic"),
-    @NamedQuery(name = KksCollection.NAMED_QUERY_GET_COLLECTIONS_BY_IDS, query = "FROM KksCollection k WHERE k.id IN (:ids)"),
-    @NamedQuery(name = KksCollection.NAMED_QUERY_GET_COLLECTIONS_BY_CUSTOMER_AND_CREATOR, query = "FROM KksCollection k WHERE k.creator =:creator AND k.customer =:customer") })
+    @NamedQuery(name = KksCollection.NAMED_QUERY_GET_COLLECTIONS_BY_CUSTOMER_PIC, query = "FROM KksCollection k WHERE k.customer =:pic AND k.status NOT LIKE 'DELETED'"),
+    @NamedQuery(name = KksCollection.NAMED_QUERY_GET_COLLECTIONS_BY_IDS, query = "FROM KksCollection k WHERE k.id IN (:ids) AND k.status NOT LIKE 'DELETED'"),
+    @NamedQuery(name = KksCollection.NAMED_QUERY_GET_COLLECTIONS_BY_CUSTOMER_AND_CREATOR, query = "FROM KksCollection k WHERE k.creator =:creator AND k.customer =:customer AND k.status NOT LIKE 'DELETED'") })
 @Table(name = "kks_collection")
 public class KksCollection implements Serializable {
 

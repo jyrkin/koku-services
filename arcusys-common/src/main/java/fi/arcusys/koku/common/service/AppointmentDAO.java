@@ -54,13 +54,13 @@ public interface AppointmentDAO extends AbstractEntityDAO<Appointment>{
      * @param orCreateUser
      * @return
      */
-    List<Appointment> getProcessedAppointments(final User user, final int startNum, final int maxResults, final AppointmentDTOCriteria criteria);
+    List<Appointment> getProcessedAppointments(final User user, List<String> userRoles, final int startNum, final int maxResults, final AppointmentDTOCriteria criteria);
 
     /**
      * @param orCreateUser
      * @return
      */
-    Long getTotalProcessedAppointments(User user, final AppointmentDTOCriteria criteria);
+    Long getTotalProcessedAppointments(User user, List<String> userRoles, final AppointmentDTOCriteria criteria);
 
     /**
      * @param orCreateUser
@@ -68,13 +68,13 @@ public interface AppointmentDAO extends AbstractEntityDAO<Appointment>{
      * @param i
      * @return
      */
-    List<Appointment> getCreatedAppointments(User user, int startNum, int maxResults, final AppointmentDTOCriteria criteria);
+    List<Appointment> getCreatedAppointments(User user, List<String> userRoles, int startNum, int maxResults, final AppointmentDTOCriteria criteria);
 
     /**
      * @param orCreateUser
      * @return
      */
-    Long getTotalCreatedAppointments(User user, final AppointmentDTOCriteria criteria);
+    Long getTotalCreatedAppointments(User user, List<String> userRoles, final AppointmentDTOCriteria criteria);
 
     /**
      * @param orCreateUser

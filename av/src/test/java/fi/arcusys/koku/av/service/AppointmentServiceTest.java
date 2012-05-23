@@ -123,6 +123,224 @@ public class AppointmentServiceTest {
 	}
 	
 	@Test
+	public void getAppointmentsWithRole() {
+		final String role1 = "role1";
+		final String role2 = "role2";
+		
+		// Spawn three users with different sets of roles
+		String employee1Uid = testUtil.getUserByUidWithRoles("testEmployee1WithRole1", Collections.singletonList(role1)).getUid();
+        String employee2Uid = testUtil.getUserByUidWithRoles("testEmployee2WithRole2", Collections.singletonList(role2)).getUid();
+        String employee3Uid = testUtil.getUserByUidWithRoles("testEmployee3WithRole2AndRole2", Arrays.asList(role1, role2)).getUid();
+		
+        // Create appointments
+		final List<AppointmentForEditTO> createdAppointments = Arrays.asList(
+				createTestAppointmentWithRole(employee1Uid, role1, "new appointment 1", "appointment description"),
+				createTestAppointmentWithRole(employee1Uid, role1, "new appointment 2", "appointment description"),
+				createTestAppointmentWithRole(employee1Uid, role1, "new appointment 3", "appointment description"),
+				createTestAppointmentWithRole(employee2Uid, role2, "new appointment 4", "appointment description"),
+				createTestAppointmentWithRole(employee2Uid, role2, "new appointment 5", "appointment description"),
+				createTestAppointmentWithRole(employee2Uid, role2, "new appointment 6", "appointment description"));
+		
+		// Get default recipient
+		final AppointmentReceipientTO appointmentReceipient = createdAppointments.get(0).getReceipients().get(0);
+		final String targetPerson = appointmentReceipient.getTargetPerson();
+		
+		assertEquals("Mock data should contain 2 guardians", 2, appointmentReceipient.getReceipients().size());
+		
+        final String guardian1 = appointmentReceipient.getReceipients().get(0);
+        final String guardian2 = appointmentReceipient.getReceipients().get(1);
+        
+        final AppointmentCriteria criteria = new AppointmentCriteria();
+        criteria.setTargetPersonUid(targetPerson);
+        
+        int oldAssignedRecipient;
+        int newAssignedRecipient;
+                
+        //
+        // Created Appointments
+        //
+        
+        oldAssignedRecipient = serviceFacade.getTotalAssignedAppointments(guardian1);
+        
+        // Get current totals		
+		final int oldCreatedEmp1 = serviceFacade.getTotalCreatedAppointments(employee1Uid, null);
+		final int oldCreatedEmpC1 = serviceFacade.getTotalCreatedAppointments(employee1Uid, criteria); // with criteria
+		final int oldCreatedEmpL1 = serviceFacade.getCreatedAppointments(employee1Uid, 1, 10, null).size(); // as list size
+		final int oldCreatedEmpLC1 = serviceFacade.getCreatedAppointments(employee1Uid, 1, 10, criteria).size(); // as list size with criteria
+		final int oldCreatedEmp2 = serviceFacade.getTotalCreatedAppointments(employee2Uid, null);
+		final int oldCreatedEmpC2 = serviceFacade.getTotalCreatedAppointments(employee2Uid, criteria); // with criteria
+		final int oldCreatedEmpL2 = serviceFacade.getCreatedAppointments(employee2Uid, 1, 10, null).size(); // as list size
+		final int oldCreatedEmpLC2 = serviceFacade.getCreatedAppointments(employee2Uid, 1, 10, criteria).size(); // as list size with criteria
+		final int oldCreatedEmp3 = serviceFacade.getTotalCreatedAppointments(employee3Uid, null);
+		final int oldCreatedEmpC3 = serviceFacade.getTotalCreatedAppointments(employee3Uid, criteria); // with criteria
+		final int oldCreatedEmpL3 = serviceFacade.getCreatedAppointments(employee3Uid, 1, 10, null).size(); // as list size
+		final int oldCreatedEmpLC3 = serviceFacade.getCreatedAppointments(employee3Uid, 1, 10, criteria).size(); // as list size with criteria
+		
+		// Created appointments
+		List<AppointmentWithTarget> assignedAppointments;
+		
+		assignedAppointments = serviceFacade.getAssignedAppointments(guardian1);
+		
+		// Count individual role occurrences
+		int oldCountRole1 = 0;
+		int oldCountRole2 = 0;
+		
+		for (AppointmentWithTarget appointment : assignedAppointments ) {
+			if (appointment.getSenderUserInfo().getUid().equals(employee1Uid) &&
+				appointment.getSenderRole().equals(role1)) oldCountRole1++;
+			
+			if (appointment.getSenderUserInfo().getUid().equals(employee2Uid) &&
+					appointment.getSenderRole().equals(role2)) oldCountRole2++;
+		}
+		
+		// Store appointments
+		for (AppointmentForEditTO appointment : createdAppointments) 
+			serviceFacade.storeAppointment(appointment);
+		
+		newAssignedRecipient = serviceFacade.getTotalAssignedAppointments(guardian1);
+        
+		// Get new totals
+		final int newCreatedEmp1 = serviceFacade.getTotalCreatedAppointments(employee1Uid, null);
+		final int newCreatedEmpC1 = serviceFacade.getTotalCreatedAppointments(employee1Uid, criteria); // with criteria
+		final int newCreatedEmpL1 = serviceFacade.getCreatedAppointments(employee1Uid, 1, 10, null).size(); // as list size
+		final int newCreatedEmpLC1 = serviceFacade.getCreatedAppointments(employee1Uid, 1, 10, criteria).size(); // as list size with criteria
+		final int newCreatedEmp2 = serviceFacade.getTotalCreatedAppointments(employee2Uid, null);
+		final int newCreatedEmpC2 = serviceFacade.getTotalCreatedAppointments(employee2Uid, criteria); // with criteria
+		final int newCreatedEmpL2 = serviceFacade.getCreatedAppointments(employee2Uid, 1, 10, null).size(); // as list size
+		final int newCreatedEmpLC2 = serviceFacade.getCreatedAppointments(employee2Uid, 1, 10, criteria).size(); // as list size with criteria
+		final int newCreatedEmp3 = serviceFacade.getTotalCreatedAppointments(employee3Uid, null);
+		final int newCreatedEmpC3 = serviceFacade.getTotalCreatedAppointments(employee3Uid, criteria); // with criteria
+		final int newCreatedEmpL3 = serviceFacade.getCreatedAppointments(employee3Uid, 1, 10, null).size(); // as list size
+		final int newCreatedEmpLC3 = serviceFacade.getCreatedAppointments(employee3Uid, 1, 10, criteria).size(); // as list size with criteria
+		
+		// Assert total values
+		assertEquals("There should be 6 assigned appointments for this recipient", 6, newAssignedRecipient - oldAssignedRecipient);
+		assertEquals("There should be 3 new appointments for employee1", 3, newCreatedEmp1 - oldCreatedEmp1);
+		assertEquals("There should be 3 new appointments for employee1 (with criteria)", 3, newCreatedEmpC1 - oldCreatedEmpC1);
+		assertEquals("There should be 3 new appointments for employee1 (as list size)", 3, newCreatedEmpL1 - oldCreatedEmpL1);
+		assertEquals("There should be 3 new appointments for employee1 (as list size with criteria)", 3, newCreatedEmpLC1 - oldCreatedEmpLC1);		
+		assertEquals("There should be 3 new appointments for employee2", 3, newCreatedEmp2 - oldCreatedEmp2);
+		assertEquals("There should be 3 new appointments for employee2 (with criteria)", 3, newCreatedEmpC2 - oldCreatedEmpC2);
+		assertEquals("There should be 3 new appointments for employee2 (as list size)", 3, newCreatedEmpL2 - oldCreatedEmpL2);
+		assertEquals("There should be 3 new appointments for employee2 (as list size with criteria)", 3, newCreatedEmpLC2 - oldCreatedEmpLC2);
+		assertEquals("There should be 6 new appointments for employee3", 6, newCreatedEmp3 - oldCreatedEmp3);
+		assertEquals("There should be 6 new appointments for employee3 (with criteria)", 6, newCreatedEmpC3 - oldCreatedEmpC3);
+		assertEquals("There should be 6 new appointments for employee3 (as list size)", 6, newCreatedEmpL3 - oldCreatedEmpL3);
+		assertEquals("There should be 6 new appointments for employee3 (as list size with criteria)", 6, newCreatedEmpLC3 - oldCreatedEmpLC3);
+		
+		assignedAppointments = serviceFacade.getAssignedAppointments(guardian1);
+		
+		// Count individual role occurrences
+		int newCountRole1 = 0;
+		int newCountRole2 = 0;
+			
+		for (AppointmentWithTarget appointment : assignedAppointments ) {
+			if (appointment.getSenderUserInfo().getUid().equals(employee1Uid) &&
+				appointment.getSenderRole().equals(role1)) newCountRole1++;
+			
+			if (appointment.getSenderUserInfo().getUid().equals(employee2Uid) &&
+				appointment.getSenderRole().equals(role2)) newCountRole2++;
+		}
+		
+		assertEquals("There should be 3 non-processed appointments with role 'role1'", 3, newCountRole1 - oldCountRole1);
+		assertEquals("There should be 3 non-processed appointments with role 'role2'", 3, newCountRole2 - oldCountRole2);
+		
+		//
+		// Processed appointments
+		//
+		
+		oldAssignedRecipient = serviceFacade.getTotalAssignedAppointments(guardian1);
+		
+		// Get current totals
+		final int oldProcessedEmp1 = serviceFacade.getTotalProcessedAppointments(employee1Uid, null);
+		final int oldProcessedEmpC1 = serviceFacade.getTotalProcessedAppointments(employee1Uid, criteria); // with criteria
+		final int oldProcessedEmpL1 = serviceFacade.getProcessedAppointments(employee1Uid, 1, 10, null).size(); // as list size
+		final int oldProcessedEmpLC1 = serviceFacade.getProcessedAppointments(employee1Uid, 1, 10, null).size(); // as list size with criteria
+		final int oldProcessedEmp2 = serviceFacade.getTotalProcessedAppointments(employee2Uid, null);
+		final int oldProcessedEmpC2 = serviceFacade.getTotalProcessedAppointments(employee2Uid, criteria); // with criteria
+		final int oldProcessedEmpL2 = serviceFacade.getProcessedAppointments(employee2Uid, 1, 10, null).size(); // as list size
+		final int oldProcessedEmpLC2 = serviceFacade.getProcessedAppointments(employee2Uid, 1, 10, null).size(); // as list size with criteria
+		final int oldProcessedEmp3 = serviceFacade.getTotalProcessedAppointments(employee3Uid, null);
+		final int oldProcessedEmpC3 = serviceFacade.getTotalProcessedAppointments(employee3Uid, criteria); // with criteria
+		final int oldProcessedEmpL3 = serviceFacade.getProcessedAppointments(employee3Uid, 1, 10, null).size(); // as list size
+		final int oldProcessedEmpLC3 = serviceFacade.getProcessedAppointments(employee3Uid, 1, 10, null).size(); // as list size with criteria
+		
+		assignedAppointments = serviceFacade.getAssignedAppointments(guardian1);
+		
+		// Count individual role occurrences
+		oldCountRole1 = 0;
+		oldCountRole2 = 0;
+		
+		for (AppointmentWithTarget appointment : assignedAppointments ) {
+			if (appointment.getSenderUserInfo().getUid().equals(employee1Uid) &&
+				appointment.getSenderRole().equals(role1)) oldCountRole1++;
+			
+			if (appointment.getSenderUserInfo().getUid().equals(employee2Uid) &&
+					appointment.getSenderRole().equals(role2)) oldCountRole2++;
+		}
+		
+		// Mark 2 appointments from each role as approved
+		
+		Long approveId;
+		
+		approveId = serviceFacade.getCreatedAppointments(employee1Uid, 1, 1, null).get(0).getAppointmentId();
+		serviceFacade.approveAppointment(targetPerson, guardian1, approveId, 1, "approved");
+		//serviceFacade.approveAppointment(targetPerson, guardian2, approveId, 1, "approved");
+		
+		approveId = serviceFacade.getCreatedAppointments(employee2Uid, 1, 1, null).get(0).getAppointmentId();
+		serviceFacade.approveAppointment(targetPerson, guardian1, approveId, 1, "approved");
+		//serviceFacade.approveAppointment(targetPerson, guardian2, approveId, 1, "approved");
+		
+		newAssignedRecipient = serviceFacade.getTotalAssignedAppointments(guardian1);
+		
+		// Get new totals
+		final int newProcessedEmp1 = serviceFacade.getTotalProcessedAppointments(employee1Uid, null);
+		final int newProcessedEmpC1 = serviceFacade.getTotalProcessedAppointments(employee1Uid, criteria); // with criteria
+		final int newProcessedEmpL1 = serviceFacade.getProcessedAppointments(employee1Uid, 1, 10, null).size(); // as list size
+		final int newProcessedEmpLC1 = serviceFacade.getProcessedAppointments(employee1Uid, 1, 10, null).size(); // as list size with criteria
+		final int newProcessedEmp2 = serviceFacade.getTotalProcessedAppointments(employee2Uid, null);
+		final int newProcessedEmpC2 = serviceFacade.getTotalProcessedAppointments(employee2Uid, criteria); // with criteria
+		final int newProcessedEmpL2 = serviceFacade.getProcessedAppointments(employee2Uid, 1, 10, null).size(); // as list size
+		final int newProcessedEmpLC2 = serviceFacade.getProcessedAppointments(employee2Uid, 1, 10, null).size(); // as list size with criteria
+		final int newProcessedEmp3 = serviceFacade.getTotalProcessedAppointments(employee3Uid, null);
+		final int newProcessedEmpC3 = serviceFacade.getTotalProcessedAppointments(employee3Uid, criteria); // with criteria
+		final int newProcessedEmpL3 = serviceFacade.getProcessedAppointments(employee3Uid, 1, 10, null).size(); // as list size
+		final int newProcessedEmpLC3 = serviceFacade.getProcessedAppointments(employee3Uid, 1, 10, null).size(); // as list size with criteria
+		
+		// Assert total values
+		assertEquals("There should be 4 assigned appointments for this recipient", 4, 6 - Math.abs(newAssignedRecipient - oldAssignedRecipient));
+		assertEquals("There should be 2 non-processed appointments for employee1", 2, 3 - Math.abs(newProcessedEmp1 - oldProcessedEmp1));
+		assertEquals("There should be 2 non-processed appointments for employee1 (with criteria)", 2, 3 - Math.abs(newProcessedEmpC1 - oldProcessedEmpC1));
+		assertEquals("There should be 2 non-processed appointments for employee1 (as list size)", 2, 3 - Math.abs(newProcessedEmpL1 - oldProcessedEmpL1));
+		assertEquals("There should be 2 non-processed appointments for employee1 (as list size with criteria)", 2, 3 - Math.abs(newProcessedEmpLC1 - oldProcessedEmpLC1));		
+		assertEquals("There should be 2 non-processed appointments for employee2", 2, 3 - Math.abs(newProcessedEmp2 - oldProcessedEmp2));
+		assertEquals("There should be 2 non-processed appointments for employee2 (with criteria)", 2, 3 - Math.abs(newProcessedEmpC2 - oldProcessedEmpC2));
+		assertEquals("There should be 2 non-processed appointments for employee2 (as list size)", 2, 3 - Math.abs(newProcessedEmpL2 - oldProcessedEmpL2));
+		assertEquals("There should be 2 non-processed appointments for employee2 (as list size with criteria)", 2, 3 - Math.abs(newProcessedEmpLC2 - oldProcessedEmpLC2));
+		assertEquals("There should be 4 non-processed appointments for employee3", 4, 6 - Math.abs(newProcessedEmp3 - oldProcessedEmp3));
+		assertEquals("There should be 4 non-processed appointments for employee3 (with criteria)", 4, 6 - Math.abs(newProcessedEmpC3 - oldProcessedEmpC3));
+		assertEquals("There should be 4 non-processed appointments for employee3 (as list size)", 4, 6 - Math.abs(newProcessedEmpL3 - oldProcessedEmpL3));
+		assertEquals("There should be 4 non-processed appointments for employee3 (as list size with criteria)", 4, 6 - Math.abs(newProcessedEmpLC3 - oldProcessedEmpLC3));
+
+		assignedAppointments = serviceFacade.getAssignedAppointments(guardian1);
+		
+		// Count individual role occurrences
+		newCountRole1 = 0;
+		newCountRole2 = 0;
+			
+		for (AppointmentWithTarget appointment : assignedAppointments ) {
+			if (appointment.getSenderUserInfo().getUid().equals(employee1Uid) &&
+				appointment.getSenderRole().equals(role1)) newCountRole1++;
+			
+			if (appointment.getSenderUserInfo().getUid().equals(employee2Uid) &&
+				appointment.getSenderRole().equals(role2)) newCountRole2++;
+		}
+		
+		assertEquals("There should be 2 non-processed appointments with role 'role1'", 2, 3 - Math.abs(newCountRole1 - oldCountRole1));
+		assertEquals("There should be 2 non-processed appointments with role 'role2'", 2, 3 - Math.abs(newCountRole2 - oldCountRole2));
+	}
+	
+	@Test
 	public void cancelAppointment() {
         final AppointmentForEditTO newAppointment = createTestAppointment("new appointment for cancel", "appointment description", 1);
 
@@ -211,7 +429,25 @@ public class AppointmentServiceTest {
 		}
 		return null;
 	}
-
+	
+	private AppointmentForEditTO createTestAppointmentWithRole(final String sender, final String senderRole,
+																final String testSubject, final String description)
+	{
+		final AppointmentForEditTO appointment = new AppointmentForEditTO();
+		appointment.setSubject(testSubject);
+		appointment.setDescription(description);
+		appointment.setSender(sender);
+		appointment.setSenderRole(senderRole);
+		
+		final AppointmentReceipientTO receipientTO = new AppointmentReceipientTO();
+		receipientTO.setTargetPerson("testAppReceiver1");
+		receipientTO.setReceipients(Arrays.asList("testGuardian1", "testGuardian2"));
+        
+		appointment.setReceipients(Arrays.asList(receipientTO));
+		appointment.setSlots(createTestSlots(2));
+		return appointment;
+	}
+	
 	private AppointmentForEditTO createTestAppointment(final String testSubject, final String description, int numberOfSlots) {
 		final AppointmentForEditTO appointment = new AppointmentForEditTO();
 		appointment.setSubject(testSubject);

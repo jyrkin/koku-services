@@ -105,17 +105,33 @@ public class AppointmentDAOImpl extends AbstractEntityDAOImpl<Appointment> imple
      * @return
      */
     @Override
-    public List<Appointment> getProcessedAppointments(User user, final int startNum, final int maxResults, final AppointmentDTOCriteria criteria) {
-        if (criteria.getTargetPersonUid() != null) {
-            return getResultList("findProcessedAppointmentsBySenderAndTarget", getParamsForSenderAndTarget(user, criteria.getTargetPersonUid()), startNum, maxResults);
-        } else {
-            return getResultList("findProcessedAppointmentsBySender", getParamsForSender(user), startNum, maxResults);
-        }
+    public List<Appointment> getProcessedAppointments(User user, List<String> userRoles, final int startNum, final int maxResults, final AppointmentDTOCriteria criteria) {
+    	if (userRoles != null && !userRoles.isEmpty()) {
+	        if (criteria.getTargetPersonUid() != null) {
+	            return getResultList("findProcessedAppointmentsBySenderAndRolesAndTarget", getParamsForSenderAndRolesAndTarget(user, userRoles, criteria.getTargetPersonUid()), startNum, maxResults);
+	        } else {
+	            return getResultList("findProcessedAppointmentsBySenderAndRoles", getParamsForSenderAndRoles(user, userRoles), startNum, maxResults);
+	        }
+    	} else {
+    		if (criteria.getTargetPersonUid() != null) {
+	            return getResultList("findProcessedAppointmentsBySenderAndTarget", getParamsForSenderAndTarget(user, criteria.getTargetPersonUid()), startNum, maxResults);
+	        } else {
+	            return getResultList("findProcessedAppointmentsBySender", getParamsForSender(user), startNum, maxResults);
+	        }
+    	}
     }
 
     private Map<String, Object> getParamsForSender(User user) {
         final Map<String, Object> params = new HashMap<String, Object>();
         params.put("sender", user);
+        params.put("status_cancelled", AppointmentStatus.Cancelled);
+        return params;
+    }
+    
+    private Map<String, Object> getParamsForSenderAndRoles(User user, List<String> userRoles) {
+        final Map<String, Object> params = new HashMap<String, Object>();
+        params.put("sender", user);
+        params.put("userRoles", userRoles);
         params.put("status_cancelled", AppointmentStatus.Cancelled);
         return params;
     }
@@ -127,18 +143,35 @@ public class AppointmentDAOImpl extends AbstractEntityDAOImpl<Appointment> imple
         params.put("status_cancelled", AppointmentStatus.Cancelled);
         return params;
     }
+    
+    private Map<String, Object> getParamsForSenderAndRolesAndTarget(User user, List<String> userRoles, final String targetUserUid) {
+        final Map<String, Object> params = new HashMap<String, Object>();
+        params.put("sender", user);
+        params.put("userRoles", userRoles);
+        params.put("targetUserUid", targetUserUid);
+        params.put("status_cancelled", AppointmentStatus.Cancelled);
+        return params;
+    }
 
     /**
      * @param user
      * @return
      */
     @Override
-    public Long getTotalProcessedAppointments(User user, final AppointmentDTOCriteria criteria) {
-        if (criteria.getTargetPersonUid() != null) {
-            return getSingleResult("countProcessedAppointmentsBySenderAndTarget", getParamsForSenderAndTarget(user, criteria.getTargetPersonUid()));
-        } else {
-            return getSingleResult("countProcessedAppointmentsBySender", getParamsForSender(user));
-        }
+    public Long getTotalProcessedAppointments(User user, List<String> userRoles, final AppointmentDTOCriteria criteria) {
+    	if (userRoles != null && !userRoles.isEmpty()) {
+	        if (criteria.getTargetPersonUid() != null) {
+	            return getSingleResult("countProcessedAppointmentsBySenderAndRolesAndTarget", getParamsForSenderAndRolesAndTarget(user, userRoles, criteria.getTargetPersonUid()));
+	        } else {
+	            return getSingleResult("countProcessedAppointmentsBySenderAndRoles", getParamsForSenderAndRoles(user, userRoles));
+	        }
+    	} else {
+    		if (criteria.getTargetPersonUid() != null) {
+	            return getSingleResult("countProcessedAppointmentsBySenderAndTarget", getParamsForSenderAndTarget(user, criteria.getTargetPersonUid()));
+	        } else {
+	            return getSingleResult("countProcessedAppointmentsBySender", getParamsForSender(user));
+	        }    		
+    	}
     }
 
     /**
@@ -148,12 +181,20 @@ public class AppointmentDAOImpl extends AbstractEntityDAOImpl<Appointment> imple
      * @return
      */
     @Override
-    public List<Appointment> getCreatedAppointments(User user, int startNum, int maxResults, final AppointmentDTOCriteria criteria) {
-        if (criteria.getTargetPersonUid() != null) {
-            return getResultList("findCreatedAppointmentsBySenderAndTarget", getParamsForSenderAndTarget(user, criteria.getTargetPersonUid()), startNum, maxResults);
-        } else {
-            return getResultList("findCreatedAppointmentsBySender", getParamsForSender(user), startNum, maxResults);
-        }
+    public List<Appointment> getCreatedAppointments(User user, List<String> userRoles, int startNum, int maxResults, final AppointmentDTOCriteria criteria) {
+    	if (userRoles != null && !userRoles.isEmpty()) {
+	        if (criteria.getTargetPersonUid() != null) {
+	            return getResultList("findCreatedAppointmentsBySenderAndRolesAndTarget", getParamsForSenderAndRolesAndTarget(user, userRoles, criteria.getTargetPersonUid()), startNum, maxResults);
+	        } else {
+	            return getResultList("findCreatedAppointmentsBySenderAndRoles", getParamsForSenderAndRoles(user, userRoles), startNum, maxResults);
+	        }
+    	} else {
+    		if (criteria.getTargetPersonUid() != null) {
+	            return getResultList("findCreatedAppointmentsBySenderAndTarget", getParamsForSenderAndTarget(user, criteria.getTargetPersonUid()), startNum, maxResults);
+	        } else {
+	            return getResultList("findCreatedAppointmentsBySender", getParamsForSender(user), startNum, maxResults);
+	        }
+    	}
     }
 
     /**
@@ -161,12 +202,20 @@ public class AppointmentDAOImpl extends AbstractEntityDAOImpl<Appointment> imple
      * @return
      */
     @Override
-    public Long getTotalCreatedAppointments(User user, final AppointmentDTOCriteria criteria) {
-        if (criteria.getTargetPersonUid() != null) {
-            return getSingleResult("countCreatedAppointmentsBySenderAndTarget", getParamsForSenderAndTarget(user, criteria.getTargetPersonUid()));
-        } else {
-            return getSingleResult("countCreatedAppointmentsBySender", getParamsForSender(user));
-        }
+    public Long getTotalCreatedAppointments(User user, List<String> userRoles, final AppointmentDTOCriteria criteria) {
+    	if (userRoles != null && !userRoles.isEmpty()) {
+	        if (criteria.getTargetPersonUid() != null) {
+	            return getSingleResult("countCreatedAppointmentsBySenderAndRolesAndTarget", getParamsForSenderAndRolesAndTarget(user, userRoles, criteria.getTargetPersonUid()));
+	        } else {
+	            return getSingleResult("countCreatedAppointmentsBySenderAndRoles", getParamsForSenderAndRoles(user, userRoles));
+	        }
+    	} else {
+    		if (criteria.getTargetPersonUid() != null) {
+	            return getSingleResult("countCreatedAppointmentsBySenderAndTarget", getParamsForSenderAndTarget(user, criteria.getTargetPersonUid()));
+	        } else {
+	            return getSingleResult("countCreatedAppointmentsBySender", getParamsForSender(user));
+	        }
+    	}
     }
 
     /**

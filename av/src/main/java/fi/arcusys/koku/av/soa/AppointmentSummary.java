@@ -12,12 +12,13 @@ import fi.arcusys.koku.common.soa.UserInfo;
  * Jul 22, 2011
  */
 @XmlType (name = "appointmentSummary", namespace = "http://soa.av.koku.arcusys.fi/",
-propOrder={"appointmentId", "status", "sender" , "senderUserInfo", "subject", "description"})
+propOrder={"appointmentId", "status", "sender", "senderRole", "senderUserInfo", "subject", "description"})
 public class AppointmentSummary {
 
 
     private long appointmentId;
     private String sender;
+    private String senderRole;
     private UserInfo senderUserInfo;
     private String subject;
     private String description;
@@ -63,6 +64,20 @@ public class AppointmentSummary {
      */
     public void setSender(String sender) {
         this.sender = sender;
+    }
+    
+    /**
+     * @return the senderRole
+     */
+    public String getSenderRole() {
+        return senderRole;
+    }
+
+    /**
+     * @param sender the sender to set
+     */
+    public void setSenderRole(String senderRole) {
+        this.senderRole = senderRole;
     }
 
     /**
