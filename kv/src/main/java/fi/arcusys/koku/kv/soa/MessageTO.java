@@ -16,6 +16,7 @@ import fi.arcusys.koku.common.soa.UserInfo;
 @XmlType (name = "message", namespace = "http://soa.kv.koku.arcusys.fi/")
 public class MessageTO extends fi.arcusys.koku.kv.soa.MessageSummary {
 	private String content;
+	private String originalContent;
 	private List<UserInfo> deliveryFailedTo;
 	
 	
@@ -32,6 +33,18 @@ public class MessageTO extends fi.arcusys.koku.kv.soa.MessageSummary {
 		this.content = content;
 	}
     /**
+	 * @return the originalContent
+	 */
+	public String getOriginalContent() {
+		return originalContent;
+	}
+	/**
+	 * @param originalContent the originalContent to set
+	 */
+	public void setOriginalContent(String originalContent) {
+		this.originalContent = originalContent;
+	}
+	/**
      * @return the deliveryFailedTo
      */
     public List<UserInfo> getDeliveryFailedTo() {

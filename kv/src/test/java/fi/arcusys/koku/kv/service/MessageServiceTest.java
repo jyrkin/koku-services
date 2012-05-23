@@ -315,7 +315,7 @@ public class MessageServiceTest {
 
     private long sendMessage(final String fromUserId, final String role, final String subject, final List<String> toUsers, final String content,
             final boolean sendToFamilyMembers, final boolean sendToGroupSite) {
-        return serviceFacade.sendNewMessage(fromUserId, role, subject, toUsers, content, sendToFamilyMembers, sendToGroupSite);
+        return serviceFacade.sendNewMessage(fromUserId, role, subject, toUsers, content, content, sendToFamilyMembers, sendToGroupSite);
     }
 
     private RequestTemplateTO createRequestTemplate(final String fromUserId) {
