@@ -76,9 +76,9 @@ public interface AppointmentServiceFacade {
 	
 	int getTotalProcessedAppointments(final String user, AppointmentCriteria criteria);
 	
-    List<AppointmentSummary> getCreatedAppointments(final String user, int startNum, int maxNum, AppointmentCriteria criteria);
+    List<AppointmentTO> getCreatedAppointments(final String user, int startNum, int maxNum, AppointmentCriteria criteria);
     
-    List<AppointmentSummary> getProcessedAppointments(final String user, int startNum, int maxNum, AppointmentCriteria criteria);
+    List<AppointmentTO> getProcessedAppointments(final String user, int startNum, int maxNum, AppointmentCriteria criteria);
 
     /**
      * @param appointmentId
