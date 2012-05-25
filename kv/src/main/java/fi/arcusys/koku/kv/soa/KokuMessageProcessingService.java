@@ -21,7 +21,8 @@ public interface KokuMessageProcessingService {
 	        @WebParam(name = "messageContent") final String content,
 	        @WebParam(name = "originalContent") final String originalContent,
 	        @WebParam(name = "sendToFamilyMembers") final Boolean sendToFamilyMembers,
-	        @WebParam(name = "sendToGroupSite") final Boolean sendToGroupSite);
+	        @WebParam(name = "sendToGroupSite") final Boolean sendToGroupSite,
+	        @WebParam(name = "replyDisabled") final Boolean replyDisabled);
 	
 	void receiveMessage(@WebParam(name = "toUser") final String toUserUid, 
 						@WebParam(name = "messageId") final Long messageId);

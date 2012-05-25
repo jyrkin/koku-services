@@ -40,6 +40,8 @@ public class Message extends AbstractEntity {
 	@ManyToMany(fetch = FetchType.EAGER)
 	private Set<User> receipients;
 	
+	private Boolean replyDisabled;
+	
 	/**
      * @return the sendToFamilyMembers
      */
@@ -151,4 +153,19 @@ public class Message extends AbstractEntity {
 	public void setReceipients(final Set<User> receipients) {
 		this.receipients = receipients;
 	}
+
+    /**
+     * @return the replyDisabled
+     */
+    public Boolean getReplyDisabled() {
+        return replyDisabled;
+    }
+
+    /**
+     * @param replyDisabled the replyDisabled to set
+     */
+    public void setReplyDisabled(Boolean replyDisabled) {
+        this.replyDisabled = replyDisabled;
+    }
+	
 }

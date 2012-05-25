@@ -83,13 +83,14 @@ public class MessageServiceTest {
             assertNotNull("Find or create receiver: " + uid, testUtil.getUserByUid(uid));
         }
 
-        final long messageId = sendMessage(fromUserUid, subject, receipients, messageContent, false, false);
+        final long messageId = sendMessage(fromUserUid, subject, receipients, messageContent, false, false, false);
         assertNotNull(messageId);
 
         // check message in "Sent messages" folder
         final List<MessageTO> sentMessages = serviceFacade.getSentMessages(fromUserUid);
         assertFalse("Some messages found in \"Sent\" folder: ", sentMessages.isEmpty());
         assertTrue("Message found in \"Sent\" folder: ", sentMessages.contains(serviceFacade.getMessageById(messageId)));
+        assertFalse("Answering is enabled: ", serviceFacade.getMessageById(messageId).getReplyDisabled());
     }
 
     @Test
@@ -97,7 +98,7 @@ public class MessageServiceTest {
         final String fromUserId = "testSender";
         final String toUserId = "testReceiver";
 
-        final long messageId = sendMessage(fromUserId, "subject", Collections.singletonList(toUserId), "content", false, false);
+        final long messageId = sendMessage(fromUserId, "subject", Collections.singletonList(toUserId), "content", false, false, false);
 
         assertEquals("Message is in sender's Outbox folder: ", FolderType.Outbox, serviceFacade.getMessageById(messageId).getMessageType());
 
@@ -112,7 +113,7 @@ public class MessageServiceTest {
         final String fromUserId = "testSenderForDelete";
         final String toUserId = "testReceiverForDelete";
 
-        final long messageId = sendMessage(fromUserId, "subject", Collections.singletonList(toUserId), "content", false, false);
+        final long messageId = sendMessage(fromUserId, "subject", Collections.singletonList(toUserId), "content", false, false, false);
 
         final MessageTO messageById = serviceFacade.getMessageById(messageId);
         assertEquals("Message is in sender's Outbox folder: ", FolderType.Outbox, messageById.getMessageType());
@@ -127,8 +128,8 @@ public class MessageServiceTest {
     public void testOpenJPAFailure() {
         final String fromUserId = "testOpenJPA";
         final String toUserId = "testOpenJPA2";
-        sendMessage(fromUserId, "subject1", Collections.singletonList(toUserId), "content1", false, false);
-        sendMessage(fromUserId, "subject2", Collections.singletonList(toUserId), "content2", false, false);
+        sendMessage(fromUserId, "subject1", Collections.singletonList(toUserId), "content1", false, false, false);
+        sendMessage(fromUserId, "subject2", Collections.singletonList(toUserId), "content2", false, false, false);
     }
 
     @Test
@@ -136,7 +137,7 @@ public class MessageServiceTest {
         final String fromUserId = "testSender2";
         final String toUserId = "testReceiver2";
 
-        final long messageId = sendMessage(fromUserId, "subject", Collections.singletonList(toUserId), "content", false, false);
+        final long messageId = sendMessage(fromUserId, "subject", Collections.singletonList(toUserId), "content", false, false, false);
         final List<MessageSummary> testInboxMessages = serviceFacade.getMessages(toUserId, FolderType.Inbox);
         serviceFacade.receiveMessage(toUserId, messageId);
 
@@ -161,7 +162,7 @@ public class MessageServiceTest {
         final String toUserId = "testReceiver3";
         final String toUserId2 = "testReceiver3_2";
 
-        final long messageId = sendMessage(fromUserId, "subject", Arrays.asList(toUserId, toUserId2), "content", false, false);
+        final long messageId = sendMessage(fromUserId, "subject", Arrays.asList(toUserId, toUserId2), "content", false, false, false);
         final long receivedMessageId = serviceFacade.receiveMessage(toUserId, messageId);
 
         assertEquals("New message in Inbox: ", 1, serviceFacade.getTotalMessagesCount(toUserId, FolderType.Inbox, null));
@@ -185,7 +186,7 @@ public class MessageServiceTest {
         final String toUserId = "testReceiverPaging";
 
         for (int i = 0; i < 1; i++) {
-            sendMessage(fromUserId, "subject_" + i, Collections.singletonList(toUserId), "content", false, false);
+            sendMessage(fromUserId, "subject_" + i, Collections.singletonList(toUserId), "content", false, false, false);
         }
         assertEquals(1, serviceFacade.getTotalMessagesCount(fromUserId, FolderType.Outbox, null));
 
@@ -210,6 +211,7 @@ public class MessageServiceTest {
         List<MessageSummary> messages = serviceFacade.getMessages(fromUserId, FolderType.Outbox);
         assertEquals("Message stored in Outbox: ", 1, messages.size());
         assertEquals("Message is Request: ", "test request", messages.get(0).getSubject());
+        assertTrue("Answering request message is disabled: ", messages.get(0).getReplyDisabled());
 
         assertEquals("Correct request retrieved: ", requestId, request.getRequestId());
 
@@ -297,7 +299,7 @@ public class MessageServiceTest {
         final String toUserId = "testRecipient";
         final List<String> toUsers = Collections.singletonList(toUserId);
 
-        final long messageId = sendMessage(fromUserId, fromRole, "role testing", toUsers, "testing of reading by role", false, false);
+        final long messageId = sendMessage(fromUserId, fromRole, "role testing", toUsers, "testing of reading by role", false, false, false);
         assertNotNull(messageId);
 
         // read message by role
@@ -309,13 +311,13 @@ public class MessageServiceTest {
     }
 
     private long sendMessage(final String fromUserId, final String subject, final List<String> toUsers, final String content,
-            final boolean sendToFamilyMembers, final boolean sendToGroupSite) {
-        return sendMessage(fromUserId, null, subject, toUsers, content, sendToFamilyMembers, sendToGroupSite);
+            final boolean sendToFamilyMembers, final boolean sendToGroupSite, final boolean replyDisabled) {
+        return sendMessage(fromUserId, null, subject, toUsers, content, sendToFamilyMembers, sendToGroupSite, replyDisabled);
     }
 
     private long sendMessage(final String fromUserId, final String role, final String subject, final List<String> toUsers, final String content,
-            final boolean sendToFamilyMembers, final boolean sendToGroupSite) {
-        return serviceFacade.sendNewMessage(fromUserId, role, subject, toUsers, content, content, sendToFamilyMembers, sendToGroupSite);
+            final boolean sendToFamilyMembers, final boolean sendToGroupSite, final boolean replyDisabled) {
+        return serviceFacade.sendNewMessage(fromUserId, role, subject, toUsers, content, content, sendToFamilyMembers, sendToGroupSite, replyDisabled);
     }
 
     private RequestTemplateTO createRequestTemplate(final String fromUserId) {
@@ -425,7 +427,7 @@ public class MessageServiceTest {
         final String toUserId = "testSearchReceiver";
         final String subject = "subject for search test";
 
-        final Long messageId = sendMessage(fromUserId, subject, Collections.singletonList(toUserId), "content for search", false, false);
+        final Long messageId = sendMessage(fromUserId, subject, Collections.singletonList(toUserId), "content for search", false, false, false);
         serviceFacade.receiveMessage(toUserId, messageId);
 
         final MessageQuery query = new MessageQuery(1, 10);
@@ -471,6 +473,7 @@ public class MessageServiceTest {
         final List<MessageSummary> messages = serviceFacade.getMessages(toUserId, FolderType.Inbox);
         assertFalse(messages.isEmpty());
         assertTrue(serviceFacade.getMessageById(messages.get(0).getMessageId()).getContent().contains(content));
+        assertTrue("Answering notifications is disabled: ", messages.get(0).getReplyDisabled());
     }
 
     @Test
@@ -478,8 +481,8 @@ public class MessageServiceTest {
         final String fromUserId = "testSender";
         final String toUserId = "testReceiver";
 
-        final long messageId = sendMessage(fromUserId, "subject", Collections.singletonList(toUserId), "content", false, false);
-        final long messageNewId = sendMessage(fromUserId, "subject", Collections.singletonList(toUserId), "content", false, false);
+        final long messageId = sendMessage(fromUserId, "subject", Collections.singletonList(toUserId), "content", false, false, false);
+        final long messageNewId = sendMessage(fromUserId, "subject", Collections.singletonList(toUserId), "content", false, false, false);
 
         assertEquals("Message is in sender's Outbox folder: ", FolderType.Outbox, serviceFacade.getMessageById(messageId).getMessageType());
 
@@ -501,8 +504,8 @@ public class MessageServiceTest {
         final String fromUserId = "testSender";
         final String toUserId = "testReceiver";
 
-        final long messageId = sendMessage(fromUserId, "subject", Collections.singletonList(toUserId), "content", false, false);
-        final long messageNewId = sendMessage(fromUserId, "subject", Collections.singletonList(toUserId), "content", false, false);
+        final long messageId = sendMessage(fromUserId, "subject", Collections.singletonList(toUserId), "content", false, false, false);
+        final long messageNewId = sendMessage(fromUserId, "subject", Collections.singletonList(toUserId), "content", false, false, false);
 
         assertEquals("Message is in sender's Outbox folder: ", FolderType.Outbox, serviceFacade.getMessageById(messageId).getMessageType());
 

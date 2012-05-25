@@ -26,6 +26,7 @@ public class MessageSummary {
 	private XMLGregorianCalendar creationDate;
 	private FolderType messageType;
 	private MessageStatus messageStatus;
+	private Boolean replyDisabled;
 
 	/**
      * @return the senderUserInfo
@@ -163,6 +164,20 @@ public class MessageSummary {
 	}
 
 	/**
+     * @return the replyDisabled
+     */
+    public Boolean getReplyDisabled() {
+        return replyDisabled;
+    }
+
+    /**
+     * @param replyDisabled the replyDisabled to set
+     */
+    public void setReplyDisabled(Boolean replyDisabled) {
+        this.replyDisabled = replyDisabled;
+    }
+
+    /**
 	 * @return
 	 */
 	@Override

@@ -35,7 +35,7 @@ public interface MessageServiceFacade {
 	List<MessageTO> getSentMessages(final String userUid);
 	
 	Long sendNewMessage(final String fromUserUid, final String role, final String subject, final List<String> receipients, final String content,
-			final String originalContent, final boolean sendToFamilyMembers, final boolean sendToGroupSite);
+			final String originalContent, final boolean sendToFamilyMembers, final boolean sendToGroupSite, final boolean replyDisabled);
 	
 	Long receiveMessage(final String toUserUid, final Long messageId);
 	
