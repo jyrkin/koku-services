@@ -836,34 +836,39 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
 
     private List<ActionRequestSummary> getActionResponsesCombined(
             final Consent consent, final List<ConsentReply> replies) {
+        
         final Map<Integer, ConsentActionRequest> numberToActionMap = consent.getTemplate().getNumberToActionMap();
-                final Map<Integer, ActionRequestSummary> actionResponses = new HashMap<Integer, ActionRequestSummary>();
-                for (final ConsentReply reply : replies) {
-                    for (final ConsentActionReply actionReply : reply.getActions()) {
-                        if (!actionResponses.containsKey(actionReply.getActionRequestNumber())) {
-                            final ActionRequestSummary actionRequestSummary = new ActionRequestSummary();
-                            final ConsentActionRequest consentActionRequest = numberToActionMap.get(actionReply.getActionRequestNumber());
-                            actionRequestSummary.setName(consentActionRequest.getName());
-                            actionRequestSummary.setDescription(consentActionRequest.getDescription());
-                            actionRequestSummary.setStatus(ActionRequestStatus.Given);
-                            actionResponses.put(actionReply.getActionRequestNumber(), actionRequestSummary);
-                        }
-                        final ActionRequestSummary actionResponse = actionResponses.get(actionReply.getActionRequestNumber());
-                        if (!actionReply.isPermitted()) {
-                            actionResponse.setStatus(ActionRequestStatus.Declined);
-                        }
-                    }
+        final Map<Integer, ActionRequestSummary> actionResponses = new HashMap<Integer, ActionRequestSummary>();
+        
+        for (final ConsentReply reply : replies) {
+            for (final ConsentActionReply actionReply : reply.getActions()) {
+                if (!actionResponses.containsKey(actionReply.getActionRequestNumber())) {
+                    final ActionRequestSummary actionRequestSummary = new ActionRequestSummary();
+                    final ConsentActionRequest consentActionRequest = numberToActionMap.get(actionReply.getActionRequestNumber());
+                    actionRequestSummary.setName(consentActionRequest.getName());
+                    actionRequestSummary.setDescription(consentActionRequest.getDescription());
+                    actionRequestSummary.setStatus(ActionRequestStatus.Given);
+                    actionResponses.put(actionReply.getActionRequestNumber(), actionRequestSummary);
                 }
-                for (final Integer actionRequestedNumber : numberToActionMap.keySet()) {
-                    if (!actionResponses.containsKey(actionRequestedNumber)) {
-                        final ActionRequestSummary actionRequestSummary = new ActionRequestSummary();
-                        final ConsentActionRequest consentActionRequest = numberToActionMap.get(actionRequestedNumber);
-                        actionRequestSummary.setName(consentActionRequest.getName());
-                        actionRequestSummary.setDescription(consentActionRequest.getDescription());
-                        actionRequestSummary.setStatus(ActionRequestStatus.Declined);
-                        actionResponses.put(actionRequestedNumber, actionRequestSummary);
-                    }
+                
+                final ActionRequestSummary actionResponse = actionResponses.get(actionReply.getActionRequestNumber());
+                if (!actionReply.isPermitted()) {
+                    actionResponse.setStatus(ActionRequestStatus.Declined);
                 }
+            }
+        }
+        
+        for (final Integer actionRequestedNumber : numberToActionMap.keySet()) {
+            if (!actionResponses.containsKey(actionRequestedNumber)) {
+                final ActionRequestSummary actionRequestSummary = new ActionRequestSummary();
+                final ConsentActionRequest consentActionRequest = numberToActionMap.get(actionRequestedNumber);
+                actionRequestSummary.setName(consentActionRequest.getName());
+                actionRequestSummary.setDescription(consentActionRequest.getDescription());
+                actionRequestSummary.setStatus(ActionRequestStatus.Undecided);
+                actionResponses.put(actionRequestedNumber, actionRequestSummary);
+            }
+        }
+        
         return new ArrayList<ActionRequestSummary>(actionResponses.values());
     }
 

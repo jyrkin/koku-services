@@ -96,21 +96,26 @@ public class ConsentServiceTest {
 
         ConsentQuery processedConcentsQuery = new ConsentQuery(1, 10);
         
-        // KOKULT-8: Sent Consents should be visible in Loora after creation (previously not visible by design)
-        assertNotNull(getById(consentId, service.getProcessedConsents(employeeUid, processedConcentsQuery)));
+        final List<ConsentSummary> beforeProcessed = service.getProcessedConsents(employeeUid, processedConcentsQuery);
         
-        // KOKULT-8: Filtered results should have the sent consents
+        // KOKU-1297: Sent Consents should be visible in Loora after creation (previously not visible by design)
+        assertNotNull(getById(consentId, beforeProcessed));
+        
+        // KOKU-1297: Filtered results should have the sent consents
         ConsentCriteria templateCriteria = new ConsentCriteria();
         templateCriteria.setConsentTemplateId(templateId);
         processedConcentsQuery.setCriteria(templateCriteria);
-        assertNotNull(getById(consentId, service.getProcessedConsents(employeeUid, processedConcentsQuery)));
+        assertEquals(1, beforeProcessed.size());
+        assertNotNull(getById(consentId, beforeProcessed));
         
-        // KOKULT-8: Check that consent has right data for displaying
-        List<ConsentSummary> summaryList = service.getProcessedConsents(employeeUid, processedConcentsQuery);
-        assertEquals(1, summaryList.size());
-        ConsentSummary summary = summaryList.get(0);
-        assertEquals("New Consents should be Open", ConsentStatus.Open, summary.getStatus());
-        assertEquals("New Consent's approval status should be Undecided", ConsentApprovalStatus.Undecided, summary.getApprovalStatus());
+        final ConsentTO combinedBefore = service.getCombinedConsentById(consentId);
+        assertEquals("New Consents should be Open", ConsentStatus.Open, combinedBefore.getStatus());
+        assertEquals("New Consent's approval status should be Undecided", ConsentApprovalStatus.Undecided, combinedBefore.getApprovalStatus());
+        
+        // KOKU-1297: New consent authorization approval status should be Undecided
+        List<ActionRequestSummary> actionRequests = combinedBefore.getActionRequests();
+        assertEquals("Expected 3 requests", 3, actionRequests.size());
+        assertActionRequests("After creation", actionRequests, 3, 0, 0); // 3 undecided actions
                 
         // first parent's approval
         final List<ConsentShortSummary> consentsForApprove = service.getAssignedConsents(parentForApprove, 1, 10);
@@ -126,6 +131,9 @@ public class ConsentServiceTest {
         assertNotNull(combinedAfterApprove);
         assertEquals("Partually approved Consents should be PartiallyGiven", ConsentStatus.PartiallyGiven, combinedAfterApprove.getStatus());
         assertEquals("PartiallyGiven Consent's approval status should be Approved", ConsentApprovalStatus.Approved, combinedAfterApprove.getApprovalStatus());
+        actionRequests = combinedAfterApprove.getActionRequests();
+        assertEquals("Expected 3 requests", 3, actionRequests.size());
+        assertActionRequests("After approval", actionRequests, 1, 0, 2); // 1 Undecided, 2 Given
         
         // second parent's declining
         final List<ConsentShortSummary> consentsForDecline = service.getAssignedConsents(parentForDecline, 1, 10);
@@ -150,18 +158,9 @@ public class ConsentServiceTest {
         assertEquals(newDate, getById(consentId, service.getOwnConsents(parentForApprove, 1, 10)).getValidTill());
         final ConsentTO replied = service.getConsentById(consentId, parentForApprove);
         assertEquals(ConsentApprovalStatus.Approved, replied.getApprovalStatus());
-        final List<ActionRequestSummary> actionRequests = replied.getActionRequests();
+        actionRequests = replied.getActionRequests();
         assertEquals(3, actionRequests.size());
-        assertTrue("One action is declined by default: ", 
-                actionRequests.get(0).getStatus() == ActionRequestStatus.Declined ||
-                actionRequests.get(1).getStatus() == ActionRequestStatus.Declined ||
-                actionRequests.get(2).getStatus() == ActionRequestStatus.Declined
-                );
-        assertTrue("Two actions are approved: ", 
-                actionRequests.get(0).getStatus() == ActionRequestStatus.Given ||
-                actionRequests.get(1).getStatus() == ActionRequestStatus.Given ||
-                actionRequests.get(2).getStatus() == ActionRequestStatus.Given
-                );
+        assertActionRequests("After reply", actionRequests, 0, 1, 2); // 1 Declined, 2 Approved
         
         // first parent's revoking
         assertNotNull(getById(consentId, service.getOwnConsents(parentForApprove, 1, 10)));
@@ -172,6 +171,35 @@ public class ConsentServiceTest {
         final ConsentTO revoked = service.getConsentById(consentId, parentForApprove);
         assertEquals(ConsentApprovalStatus.Declined, revoked.getApprovalStatus());
         assertEquals(ConsentStatus.Revoked, revoked.getStatus());
+    }
+    
+    private void assertActionRequests(final String message, final List<ActionRequestSummary> actionRequests,
+            int actualUndecided, int actualDeclided, int actualGiven) {
+        
+        int undecided = 0, declined = 0, given = 0;
+        
+        for (ActionRequestSummary a : actionRequests) {
+            switch (a.getStatus()) {
+                case Undecided:
+                    undecided++;
+                    break;
+                    
+                case Declined:
+                    declined++;
+                    break;
+                    
+                case Given:
+                    given++;
+                    break;
+        
+                default:
+                    break;
+            }
+        }
+        
+        assertEquals(String.format("%s %d actions should be undecided", message, actualUndecided), actualUndecided, undecided);
+        assertEquals(String.format("%s %d actions should be declided", message, actualDeclided), actualDeclided, declined);
+        assertEquals(String.format("%s %d actions should be approved", message, actualGiven), actualGiven, given);
     }
     
     @Test
@@ -188,8 +216,8 @@ public class ConsentServiceTest {
         
         assertEquals(1, service.getTotalAssignedConsents(parent));
         assertEquals(0, service.getTotalOwnConsents(parent));
-        assertEquals(1, service.getTotalProcessedConsents(employee, null)); // KOKULT-8: Sent Consents should be visible in Loora after creation
-        assertEquals(1, service.getTotalProcessedConsents(employee, totalProcessedCriteria));  // KOKULT-8
+        assertEquals(1, service.getTotalProcessedConsents(employee, null)); // KOKU-1297: Sent Consents should be visible in Loora after creation
+        assertEquals(1, service.getTotalProcessedConsents(employee, totalProcessedCriteria));  // KOKU-1297
         
         service.giveConsent(consentId, parent, Collections.<ActionPermittedTO>emptyList(), null, "");
 
@@ -210,7 +238,7 @@ public class ConsentServiceTest {
         final Long consentId = service.requestForConsent(templateId, employeeUid, 
                 "Lassi Lapsi", Arrays.asList(parent1, parent2), null, null, null, Boolean.FALSE, null);
         
-        // KOKULT-8: Sent Consents should be visible in Loora
+        // KOKU-1297: Sent Consents should be visible in Loora
         final ConsentQuery query = new ConsentQuery(1, 100);
         assertNotNull(getById(consentId, service.getProcessedConsents(employeeUid, query)));
         

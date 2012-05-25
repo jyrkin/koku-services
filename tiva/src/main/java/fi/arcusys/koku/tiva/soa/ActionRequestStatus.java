@@ -7,5 +7,5 @@ package fi.arcusys.koku.tiva.soa;
  * Aug 11, 2011
  */
 public enum ActionRequestStatus {
-    Given, Declined;
+    Undecided, Given, Declined;
 }
