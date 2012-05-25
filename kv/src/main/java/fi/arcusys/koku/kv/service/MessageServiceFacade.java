@@ -118,7 +118,7 @@ public interface MessageServiceFacade {
      * @param content
      * @return
      */
-    Long receiveNewMessage(final String fromUserUid, final String subject, final String toUserUid, final String content);
+    Long receiveNewMessage(final String fromUserUid, final String subject, final String toUserUid, final String content, final String originalContent);
 
     void deliverMessage(final String fromUser, final List<String> toUsers, final String subject, final String content);
 

@@ -988,10 +988,10 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
      * @param content
      */
     @Override
-    public Long receiveNewMessage(final String fromUserUid, final String subject, final String toUserUid, final String content) {
+    public Long receiveNewMessage(final String fromUserUid, final String subject, final String toUserUid, final String content, final String originalContent) {
         Message msg = new Message();
         final User user = getUserByUid(fromUserUid);
-        fillMessage(msg, user, null, subject, Collections.singletonList(toUserUid), content, content);
+        fillMessage(msg, user, null, subject, Collections.singletonList(toUserUid), content, originalContent);
         msg = messageDao.create(msg);
         
         return doReceiveNewMessage(getUserByUid(toUserUid), msg).getId();
