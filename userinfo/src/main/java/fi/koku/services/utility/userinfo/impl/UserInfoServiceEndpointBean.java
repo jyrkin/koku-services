@@ -26,11 +26,16 @@ import fi.koku.services.utility.user.v1.UserIdsQueryParamType;
 import fi.koku.services.utility.user.v1.UserInfoServicePortType;
 import fi.koku.services.utility.user.v1.UserPicsQueryParamType;
 import fi.koku.services.utility.user.v1.UsersType;
+import fi.koku.services.utility.user.v1.GroupIdsQueryParamType;
+import fi.koku.services.utility.user.v1.GroupsType;
+import fi.koku.services.utility.user.v1.UserGroupsIdsQueryParamType;
+import fi.koku.services.utility.user.v1.UserGroupsPicsQueryParamType;
 
 /**
  * KoKu userInfo service endpoint implementation class.
  * 
  * @author hanhian
+ * @author hekkata
  */
 @Stateless
 @WebService(wsdlLocation = "META-INF/wsdl/userInfoService.wsdl",
@@ -73,4 +78,24 @@ public class UserInfoServiceEndpointBean implements UserInfoServicePortType {
     logger.info("opGetUsersByPics (impl: " + userInfoService + ")");
     return userInfoService.getUsersByPics(userPicsQueryParam);
   }
+  
+  @Override
+  public GroupsType opGetGroupsByIds(GroupIdsQueryParamType groupIdsQueryParam) throws ServiceFault {
+    logger.info("opGetGroupsByIds (impl: " + userInfoService + ")");
+    return userInfoService.getGroupsByIds(groupIdsQueryParam);
+  }
+    
+  @Override
+  public GroupsType opGetUserGroupsByIds(UserGroupsIdsQueryParamType userGroupIdsQueryParam) throws ServiceFault {
+    logger.info("opGetUserGroupsByIds (impl: " + userInfoService + ")");
+    return userInfoService.getUserGroupsByIds(userGroupIdsQueryParam);
+  }
+    
+  @Override
+  public GroupsType opGetUserGroupsByPics(UserGroupsPicsQueryParamType userGroupPicsQueryParam) throws ServiceFault {
+    logger.info("opGetUserGroupsByPics (impl: " + userInfoService + ")");
+    return userInfoService.getUserGroupsByPics(userGroupPicsQueryParam);
+  }
+    
+  
 }
