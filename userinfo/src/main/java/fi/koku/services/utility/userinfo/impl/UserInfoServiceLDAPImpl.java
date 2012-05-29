@@ -225,7 +225,6 @@ public class UserInfoServiceLDAPImpl implements UserInfoService {
       groupFilter.and(new EqualsFilter("objectclass", "groupOfNames"));
     }
 
-    if (!domain.equals("virkailija")) {
       // customer won't do this query
     if (!UserInfoServiceConstants.USER_INFO_SERVICE_DOMAIN_OFFICER.equals(domain)) {
       // customer won't do this query
