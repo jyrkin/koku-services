@@ -40,8 +40,8 @@ public class KokuMessageProcessingServiceImpl implements KokuMessageProcessingSe
 	 * @return
 	 */
 	@Override
-	public Long sendMessage(String fromUserUid, final String roleUid, String subject, Receipients receipients, String content, String origialContent, final Boolean sendToFamilyMembers, final Boolean sendToGroupSite, final Boolean replyDisabled) {
-		return kvFacade.sendNewMessage(fromUserUid, roleUid, subject, receipients.getReceipients(), content, origialContent, Boolean.TRUE.equals(sendToFamilyMembers), Boolean.TRUE.equals(sendToGroupSite), Boolean.TRUE.equals(replyDisabled));
+	public Long sendMessage(String fromUserUid, final String roleUid, String subject, Receipients receipients, String content, String origialContent, final Boolean sendToFamilyMembers, final Boolean sendToGroupSite) {
+		return kvFacade.sendNewMessage(fromUserUid, roleUid, subject, receipients.getReceipients(), content, origialContent, Boolean.TRUE.equals(sendToFamilyMembers), Boolean.TRUE.equals(sendToGroupSite));
 	}
 
     /**
