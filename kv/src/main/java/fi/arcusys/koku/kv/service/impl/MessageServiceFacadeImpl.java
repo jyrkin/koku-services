@@ -164,10 +164,10 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
 
     @Override
     public Long sendNewMessage(final String fromUserUid, final String role, final String subject, final List<String> receipientUids, final String content,
-            final String originalContent, final boolean sendToFamilyMembers, final boolean sendToGroupSite, final boolean replyDisabled) {
+            final String originalContent, final boolean sendToFamilyMembers, final boolean sendToGroupSite) {
 		final User fromUser = getUserByUid(fromUserUid);
 		
-        final MessageRef storedMessage = createNewMessageInOutbox(subject, receipientUids, content, originalContent, fromUser, role, sendToFamilyMembers, sendToGroupSite, replyDisabled);
+        final MessageRef storedMessage = createNewMessageInOutbox(subject, receipientUids, content, originalContent, fromUser, role, sendToFamilyMembers, sendToGroupSite);
         final String emailSubject = getValueFromBundle(EMAIL_NEW_MESSAGE_RECEIVED_SUBJECT);
         final String emailContent = MessageFormat.format(getValueFromBundle(EMAIL_NEW_MESSAGE_RECEIVED_BODY), 
                 new Object[] {KoKuPropertiesUtil.get(EMAIL_LINKS_MESSAGE_INBOX_PATH)});
@@ -179,14 +179,14 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
     private MessageRef createNewMessageInOutbox(final String subject,
             final List<String> receipientUids, final String content, final String originalContent,
             final User fromUser, final String roleUid, boolean replyPossible) {
-        return createNewMessageInOutbox(subject, receipientUids, content, originalContent, fromUser, roleUid, false, false, true);
+        return createNewMessageInOutbox(subject, receipientUids, content, originalContent, fromUser, roleUid, false, false);
     }
 
     private MessageRef createNewMessageInOutbox(final String subject,
             final List<String> receipientUids, final String content, final String originalContent,
-            final User fromUser, final String roleUid, boolean sendToFamilyMembers, boolean sendToGroupSite, boolean replyDisabled) {
+            final User fromUser, final String roleUid, boolean sendToFamilyMembers, boolean sendToGroupSite) {
         Message msg = new Message();
-		fillMessage(msg, fromUser, roleUid, subject, receipientUids, content, originalContent, sendToFamilyMembers, sendToGroupSite, replyDisabled);
+		fillMessage(msg, fromUser, roleUid, subject, receipientUids, content, originalContent, sendToFamilyMembers, sendToGroupSite);
 		
 		msg = messageDao.create(msg);
 		
@@ -199,12 +199,12 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
     private void fillMessage(Message msg,
             final User fromUser, final String roleUid, final String subject,
             final List<String> receipientUids, final String content, final String originalContent) {
-        fillMessage(msg, fromUser, roleUid, subject, receipientUids, content, originalContent, false, false, true);
+        fillMessage(msg, fromUser, roleUid, subject, receipientUids, content, originalContent, false, false);
     }
 
     private void fillMessage(Message msg,
 			final User fromUser, final String roleUid, final String subject,
-			final List<String> receipientUids, final String content, String originalContent, boolean sendToFamilyMembers, boolean sendToGroupSite, boolean replyDisabled) {
+			final List<String> receipientUids, final String content, String originalContent, boolean sendToFamilyMembers, boolean sendToGroupSite) {
 		msg.setFrom(fromUser);
 		msg.setFromRoleUid(roleUid);
 		msg.setSubject(subject);
@@ -213,7 +213,6 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
 		msg.setPlainText(originalContent);
 		msg.setSendToFamilyMembers(sendToFamilyMembers);
 		msg.setSendToGroupSite(sendToGroupSite);
-		msg.setReplyDisabled(replyDisabled);
 	}
 
     protected Set<User> getUsersByUids(final List<String> receipientUids) {
@@ -255,7 +254,11 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
 		msg.setCreationDate(CalendarUtil.getXmlGregorianCalendar(message.getCreatedDate()));
 		msg.setMessageStatus(MessageStatus.getStatus(messageRef.isRead()));
 		msg.setMessageType(messageRef.getFolder().getFolderType());
-		msg.setReplyDisabled(message.getReplyDisabled());
+		
+		if (message.getUser().getUid().equals(SYSTEM_USER_NAME_FOR_NOTIFICATIONS))
+		    msg.setReplyDisabled(true);
+		else
+		    msg.setReplyDisabled(false);
 		
 		msg.setRecipients(getDisplayNamesByUsers(message.getReceipients()));
 		msg.setRecipientUserInfos(getUserInfos(message.getReceipients()));
@@ -857,7 +860,7 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
     private void doDeliverMessage(final String fromUser,
             List<String> receipients, String subject, String content) {
         final String contentByTemplate = MessageFormat.format(notificationTemplate, new Object[] {getReceipientNames(receipients), subject, content});
-        final Long messageId = sendNewMessage(fromUser, null, subject, receipients, contentByTemplate, content, false, false, true);
+        final Long messageId = sendNewMessage(fromUser, null, subject, receipients, contentByTemplate, content, false, false);
         for (final String receipient : receipients) {
             receiveMessage(receipient, messageId);
         }
@@ -993,7 +996,7 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
     public Long receiveNewMessage(final String fromUserUid, final String subject, final String toUserUid, final String content, final String originalContent) {
         Message msg = new Message();
         final User user = getUserByUid(fromUserUid);
-        fillMessage(msg, user, null, subject, Collections.singletonList(toUserUid), content, originalContent, false, false, false);
+        fillMessage(msg, user, null, subject, Collections.singletonList(toUserUid), content, originalContent, false, false);
         msg = messageDao.create(msg);
         
         return doReceiveNewMessage(getUserByUid(toUserUid), msg).getId();
