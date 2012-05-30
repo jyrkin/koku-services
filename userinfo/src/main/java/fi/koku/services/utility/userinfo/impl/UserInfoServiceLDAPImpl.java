@@ -225,7 +225,8 @@ public class UserInfoServiceLDAPImpl implements UserInfoService {
       groupFilter.and(new EqualsFilter("objectclass", "groupOfNames"));
     }
 
-    if (!domain.equals("virkailija")) {
+      // customer won't do this query
+    if (!UserInfoServiceConstants.USER_INFO_SERVICE_DOMAIN_OFFICER.equals(domain)) {
       // customer won't do this query
       return "";
     }
@@ -253,7 +254,7 @@ public class UserInfoServiceLDAPImpl implements UserInfoService {
     userGroupFilter.and(new EqualsFilter("objectclass", "groupOfNames"));
     userGroupFilter.and(orFilter);
 
-    if (!domain.equals("virkailija")) {
+    if (!UserInfoServiceConstants.USER_INFO_SERVICE_DOMAIN_OFFICER.equals(domain)) {
       // customer won't do this query
       return "";
     }
