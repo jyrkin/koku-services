@@ -19,6 +19,7 @@ public interface KokuMessageProcessingService {
 	        @WebParam(name = "subject") final String subject, 
 	        @WebParam(name = "receipients") final Receipients receipients, 
 	        @WebParam(name = "messageContent") final String content,
+	        @WebParam(name = "originalContent") final String originalContent,
 	        @WebParam(name = "sendToFamilyMembers") final Boolean sendToFamilyMembers,
 	        @WebParam(name = "sendToGroupSite") final Boolean sendToGroupSite);
 	
@@ -30,5 +31,6 @@ public interface KokuMessageProcessingService {
             @WebParam(name = "fromUser") final String fromUserUid, 
             @WebParam(name = "subject") final String subject,
             @WebParam(name = "toUser") final String toUserUid, 
-            @WebParam(name = "messageContent") final String content);
+            @WebParam(name = "messageContent") final String content,
+            @WebParam(name = "originalContent") final String originalContent);
 }

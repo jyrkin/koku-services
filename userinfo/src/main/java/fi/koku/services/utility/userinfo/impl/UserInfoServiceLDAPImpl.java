@@ -1,5 +1,6 @@
 package fi.koku.services.utility.userinfo.impl;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -23,10 +24,18 @@ import fi.koku.services.utility.user.v1.UserType;
 import fi.koku.services.utility.user.v1.UsersType;
 import fi.koku.services.utility.userinfo.impl.model.LDAPUser;
 
+import fi.koku.services.utility.user.v1.GroupIdsQueryParamType;
+import fi.koku.services.utility.user.v1.GroupsType;
+import fi.koku.services.utility.user.v1.GroupType;
+import fi.koku.services.utility.user.v1.UserGroupsIdsQueryParamType;
+import fi.koku.services.utility.user.v1.UserGroupsPicsQueryParamType;
+import fi.koku.services.utility.userinfo.impl.model.LDAPGroup;
+
 /**
  * KoKu userInfo service LDAP implementation class.
  * 
  * @author hanhian
+ * @author hekkata
  */
 public class UserInfoServiceLDAPImpl implements UserInfoService {
 
@@ -53,6 +62,44 @@ public class UserInfoServiceLDAPImpl implements UserInfoService {
 
   public void setLdapTemplate(SimpleLdapTemplate ldapTemplate) {
     this.ldapTemplate = ldapTemplate;
+  }
+
+  @Override
+  public GroupsType getGroupsByIds(GroupIdsQueryParamType idsType) {
+
+    boolean allGroups = false;
+
+    // check query for all groups
+    if (idsType.getGroupId().get(0).equals("*")) {
+      allGroups = true;
+    }
+
+    return checkUserGroup(getSpecificGroupQuery(idsType.getGroupId(), idsType.getDomain(), allGroups));
+  }
+
+  @Override
+  public GroupsType getUserGroupsByIds(UserGroupsIdsQueryParamType idsType) {
+
+    String query = getUserIdGroupQuery(idsType.getId(), idsType.getDomain(), false);
+
+    return checkUserIdGroup(query);
+
+  }
+
+  @Override
+  public GroupsType getUserGroupsByPics(UserGroupsPicsQueryParamType picsType) {
+
+    List<LDAPUser> ldapUsers = getUsers(getUserQuery(picsType.getPic(), "uid"));
+
+    List<String> users = new ArrayList<String>();
+
+    for (int i = 0; i < ldapUsers.size(); i++) {
+      users.add(i, ldapUsers.get(i).getDn());
+    }
+
+    String query = getUserIdGroupQuery(users, picsType.getDomain(), true);
+
+    return checkUserIdGroup(query);
   }
 
   private List<LDAPUser> getUsers(String query) {
@@ -82,7 +129,7 @@ public class UserInfoServiceLDAPImpl implements UserInfoService {
       List<String> members = groups.get(0);
       if (members != null) {
         if (users != null) {
-          for (LDAPUser ldapUser : users) {            
+          for (LDAPUser ldapUser : users) {
             if (members.contains(ldapUser.getDn())) {
               userTypes.add(ldapUser);
             }
@@ -91,6 +138,43 @@ public class UserInfoServiceLDAPImpl implements UserInfoService {
       }
     }
     return usersType;
+  }
+
+  private GroupsType checkUserGroup(String query) {
+    SearchControls ctrl = new SearchControls();
+    ctrl.setSearchScope(SearchControls.SUBTREE_SCOPE);
+
+    GroupsType groupsType = new GroupsType();
+    List<GroupType> groupTypes = groupsType.getGroup();
+
+    //restrict search by first parameter
+    List<LDAPGroup> groups = ldapTemplate.search("ou=Groups,ou=KokuCommunities", query, ctrl,
+        new LdapGroupTypeMapper(), new DirContextProcessorNoop());
+
+    if (groups != null) {
+      for (LDAPGroup ldapGroup : groups) {
+        GroupType group = new GroupType();
+        group.setGroupId(ldapGroup.getGroupId());
+
+        groupTypes.add(group);
+
+        List<LDAPUser> users = ldapGroup.getUsers();
+
+        if (users != null) {
+          for (LDAPUser ldapUser : users) {
+            UserType user = new UserType();
+
+            String userDn = ldapUser.getDn();
+            String parts[] = userDn.split(",");
+            String userId = parts[0].substring(3);
+            user.setUserId(userId);
+            group.getMembers().add(user);
+          }
+        }
+      }
+
+    }
+    return groupsType;
   }
 
   private String getUserQuery(List<String> criteria, String queryType) {
@@ -124,6 +208,60 @@ public class UserInfoServiceLDAPImpl implements UserInfoService {
     return groupFilter.encode();
   }
 
+  private String getSpecificGroupQuery(List<String> groupId, String domain, boolean allGroups) {
+
+    AndFilter groupFilter = new AndFilter();
+
+    if (!allGroups) {
+      // Add criteria to OR filter
+      OrFilter orFilter = new OrFilter();
+      for (String crit : groupId) {
+        orFilter.or(new EqualsFilter("cn", crit));
+      }
+
+      groupFilter.and(new EqualsFilter("objectclass", "groupOfNames"));
+      groupFilter.and(orFilter);
+    } else {
+      groupFilter.and(new EqualsFilter("objectclass", "groupOfNames"));
+    }
+
+      // customer won't do this query
+    if (!UserInfoServiceConstants.USER_INFO_SERVICE_DOMAIN_OFFICER.equals(domain)) {
+      // customer won't do this query
+      return "";
+    }
+
+    return groupFilter.encode();
+  }
+
+  private GroupsType checkUserIdGroup(String query) {
+
+    return checkUserGroup(query);
+  }
+
+  private String getUserIdGroupQuery(List<String> userId, String domain, boolean picQuery) {
+
+    // Add criteria to OR filter
+    OrFilter orFilter = new OrFilter();
+    for (String crit : userId) {
+      if (!picQuery) {
+        crit = "cn=" + crit + ",ou=People,o=koku,dc=example,dc=org";
+      }
+      orFilter.or(new EqualsFilter("member", crit));
+    }
+
+    AndFilter userGroupFilter = new AndFilter();
+    userGroupFilter.and(new EqualsFilter("objectclass", "groupOfNames"));
+    userGroupFilter.and(orFilter);
+
+    if (!UserInfoServiceConstants.USER_INFO_SERVICE_DOMAIN_OFFICER.equals(domain)) {
+      // customer won't do this query
+      return "";
+    }
+
+    return userGroupFilter.encode();
+  }
+
   private class LdapPersonMapper implements ParameterizedContextMapper<LDAPUser> {
     @Override
     public LDAPUser mapFromContext(Object ctx) {
@@ -144,6 +282,28 @@ public class UserInfoServiceLDAPImpl implements UserInfoService {
     public List<String> mapFromContext(Object ctx) {
       DirContextAdapter a = (DirContextAdapter) ctx;
       return Arrays.asList(a.getStringAttributes("member"));
+    }
+  }
+
+  private class LdapGroupTypeMapper implements ParameterizedContextMapper<LDAPGroup> {
+    @Override
+    public LDAPGroup mapFromContext(Object ctx) {
+      DirContextAdapter a = (DirContextAdapter) ctx;
+
+      LDAPGroup group = new LDAPGroup();
+      group.setGroupId(a.getStringAttribute("cn"));
+
+      List<String> members = Arrays.asList(a.getStringAttributes("member"));
+      List<LDAPUser> users = new ArrayList<LDAPUser>();
+
+      for (String dnName : members) {
+        LDAPUser user = new LDAPUser();
+        user.setDn(dnName);
+        users.add(user);
+      }
+
+      group.setUsers(users);
+      return group;
     }
   }
 

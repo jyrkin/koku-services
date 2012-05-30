@@ -90,6 +90,7 @@ public class MessageServiceTest {
         final List<MessageTO> sentMessages = serviceFacade.getSentMessages(fromUserUid);
         assertFalse("Some messages found in \"Sent\" folder: ", sentMessages.isEmpty());
         assertTrue("Message found in \"Sent\" folder: ", sentMessages.contains(serviceFacade.getMessageById(messageId)));
+        assertFalse("Answering is enabled: ", serviceFacade.getMessageById(messageId).getReplyDisabled());
     }
 
     @Test
@@ -210,6 +211,7 @@ public class MessageServiceTest {
         List<MessageSummary> messages = serviceFacade.getMessages(fromUserId, FolderType.Outbox);
         assertEquals("Message stored in Outbox: ", 1, messages.size());
         assertEquals("Message is Request: ", "test request", messages.get(0).getSubject());
+        assertFalse("Answering request message is enabled: ", messages.get(0).getReplyDisabled());
 
         assertEquals("Correct request retrieved: ", requestId, request.getRequestId());
 
@@ -315,7 +317,7 @@ public class MessageServiceTest {
 
     private long sendMessage(final String fromUserId, final String role, final String subject, final List<String> toUsers, final String content,
             final boolean sendToFamilyMembers, final boolean sendToGroupSite) {
-        return serviceFacade.sendNewMessage(fromUserId, role, subject, toUsers, content, sendToFamilyMembers, sendToGroupSite);
+        return serviceFacade.sendNewMessage(fromUserId, role, subject, toUsers, content, content, sendToFamilyMembers, sendToGroupSite);
     }
 
     private RequestTemplateTO createRequestTemplate(final String fromUserId) {
@@ -471,6 +473,7 @@ public class MessageServiceTest {
         final List<MessageSummary> messages = serviceFacade.getMessages(toUserId, FolderType.Inbox);
         assertFalse(messages.isEmpty());
         assertTrue(serviceFacade.getMessageById(messages.get(0).getMessageId()).getContent().contains(content));
+        assertTrue("Answering notifications is disabled: ", messages.get(0).getReplyDisabled());
     }
 
     @Test
@@ -566,7 +569,7 @@ public class MessageServiceTest {
         assertEquals("no more reminders received", totalInboxMessages + 2, serviceFacade.getTotalMessagesCount(toUserId, FolderType.Inbox, null));
 
     }
-
+    
     private void assertMessageFound(final String userId, FolderType folderType, final MessageQuery query, final String subject) {
         List<MessageSummary> messages = serviceFacade.getMessages(userId, folderType, query);
         assertNotNull(messages);

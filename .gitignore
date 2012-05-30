@@ -2,3 +2,10 @@ target
 .classpath
 .project
 .settings
+authorizationinfo/src/main/resources/META-INF/MANIFEST.MF
+customer/src/main/resources/META-INF/MANIFEST.MF
+intalio/src/main/resources/META-INF/MANIFEST.MF
+kks/src/main/resources/META-INF/MANIFEST.MF
+kv/src/main/resources/META-INF/MANIFEST.MF
+pyh/src/main/resources/META-INF/MANIFEST.MF
+userinfo/src/main/resources/META-INF/MANIFEST.MF

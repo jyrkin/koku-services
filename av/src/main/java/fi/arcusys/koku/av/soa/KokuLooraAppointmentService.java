@@ -22,13 +22,13 @@ public interface KokuLooraAppointmentService {
             @WebParam(name = "user") final String user, 
             @WebParam(name = "criteria") final AppointmentCriteria criteria);
 
-    public List<AppointmentSummary> getCreatedAppointments(
+    public List<AppointmentTO> getCreatedAppointments(
             @WebParam(name = "user") final String user,
             @WebParam(name = "startNum") int startNum, 
             @WebParam(name = "maxNum") int maxNum, 
             @WebParam(name = "criteria") final AppointmentCriteria criteria);
     
-    public List<AppointmentSummary>  getProcessedAppointments(
+    public List<AppointmentTO>  getProcessedAppointments(
             @WebParam(name = "user") final String user,
             @WebParam(name = "startNum") int startNum, 
             @WebParam(name = "maxNum") int maxNum, 

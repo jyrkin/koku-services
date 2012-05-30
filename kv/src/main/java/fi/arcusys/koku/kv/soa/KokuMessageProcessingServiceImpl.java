@@ -40,8 +40,8 @@ public class KokuMessageProcessingServiceImpl implements KokuMessageProcessingSe
 	 * @return
 	 */
 	@Override
-	public Long sendMessage(String fromUserUid, final String roleUid, String subject, Receipients receipients, String content, final Boolean sendToFamilyMembers, final Boolean sendToGroupSite) {
-		return kvFacade.sendNewMessage(fromUserUid, roleUid, subject, receipients.getReceipients(), content, Boolean.TRUE.equals(sendToFamilyMembers), Boolean.TRUE.equals(sendToGroupSite));
+	public Long sendMessage(String fromUserUid, final String roleUid, String subject, Receipients receipients, String content, String origialContent, final Boolean sendToFamilyMembers, final Boolean sendToGroupSite) {
+		return kvFacade.sendNewMessage(fromUserUid, roleUid, subject, receipients.getReceipients(), content, origialContent, Boolean.TRUE.equals(sendToFamilyMembers), Boolean.TRUE.equals(sendToGroupSite));
 	}
 
     /**
@@ -51,8 +51,8 @@ public class KokuMessageProcessingServiceImpl implements KokuMessageProcessingSe
      * @param content
      */
     @Override
-    public Long receiveNewMessage(String fromUserUid, String subject, String toUserUid, String content) {
-        return kvFacade.receiveNewMessage(fromUserUid, subject, toUserUid, content);
+    public Long receiveNewMessage(String fromUserUid, String subject, String toUserUid, String content, String originalContent) {
+        return kvFacade.receiveNewMessage(fromUserUid, subject, toUserUid, content, originalContent);
     }
 
 }

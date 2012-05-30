@@ -23,6 +23,10 @@ public class Message extends AbstractEntity {
 	@Lob
 	@Column(name = "content")
 	private String text;
+	
+	@Lob
+	@Column(name = "originalContent")
+	private String plainText;
 
 	private String subject;
 	private Boolean sendToFamilyMembers;
@@ -76,6 +80,20 @@ public class Message extends AbstractEntity {
 	
 	public void setText(final String text) {
 		this.text = text;
+	}
+
+	/**
+	 * @return the plainText
+	 */
+	public String getPlainText() {
+		return plainText;
+	}
+
+	/**
+	 * @param plainText the plainText to set
+	 */
+	public void setPlainText(String plainText) {
+		this.plainText = plainText;
 	}
 
 	/**
@@ -133,4 +151,5 @@ public class Message extends AbstractEntity {
 	public void setReceipients(final Set<User> receipients) {
 		this.receipients = receipients;
 	}
+
 }

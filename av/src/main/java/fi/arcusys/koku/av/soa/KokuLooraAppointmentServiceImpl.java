@@ -54,7 +54,7 @@ public class KokuLooraAppointmentServiceImpl implements KokuLooraAppointmentServ
      * @return
      */
     @Override
-    public List<AppointmentSummary> getCreatedAppointments(String user, int startNum, int maxNum, final AppointmentCriteria criteria) {
+    public List<AppointmentTO> getCreatedAppointments(String user, int startNum, int maxNum, final AppointmentCriteria criteria) {
         return serviceFacade.getCreatedAppointments(user, startNum, maxNum, updateUserUid(criteria));
     }
 
@@ -65,7 +65,7 @@ public class KokuLooraAppointmentServiceImpl implements KokuLooraAppointmentServ
      * @return
      */
     @Override
-    public List<AppointmentSummary> getProcessedAppointments(String user,
+    public List<AppointmentTO> getProcessedAppointments(String user,
             int startNum, int maxNum, final AppointmentCriteria criteria) {
         return serviceFacade.getProcessedAppointments(user, startNum, maxNum, updateUserUid(criteria));
     }

@@ -35,7 +35,7 @@ public interface MessageServiceFacade {
 	List<MessageTO> getSentMessages(final String userUid);
 	
 	Long sendNewMessage(final String fromUserUid, final String role, final String subject, final List<String> receipients, final String content,
-	        final boolean sendToFamilyMembers, final boolean sendToGroupSite);
+			final String originalContent, final boolean sendToFamilyMembers, final boolean sendToGroupSite);
 	
 	Long receiveMessage(final String toUserUid, final Long messageId);
 	
@@ -118,7 +118,7 @@ public interface MessageServiceFacade {
      * @param content
      * @return
      */
-    Long receiveNewMessage(final String fromUserUid, final String subject, final String toUserUid, final String content);
+    Long receiveNewMessage(final String fromUserUid, final String subject, final String toUserUid, final String content, final String originalContent);
 
     void deliverMessage(final String fromUser, final List<String> toUsers, final String subject, final String content);
 
