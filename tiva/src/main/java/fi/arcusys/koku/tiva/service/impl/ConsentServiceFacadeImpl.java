@@ -683,9 +683,12 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
         fillSummaryByReply(user, reply, consentTO);
         
         final Set<Integer> actionsApproved = new HashSet<Integer>();
-        for (final ConsentActionReply actionReply : reply.getActions()) {
-            if (actionReply.isPermitted()) {
-                actionsApproved.add(actionReply.getActionRequestNumber());
+
+        if (consentTO.getStatus() != ConsentStatus.Declined && consentTO.getStatus() != ConsentStatus.Revoked) {
+            for (final ConsentActionReply actionReply : reply.getActions()) {
+                if (actionReply.isPermitted()) {
+                    actionsApproved.add(actionReply.getActionRequestNumber());
+                }
             }
         }
         
@@ -764,7 +767,7 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
         final ConsentTO consentTO = new ConsentTO();
         fillConsentSummaryCombined(consent, replies, consentTO);
         
-        consentTO.setActionRequests(getActionResponsesCombined(consent, replies));
+        consentTO.setActionRequests(getActionResponsesCombined(consent, replies, consentTO.getStatus()));
         consentTO.setComment(getCommentsCombined(replies));
         
         return consentTO;
@@ -835,10 +838,23 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
     }
 
     private List<ActionRequestSummary> getActionResponsesCombined(
-            final Consent consent, final List<ConsentReply> replies) {
+            final Consent consent, final List<ConsentReply> replies, ConsentStatus status) {
         
         final Map<Integer, ConsentActionRequest> numberToActionMap = consent.getTemplate().getNumberToActionMap();
         final Map<Integer, ActionRequestSummary> actionResponses = new HashMap<Integer, ActionRequestSummary>();
+        
+        if (status == ConsentStatus.Declined || status == ConsentStatus.Revoked) {
+            for (final Integer actionRequestedNumber : numberToActionMap.keySet()) {
+                final ActionRequestSummary actionRequestSummary = new ActionRequestSummary();
+                final ConsentActionRequest consentActionRequest = numberToActionMap.get(actionRequestedNumber);
+                actionRequestSummary.setName(consentActionRequest.getName());
+                actionRequestSummary.setDescription(consentActionRequest.getDescription());
+                actionRequestSummary.setStatus(ActionRequestStatus.Declined);
+                actionResponses.put(actionRequestedNumber, actionRequestSummary);
+            }
+            
+            return new ArrayList<ActionRequestSummary>(actionResponses.values());
+        }
         
         for (final ConsentReply reply : replies) {
             for (final ConsentActionReply actionReply : reply.getActions()) {
@@ -855,6 +871,7 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
                 if (!actionReply.isPermitted()) {
                     actionResponse.setStatus(ActionRequestStatus.Declined);
                 }
+                
             }
         }
         
@@ -864,7 +881,7 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
                 final ConsentActionRequest consentActionRequest = numberToActionMap.get(actionRequestedNumber);
                 actionRequestSummary.setName(consentActionRequest.getName());
                 actionRequestSummary.setDescription(consentActionRequest.getDescription());
-                actionRequestSummary.setStatus(ActionRequestStatus.Undecided);
+                actionRequestSummary.setStatus(status == ConsentStatus.Open ? ActionRequestStatus.Undecided : ActionRequestStatus.Declined);
                 actionResponses.put(actionRequestedNumber, actionRequestSummary);
             }
         }

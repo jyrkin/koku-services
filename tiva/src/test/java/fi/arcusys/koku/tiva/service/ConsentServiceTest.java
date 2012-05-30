@@ -113,9 +113,7 @@ public class ConsentServiceTest {
         assertEquals("New Consent's approval status should be Undecided", ConsentApprovalStatus.Undecided, combinedBefore.getApprovalStatus());
         
         // KOKU-1297: New consent authorization approval status should be Undecided
-        List<ActionRequestSummary> actionRequests = combinedBefore.getActionRequests();
-        assertEquals("Expected 3 requests", 3, actionRequests.size());
-        assertActionRequests("After creation", actionRequests, 3, 0, 0); // 3 undecided actions
+        assertConsentActions("After creation", combinedBefore, 3, 3, 0, 0); // 3 undecided actions
                 
         // first parent's approval
         final List<ConsentShortSummary> consentsForApprove = service.getAssignedConsents(parentForApprove, 1, 10);
@@ -127,13 +125,13 @@ public class ConsentServiceTest {
         assertNull("already processed consent: ", getById(consentId, service.getAssignedConsents(parentForApprove, 1, 10)));
         
         assertNotNull(getById(consentId, service.getProcessedConsents(employeeUid, new ConsentQuery(1, 10))));
+        final ConsentTO afterApprove = service.getConsentById(consentId, parentForApprove);
         final ConsentTO combinedAfterApprove = service.getCombinedConsentById(consentId);
         assertNotNull(combinedAfterApprove);
-        assertEquals("Partually approved Consents should be PartiallyGiven", ConsentStatus.PartiallyGiven, combinedAfterApprove.getStatus());
-        assertEquals("PartiallyGiven Consent's approval status should be Approved", ConsentApprovalStatus.Approved, combinedAfterApprove.getApprovalStatus());
-        actionRequests = combinedAfterApprove.getActionRequests();
-        assertEquals("Expected 3 requests", 3, actionRequests.size());
-        assertActionRequests("After approval", actionRequests, 1, 0, 2); // 1 Undecided, 2 Given
+        assertConsentStatus("(parent) After approval", afterApprove, ConsentStatus.Valid, ConsentApprovalStatus.Approved);
+        assertConsentStatus("(employee) After approval", combinedAfterApprove, ConsentStatus.PartiallyGiven, ConsentApprovalStatus.Approved);
+        assertConsentActions("(parent) After approval", afterApprove, 3, 0, 1, 2); // 1 Declined, 2 Given
+        assertConsentActions("(employee) After approval", combinedAfterApprove, 3, 0, 1, 2); // 1 Declined, 2 Given
         
         // second parent's declining
         final List<ConsentShortSummary> consentsForDecline = service.getAssignedConsents(parentForDecline, 1, 10);
@@ -144,9 +142,13 @@ public class ConsentServiceTest {
         service.declineConsent(consentForDecline.getConsentId(), parentForDecline, "consent declined");
         assertNull("already processed consent: ", getById(consentId, service.getAssignedConsents(parentForDecline, 1, 10)));
         assertNotNull(getById(consentId, service.getOldConsents(parentForDecline, 1, 10)));
-
-        assertEquals(ConsentStatus.Declined, service.getCombinedConsentById(consentId).getStatus());
-        assertEquals(ConsentApprovalStatus.Declined, service.getCombinedConsentById(consentId).getApprovalStatus());
+        final ConsentTO afterDecline = service.getConsentById(consentId, parentForDecline);
+        final ConsentTO combinedAfterDecline = service.getCombinedConsentById(consentId);
+        assertConsentStatus("(approved-parent) After decline", service.getConsentById(consentId, parentForApprove), ConsentStatus.Valid, ConsentApprovalStatus.Approved);
+        assertConsentStatus("(parent) After decline", afterDecline, ConsentStatus.Declined, ConsentApprovalStatus.Declined);        
+        assertConsentStatus("(employee) After decline", combinedAfterDecline, ConsentStatus.Declined, ConsentApprovalStatus.Declined);
+        assertConsentActions("(parent) After decline", afterDecline, 3, 0, 3, 0); // 3 Declined
+        assertConsentActions("(employee) After decline", combinedAfterDecline, 3, 0, 3, 0); // 3 Declined
         
         // first parent's update
         final List<ConsentSummary> ownConsents = service.getOwnConsents(parentForApprove, 1, 10);
@@ -156,11 +158,12 @@ public class ConsentServiceTest {
         final XMLGregorianCalendar newDate = CalendarUtil.getXmlDate(currentDate.toGregorianCalendar().getTime());
         service.updateConsent(consentId, parentForApprove, newDate, "extended consent");
         assertEquals(newDate, getById(consentId, service.getOwnConsents(parentForApprove, 1, 10)).getValidTill());
-        final ConsentTO replied = service.getConsentById(consentId, parentForApprove);
-        assertEquals(ConsentApprovalStatus.Approved, replied.getApprovalStatus());
-        actionRequests = replied.getActionRequests();
-        assertEquals(3, actionRequests.size());
-        assertActionRequests("After reply", actionRequests, 0, 1, 2); // 1 Declined, 2 Approved
+        final ConsentTO afterUpdate = service.getConsentById(consentId, parentForApprove);
+        final ConsentTO combinedAfterUpdate = service.getCombinedConsentById(consentId);
+        assertConsentStatus("(parent) After update", afterUpdate, ConsentStatus.Valid, ConsentApprovalStatus.Approved);        
+        assertConsentStatus("(employee) After update", combinedAfterUpdate, ConsentStatus.Declined, ConsentApprovalStatus.Declined);
+        assertConsentActions("(parent) After update", afterUpdate, 3, 0, 1, 2); // 1 Declined, 2 Given
+        assertConsentActions("(employee) After update", combinedAfterUpdate, 3, 0, 3, 0); // 3 Declined
         
         // first parent's revoking
         assertNotNull(getById(consentId, service.getOwnConsents(parentForApprove, 1, 10)));
@@ -168,15 +171,29 @@ public class ConsentServiceTest {
         service.revokeConsent(consentId, parentForApprove, "revoked consent");
         assertNull(getById(consentId, service.getOwnConsents(parentForApprove, 1, 10)));
         assertNotNull(getById(consentId, service.getOldConsents(parentForApprove, 1, 10)));
-        final ConsentTO revoked = service.getConsentById(consentId, parentForApprove);
-        assertEquals(ConsentApprovalStatus.Declined, revoked.getApprovalStatus());
-        assertEquals(ConsentStatus.Revoked, revoked.getStatus());
+        final ConsentTO afterRevoke = service.getConsentById(consentId, parentForApprove);
+        final ConsentTO combinedAfterRevoke = service.getCombinedConsentById(consentId);
+        assertConsentStatus("(parent) After update", afterRevoke, ConsentStatus.Revoked, ConsentApprovalStatus.Declined);        
+        assertConsentStatus("(employee) After update", combinedAfterRevoke, ConsentStatus.Declined, ConsentApprovalStatus.Declined);
+        assertConsentActions("(parent) After revoke", afterRevoke, 3, 0, 3, 0); // 3 Declined
+        assertConsentActions("(employee) After revoke", combinedAfterRevoke, 3, 0, 3, 0); // 3 Declined
     }
     
-    private void assertActionRequests(final String message, final List<ActionRequestSummary> actionRequests,
+    private void assertConsentStatus(final String message, ConsentTO consent, ConsentStatus status,
+            ConsentApprovalStatus approvalStatus) {
+        
+        assertEquals(String.format("%s concent status should be %s", message, status), status, consent.getStatus());
+        assertEquals(String.format("%s concent approval status should be %s", message, approvalStatus), approvalStatus, consent.getApprovalStatus());
+    }
+    
+    private void assertConsentActions(final String message, ConsentTO consent, int actionCount,
             int actualUndecided, int actualDeclided, int actualGiven) {
         
+        final List<ActionRequestSummary> actionRequests = consent.getActionRequests();
+        
         int undecided = 0, declined = 0, given = 0;
+        
+        assertEquals(String.format("Expected %d action requests", actionCount), actionCount, actionRequests.size());
         
         for (ActionRequestSummary a : actionRequests) {
             switch (a.getStatus()) {
@@ -198,7 +215,7 @@ public class ConsentServiceTest {
         }
         
         assertEquals(String.format("%s %d actions should be undecided", message, actualUndecided), actualUndecided, undecided);
-        assertEquals(String.format("%s %d actions should be declided", message, actualDeclided), actualDeclided, declined);
+        assertEquals(String.format("%s %d actions should be declined", message, actualDeclided), actualDeclided, declined);
         assertEquals(String.format("%s %d actions should be approved", message, actualGiven), actualGiven, given);
     }
     
