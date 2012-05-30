@@ -239,7 +239,8 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
 		for (final MessageRef messageRef : messages) {
 			final MessageTO msg = new MessageTO();
 			msg.setContent(messageRef.getMessage().getText());
-			msg.setOriginalContent(messageRef.getMessage().getPlainText());
+			final String originalContent = messageRef.getMessage().getPlainText();
+			msg.setOriginalContent(originalContent != null ? originalContent : "");
 			result.add(convertMessageToDTO(messageRef, msg));
 		}
 		return result;
@@ -331,7 +332,8 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
 		}
 		final MessageTO msg = new MessageTO();
 		msg.setContent(msgRef.getMessage().getText());
-		msg.setOriginalContent(msgRef.getMessage().getPlainText());
+		final String originalContent = msgRef.getMessage().getPlainText();
+        msg.setOriginalContent(originalContent != null ? originalContent : "");
 		msg.setDeliveryFailedTo(getUserInfos(msgRef.getDeliveryFailedTo()));
 		return convertMessageToDTO(msgRef, msg);
 	}
