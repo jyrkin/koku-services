@@ -32,6 +32,7 @@ import fi.arcusys.koku.common.service.datamodel.Request;
 import fi.arcusys.koku.common.service.dto.Criteria;
 import fi.arcusys.koku.common.service.dto.MessageQuery;
 import fi.arcusys.koku.kv.soa.Answer;
+import fi.arcusys.koku.kv.soa.AnswerTO;
 import fi.arcusys.koku.kv.soa.MessageStatus;
 import fi.arcusys.koku.kv.soa.MessageSummary;
 import fi.arcusys.koku.kv.soa.MessageTO;
@@ -41,9 +42,11 @@ import fi.arcusys.koku.kv.soa.QuestionType;
 import fi.arcusys.koku.kv.soa.RequestProcessingTO;
 import fi.arcusys.koku.kv.soa.RequestSummary;
 import fi.arcusys.koku.kv.soa.RequestTO;
+import fi.arcusys.koku.kv.soa.RequestTemplateSummary;
 import fi.arcusys.koku.kv.soa.RequestTemplateTO;
 import fi.arcusys.koku.kv.soa.RequestTemplateVisibility;
 import fi.arcusys.koku.kv.soa.ResponseSummary;
+import fi.arcusys.koku.kv.soa.ResponseTO;
 
 /**
  * 
@@ -219,6 +222,82 @@ public class MessageServiceTest {
         messages = serviceFacade.getMessages(toUserId, FolderType.Inbox);
         assertEquals("Message stored in Inbox: ", 1, messages.size());
         assertEquals("Message is Request: ", "test request", messages.get(0).getSubject());
+    }
+
+    @Test
+    public void returnOriginalOptions() {
+        final String fromUserId = "testRequestSender" + Math.random();
+        final String toUserId = "testRequestReplier" + Math.random();
+
+        final List<MultipleChoiceTO> choices = Arrays.asList(
+                createChoice(1, 1, "option 1"),
+                createChoice(1, 2, "option 2"),
+                createChoice(1, 3, "option 3"));
+
+        final List<QuestionTO> questions = Arrays.asList(
+                createQuestion(1, QuestionType.MULTIPLE_CHOICE, "description 1")
+                );
+
+        final RequestTemplateTO createdTemplate = new RequestTemplateTO();
+        createdTemplate.setCreatorUid(fromUserId);
+        createdTemplate.setSubject("test subject");
+        createdTemplate.setQuestions(questions);
+        createdTemplate.setChoices(choices);
+        createdTemplate.setVisibility(RequestTemplateVisibility.All);
+
+
+        final RequestProcessingTO createdRequest = new RequestProcessingTO();
+        createdRequest.setContent("read-only form of request");
+        createdRequest.setFromRole("role 1");
+        createdRequest.setFromUserUid(fromUserId);
+        createdRequest.setReceipients(Arrays.asList(toUserId));
+        createdRequest.setSubject("test request");
+
+        final long requestId = serviceFacade.sendRequest(createdTemplate, createdRequest);
+
+        final List<Answer> answers = Arrays.asList(
+                createAnswer(1, null, "option 1", "comment 1"));
+
+        assertNull(getByRequestId(serviceFacade.getRepliedRequests(toUserId, 1, 10), requestId));
+        serviceFacade.replyToRequest(toUserId, requestId, answers, null);
+        assertNotNull(getByRequestId(serviceFacade.getRepliedRequests(toUserId, 1, 10), requestId));
+
+        final RequestTO request = serviceFacade.getRequestById(requestId);
+        assertEquals("One reply got: ", 1, request.getRespondedAmount());
+        assertEquals("No replies missing: ", 0, request.getMissedAmout());
+
+        assertEquals("There should be one response", 1, request.getResponses().size());
+        assertEquals("There should be one answer", 1, request.getResponses().get(0).getAnswers().size());
+
+        final List<RequestSummary> requests = serviceFacade.getRequests(fromUserId, 1, 10);
+        assertEquals("There should be one request", 1, requests.size());
+
+        assertEquals("Expected 3 possible answers", 3, request.getPossibleAnswers().size());
+    }
+
+    private MultipleChoiceTO createChoice(int questionNumber, int number, final String description) {
+        final MultipleChoiceTO choice = new MultipleChoiceTO();
+        choice.setQuestionNumber(questionNumber);
+        choice.setNumber(number);
+        choice.setDescription(description);
+        return choice;
+    }
+
+    private QuestionTO createQuestion(int number, QuestionType type, final String description) {
+        final QuestionTO question = new QuestionTO();
+        question.setNumber(number);
+        question.setType(type);
+        question.setDescription(description);
+        return question;
+    }
+
+    private Answer createAnswer(int questionNumber, final Boolean value, final String textValue, final String comment) {
+        final Answer answer = new Answer();
+        answer.setQuestionNumber(questionNumber);
+        answer.setValue(value);
+        answer.setTextValue(textValue);
+        answer.setComment(comment);
+        return answer;
     }
 
     @Test

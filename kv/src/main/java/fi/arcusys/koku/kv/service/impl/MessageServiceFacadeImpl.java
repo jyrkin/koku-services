@@ -522,12 +522,23 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
 		final Request request = requestDAO.getById(requestId);
 		final List<UserInfo> receipientsNotResponded = getUserInfos(request.getReceipients());
 		final List<ResponseTO> responseTOs = new ArrayList<ResponseTO>();
+		final List<MultipleChoiceTO> possibleAnswers = new ArrayList<MultipleChoiceTO>();
+
+		for (Question question : request.getTemplate().getQuestions()) {
+		    for (MultipleChoice choice : question.getChoices()) {
+		        final MultipleChoiceTO choiceTO = new MultipleChoiceTO();
+		        choiceTO.setQuestionNumber(question.getIndex());
+		        choiceTO.setNumber(choice.getNumber());
+		        choiceTO.setDescription(choice.getDescription());
+		        possibleAnswers.add(choiceTO);
+	        }
+	    }
 
 		fillRequestSummary(result, request, receipientsNotResponded, responseTOs);
 		result.setContent("");
 		result.setNotRespondedUserInfos(receipientsNotResponded);
 		result.setResponses(responseTOs);
-
+		result.setPossibleAnswers(possibleAnswers);
 		result.setQuestions(getQuestionsTObyDTO(request.getTemplate().getQuestions()));
 
 		return result;

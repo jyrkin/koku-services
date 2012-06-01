@@ -18,6 +18,7 @@ public class RequestTO extends RequestSummary {
 	private List<UserInfo> notRespondedUserInfos;
 	private List<ResponseTO> responses;
 	private List<QuestionTO> questions;
+	private List<MultipleChoiceTO> possibleAnswers;
 	private String content;
 	
 	/**
@@ -68,4 +69,16 @@ public class RequestTO extends RequestSummary {
 	public void setContent(String content) {
 		this.content = content;
 	}
+	/**
+     * @return the possibleAnswers
+     */
+    public List<MultipleChoiceTO> getPossibleAnswers() {
+        return possibleAnswers;
+    }
+    /**
+     * @param possibleAnswers the possibleAnswers to set
+     */
+    public void setPossibleAnswers(List<MultipleChoiceTO> possibleAnswers) {
+        this.possibleAnswers = possibleAnswers;
+    }
 }
