@@ -176,16 +176,11 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
     private AppointmentResponse processReply(final String targetPersonUid,
             final String userUid, final String comment,
             final Appointment appointment) {
+
         if (appointment.getStatus() != AppointmentStatus.Created) {
 			throw new IllegalStateException("Appointment for approval (id = " + appointment.getId() + ") should be in status 'Created' but it has status " + appointment.getStatus());
 		}
-        
-        for (final AppointmentResponse response : appointment.getResponses() ) {
-            if (response.getTarget().getTargetUser().getUid().equals(targetPersonUid)) {
-                throw new IllegalStateException("Apppointment id " + appointment.getId() + " already have response for targetPerson " + targetPersonUid);
-            }
-        }
-		
+
 		final TargetPerson targetPerson = appointment.getTargetPersonByUid(targetPersonUid);
 		if(targetPerson == null) {
 			throw new IllegalStateException("There is no target person with uid '" + userUid + "' in appointment id = " + appointment.getId());
@@ -196,12 +191,17 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
             throw new IllegalStateException("There is no guardian with uid '" + userUid + "' for target person " + targetPersonUid);
         }
 
-		final AppointmentResponse response = new AppointmentResponse();
-		response.setReplier(replier);
-		response.setComment(comment);
-		response.setTarget(targetPerson);
-		response.setAppointment(appointment);
-		appointment.getResponses().add(response);
+		AppointmentResponse response = appointment.getResponseForTargetPerson(targetPersonUid);
+
+		if (response == null) {
+		    response = new AppointmentResponse();
+		    response.setReplier(replier);
+		    response.setComment(comment);
+		    response.setTarget(targetPerson);
+		    response.setAppointment(appointment);
+		    appointment.getResponses().add(response);
+		}
+
         return response;
     }
 
