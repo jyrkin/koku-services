@@ -41,7 +41,12 @@
         <dependency>
             <groupId>kohti-kumppanuutta</groupId>
             <artifactId>personservice-api</artifactId>
-            <version>0.0.14</version>
+            <version>0.0.16</version>
+        </dependency>
+        <dependency>
+            <groupId>kohti-kumppanuutta</groupId>
+            <artifactId>kahvaservice-api</artifactId>
+            <version>0.0.3</version>
         </dependency>
 		<dependency>
 			<groupId>org.springframework</groupId>
