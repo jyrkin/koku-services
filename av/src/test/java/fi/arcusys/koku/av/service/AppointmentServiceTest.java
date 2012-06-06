@@ -97,8 +97,11 @@ public class AppointmentServiceTest {
 		assertFalse(appointments.isEmpty());
 		
 		final AppointmentSummary appointmentForApprove = getById(appointments, appointmentId);
+		assertEquals("Non-answered appointments should be Created", AppointmentSummaryStatus.Created, serviceFacade.getAppointmentForReply(appointmentId, targetPerson).getResponse());
         assertTrue(serviceFacade.getAppointment(appointmentForApprove.getAppointmentId()).getAcceptedSlots().isEmpty());
 		serviceFacade.approveAppointment(targetPerson, receipient, appointmentForApprove.getAppointmentId(), 1, "approved");
+		assertEquals("Approved appointments should be Approved", AppointmentSummaryStatus.Approved, serviceFacade.getAppointmentForReply(appointmentId, targetPerson).getResponse());
+		assertEquals("Chosen slot should be 1", 1, serviceFacade.getAppointmentForReply(appointmentId, targetPerson).getChosenSlot());
         assertFalse(serviceFacade.getAppointment(appointmentForApprove.getAppointmentId()).getAcceptedSlots().isEmpty());
         assertEquals(AppointmentSummaryStatus.Approved, serviceFacade.getAppointmentRespondedById(appointmentForApprove.getAppointmentId(), targetPerson).getStatus());
         assertNotNull(getById(serviceFacade.getRespondedAppointments(receipient, 1, 10), appointmentId));
@@ -110,6 +113,7 @@ public class AppointmentServiceTest {
         final AppointmentSummary appointmentForDecline = getById(appointments, appointmentId);
         assertTrue(serviceFacade.getAppointment(appointmentForApprove.getAppointmentId()).getUsersRejected().isEmpty());
 		serviceFacade.declineAppointment(targetPersonForDecline, receipientForDecline, appointmentForDecline.getAppointmentId(), "declined");
+		assertEquals("Declied appointments should be Cancelled", AppointmentSummaryStatus.Cancelled, serviceFacade.getAppointmentForReply(appointmentId, targetPersonForDecline).getResponse());
         assertFalse(serviceFacade.getAppointment(appointmentForApprove.getAppointmentId()).getUsersRejected().isEmpty());
         assertTrue(serviceFacade.getAppointment(appointmentForApprove.getAppointmentId()).getUsersRejected().contains(getKunpoName(targetPersonForDecline)));
         assertNull(getById(serviceFacade.getRespondedAppointments(receipientForDecline, 1, 10), appointmentId));

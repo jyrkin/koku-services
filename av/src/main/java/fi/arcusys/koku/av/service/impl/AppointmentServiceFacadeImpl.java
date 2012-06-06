@@ -21,6 +21,7 @@ import javax.annotation.PostConstruct;
 import javax.ejb.EJB;
 import javax.ejb.EJBException;
 import javax.ejb.Stateless;
+import javax.swing.RepaintManager;
 import javax.xml.datatype.XMLGregorianCalendar;
 
 import org.slf4j.Logger;
@@ -567,11 +568,7 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
         if (appointment.getTargetPersonByUid(targetPersonUid) == null) {
             throw new IllegalArgumentException("Appointment id " + appointmentId + " doesn't have target person " + targetPersonUid);
         }
-        
-        if (appointment.getResponseForTargetPerson(targetPersonUid) != null) {
-            throw new IllegalArgumentException("Appointment id " + appointmentId + " already have response for target person " + targetPersonUid);
-        }
-        
+
         final Set<Integer> acceptedSlots = new HashSet<Integer>();
         for (final AppointmentResponse response : appointment.getResponses()) {
             if (response.getStatus() == AppointmentResponseStatus.Accepted) {
@@ -579,6 +576,30 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
             }
         }
         
+        final AppointmentResponse ownResponse = appointment.getResponseForTargetPerson(targetPersonUid);
+
+        if (ownResponse != null) {
+            if (ownResponse.getStatus() == AppointmentResponseStatus.Accepted) {
+                appointmentTO.setResponse(AppointmentSummaryStatus.Approved);
+
+                for (AppointmentSlotTO slot : appointmentTO.getSlots())
+                    if (slot.getSlotNumber() == ownResponse.getSlotNumber()) {
+                        appointmentTO.setChosenSlot(slot.getSlotNumber());
+                        acceptedSlots.remove(slot); // do not put away slot accepted by us
+                        break;
+                    }
+
+            } else {
+                appointmentTO.setResponse(AppointmentSummaryStatus.Cancelled);
+
+            }
+
+        } else {
+            appointmentTO.setResponse(AppointmentSummaryStatus.Created);
+
+        }
+
+        // put away slots accepted by other users
         for (final Iterator<AppointmentSlotTO> iter = appointmentTO.getSlots().iterator(); iter.hasNext();) {
             if (acceptedSlots.contains(iter.next().getSlotNumber())) {
                 iter.remove();
