@@ -256,7 +256,10 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
 		msg.setMessageStatus(MessageStatus.getStatus(messageRef.isRead()));
 		msg.setMessageType(messageRef.getFolder().getFolderType());
 		
-		if (message.getUser().getUid().equals(SYSTEM_USER_NAME_FOR_NOTIFICATIONS))
+		if (message.getUser().getUid()
+		        .equals(SYSTEM_USER_NAME_FOR_NOTIFICATIONS) ||
+		    messageRef.getFolder()
+		        .getFolderType() != FolderType.Inbox)
 		    msg.setReplyDisabled(true);
 		else
 		    msg.setReplyDisabled(false);

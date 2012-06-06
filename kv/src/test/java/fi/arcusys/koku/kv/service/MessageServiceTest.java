@@ -77,10 +77,11 @@ public class MessageServiceTest {
         final String fromUserUid = "test";
         assertNotNull("Find or create test user: " + fromUserUid, testUtil.getUserByUid(fromUserUid));
 
+        final String testReceiver = "testReceiver" + Math.random() * 100;
         final String subject = "test subject";
         final String messageContent = "some html content goes here";
         final List<String> receipients = new ArrayList<String>();
-        receipients.add("testReceiver");
+        receipients.add(testReceiver);
         receipients.add("testReceiversGroup");
         for (final String uid : receipients) {
             assertNotNull("Find or create receiver: " + uid, testUtil.getUserByUid(uid));
@@ -93,7 +94,7 @@ public class MessageServiceTest {
         final List<MessageTO> sentMessages = serviceFacade.getSentMessages(fromUserUid);
         assertFalse("Some messages found in \"Sent\" folder: ", sentMessages.isEmpty());
         assertTrue("Message found in \"Sent\" folder: ", sentMessages.contains(serviceFacade.getMessageById(messageId)));
-        assertFalse("Answering is enabled: ", serviceFacade.getMessageById(messageId).getReplyDisabled());
+        assertTrue("Answering is disabled for sent messages: ", serviceFacade.getMessageById(messageId).getReplyDisabled());
     }
 
     @Test
@@ -147,12 +148,14 @@ public class MessageServiceTest {
         final MessageTO message = serviceFacade.getMessageById(messageId);
 
         assertEquals("'Read' message in Outbox: ", MessageStatus.Read, message.getMessageStatus());
+        assertTrue("Non-answerable message in Outbox: ", message.getReplyDisabled());
 
         final List<MessageSummary> newInboxMessages = new ArrayList<MessageSummary>(serviceFacade.getMessages(toUserId, FolderType.Inbox));
         newInboxMessages.removeAll(testInboxMessages);
 
         assertEquals("Only one new message: ", 1, newInboxMessages.size());
         assertEquals("'Unread' message in Inbox: ", MessageStatus.Unread, newInboxMessages.get(0).getMessageStatus());
+        assertFalse("Answerable message in Inbox: ", newInboxMessages.get(0).getReplyDisabled());
 
         serviceFacade.setMessageStatus(Collections.singletonList(newInboxMessages.get(0).getMessageId()), MessageStatus.Read);
         assertEquals("'Read' message in Inbox: ", MessageStatus.Read, serviceFacade.getMessageById(newInboxMessages.get(0).getMessageId())
@@ -214,7 +217,7 @@ public class MessageServiceTest {
         List<MessageSummary> messages = serviceFacade.getMessages(fromUserId, FolderType.Outbox);
         assertEquals("Message stored in Outbox: ", 1, messages.size());
         assertEquals("Message is Request: ", "test request", messages.get(0).getSubject());
-        assertFalse("Answering request message is enabled: ", messages.get(0).getReplyDisabled());
+        assertTrue("Answering request message is disabled: ", messages.get(0).getReplyDisabled());
 
         assertEquals("Correct request retrieved: ", requestId, request.getRequestId());
 
