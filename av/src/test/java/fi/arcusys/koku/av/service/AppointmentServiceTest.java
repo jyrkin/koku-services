@@ -117,6 +117,15 @@ public class AppointmentServiceTest {
 
         assertNull("All appointments should be processed already", getById(serviceFacade.getAssignedAppointments(receipientForDecline), appointmentId));
         
+        serviceFacade.approveAppointment(targetPersonForDecline, receipientForDecline, appointmentForDecline.getAppointmentId(), 1, "reconcidered, approved");
+
+        final AppointmentTO reconcideredAppointment = serviceFacade.getAppointment(appointmentForDecline.getAppointmentId());
+        assertTrue(reconcideredAppointment.getUsersRejected().isEmpty());
+        assertFalse(reconcideredAppointment.getAcceptedSlots().isEmpty());
+        assertEquals(AppointmentSummaryStatus.Approved, serviceFacade.getAppointmentRespondedById(reconcideredAppointment.getAppointmentId(), targetPerson).getStatus());
+        assertNotNull(getById(serviceFacade.getRespondedAppointments(receipientForDecline, 1, 10), appointmentId));
+        assertNull(getById(serviceFacade.getOldAppointments(receipientForDecline, 1, 10), appointmentId));
+
         // cancel appointment
         serviceFacade.cancelAppointment(targetPerson, receipient, appointmentForApprove.getAppointmentId(), "cancelled");
         assertEquals(AppointmentSummaryStatus.Cancelled, serviceFacade.getAppointmentRespondedById(appointmentForApprove.getAppointmentId(), targetPerson).getStatus());
