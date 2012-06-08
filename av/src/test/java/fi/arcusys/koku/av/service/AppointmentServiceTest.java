@@ -100,8 +100,15 @@ public class AppointmentServiceTest {
 		assertEquals("Non-answered appointments should be Created", AppointmentSummaryStatus.Created, serviceFacade.getAppointmentForReply(appointmentId, targetPerson).getResponse());
         assertTrue(serviceFacade.getAppointment(appointmentForApprove.getAppointmentId()).getAcceptedSlots().isEmpty());
 		serviceFacade.approveAppointment(targetPerson, receipient, appointmentForApprove.getAppointmentId(), 1, "approved");
-		assertEquals("Approved appointments should be Approved", AppointmentSummaryStatus.Approved, serviceFacade.getAppointmentForReply(appointmentId, targetPerson).getResponse());
-		assertEquals("Chosen slot should be 1", 1, serviceFacade.getAppointmentForReply(appointmentId, targetPerson).getChosenSlot());
+		final AppointmentForReplyTO approvedAppointment = serviceFacade.getAppointmentForReply(appointmentId, targetPerson);
+		assertEquals("Approved appointments should be Approved", AppointmentSummaryStatus.Approved, approvedAppointment.getResponse());
+		assertEquals("Chosen slot should be 1", 1, approvedAppointment.getChosenSlot());
+
+		boolean haveChosenSlot = false;
+		for (final AppointmentSlotTO slot : approvedAppointment.getSlots())
+		    if (slot.getSlotNumber() == 1) { haveChosenSlot = true; break; }
+		assertTrue("Chosen slot must remain to ba available for choosing", haveChosenSlot);
+
         assertFalse(serviceFacade.getAppointment(appointmentForApprove.getAppointmentId()).getAcceptedSlots().isEmpty());
         assertEquals(AppointmentSummaryStatus.Approved, serviceFacade.getAppointmentRespondedById(appointmentForApprove.getAppointmentId(), targetPerson).getStatus());
         assertNotNull(getById(serviceFacade.getRespondedAppointments(receipient, 1, 10), appointmentId));

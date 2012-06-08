@@ -585,7 +585,7 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
                 for (AppointmentSlotTO slot : appointmentTO.getSlots())
                     if (slot.getSlotNumber() == ownResponse.getSlotNumber()) {
                         appointmentTO.setChosenSlot(slot.getSlotNumber());
-                        acceptedSlots.remove(slot); // do not put away slot accepted by us
+                        acceptedSlots.remove(slot.getSlotNumber()); // do not put away slot accepted by us
                         break;
                     }
 
