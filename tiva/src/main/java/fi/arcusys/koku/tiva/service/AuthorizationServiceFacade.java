@@ -20,7 +20,7 @@ import fi.arcusys.koku.tiva.soa.AuthorizationTemplateTO;
 public interface AuthorizationServiceFacade {
     List<AuthorizationTemplateTO> getAuthorizationTemplates(final String searchString, final int limit);
     
-    Long createAuthorization(final long authorizationTemplateId, final XMLGregorianCalendar endDate, final String senderUid, final String receiverUid, final String targetPersonUid);
+    Long createAuthorization(final long authorizationTemplateId, final XMLGregorianCalendar replyTillDate, final XMLGregorianCalendar endDate, final String senderUid, final String receiverUid, final String targetPersonUid);
     
     AuthorizationDetailTO getAuthorization(final long authorizationId, final String userUid);
 
