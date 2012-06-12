@@ -22,6 +22,8 @@ public class AppointmentSlot extends AbstractEntity {
 	private int startTime;
 	private int endTime;
 	
+	private Boolean disabled;
+
 	private String location;
 	
 	@Lob
@@ -111,4 +113,21 @@ public class AppointmentSlot extends AbstractEntity {
 	public void setEndTime(int endTime) {
 		this.endTime = endTime;
 	}
+
+    /**
+     * @return the disabled
+     */
+    public Boolean getDisabled() {
+        if (disabled == null) {
+            disabled = Boolean.FALSE;
+        }
+        return disabled;
+    }
+
+    /**
+     * @param disabled the disabled to set
+     */
+    public void setDisabled(Boolean disabled) {
+        this.disabled = disabled;
+    }
 }

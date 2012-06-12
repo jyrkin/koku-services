@@ -80,10 +80,10 @@ public class AppointmentServiceTest {
         criteria.setTargetPersonUid("unknown");
         assertNull("Search by wrong target person:", getById(serviceFacade.getCreatedAppointments(newAppointment.getSender(), 1, 10, criteria), appointmentId));
 	}
-	
+
 	@Test
 	public void approveAndDecline() {
-		final AppointmentForEditTO newAppointment = createTestAppointment("new appointment for approve & decline", "appointment description", 1);
+		final AppointmentForEditTO newAppointment = createTestAppointment("new appointment for approve & decline", "appointment description", 2);
 
 		final AppointmentReceipientTO appointmentReceipient = newAppointment.getReceipients().get(0);
         final String receipient = appointmentReceipient.getReceipients().get(0);
@@ -113,7 +113,16 @@ public class AppointmentServiceTest {
         assertEquals(AppointmentSummaryStatus.Approved, serviceFacade.getAppointmentRespondedById(appointmentForApprove.getAppointmentId(), targetPerson).getStatus());
         assertNotNull(getById(serviceFacade.getRespondedAppointments(receipient, 1, 10), appointmentId));
         assertNull(getById(serviceFacade.getOldAppointments(receipient, 1, 10), appointmentId));
-		
+
+        serviceFacade.disableSlot(appointmentId, 2);
+
+        boolean haveDisabledSlot = false;
+        final AppointmentForReplyTO changedAppointment = serviceFacade.getAppointmentForReply(appointmentId, targetPerson);
+        for (final AppointmentSlotTO slot : changedAppointment.getSlots())
+            if (slot.getSlotNumber() == 2 && slot.isDisabled()) { haveDisabledSlot = true; }
+
+        assertTrue("Slot 2 must be disabled", haveDisabledSlot);
+
         appointments = serviceFacade.getAssignedAppointments(receipient);
         assertFalse(appointments.isEmpty());
 

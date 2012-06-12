@@ -55,6 +55,12 @@ public interface AppointmentServiceFacade {
 	void removeAppointment(long appointmentId);
 
 	/**
+     * @param appointmentId
+     * @param slotNumber
+     */
+    void disableSlot(long appointmentId, int slotNumber);
+
+	/**
 	 * @param user
 	 * @return
 	 */

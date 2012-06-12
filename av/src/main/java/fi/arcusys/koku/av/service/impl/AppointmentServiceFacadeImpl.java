@@ -282,6 +282,7 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
         slotTO.setAppointmentDate(CalendarUtil.getXmlDate(slot.getAppointmentDate()));
         slotTO.setStartTime(CalendarUtil.getXmlTime(slot.getAppointmentDate(), slot.getStartTime()));
         slotTO.setEndTime(CalendarUtil.getXmlTime(slot.getAppointmentDate(), slot.getEndTime()));
+        slotTO.setDisabled(slot.getDisabled());
         slotTO.setLocation(slot.getLocation());
         slotTO.setComment(slot.getComment());
         return slotTO;
@@ -498,6 +499,18 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
 		appointment.setStatus(AppointmentStatus.Cancelled);
 		appointmentDAO.update(appointment);
 	}
+
+	/**
+     * @param appointmentId
+     * @param slotNumber
+     */
+    @Override
+    public void disableSlot(long appointmentId, int slotNumber) {
+        final Appointment appointment = loadAppointment(appointmentId);
+        AppointmentSlot slot = appointment.getSlotByNumber(slotNumber);
+        slot.setDisabled(true);
+        appointmentDAO.update(appointment);
+    }
 
     /**
 	 * @param user

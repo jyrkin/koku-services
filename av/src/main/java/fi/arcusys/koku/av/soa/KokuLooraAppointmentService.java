@@ -39,4 +39,7 @@ public interface KokuLooraAppointmentService {
     public void cancelAppointment(
             @WebParam(name = "appointmentId") final long appointmentId, 
             @WebParam(name = "comment") final String comment);
+
+    public void disableSlot(@WebParam(name = "appointmentId") final long appointmentId, @WebParam(name = "slotNumber") final int slotNumber);
+
 }

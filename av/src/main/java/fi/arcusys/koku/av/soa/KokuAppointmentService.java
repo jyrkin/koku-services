@@ -36,4 +36,5 @@ public interface KokuAppointmentService {
 	public AppointmentTO getAppointmentById(@WebParam(name = "appointmentId") final long appointmentId);
 	
 	public void removeAppointment(@WebParam(name = "appointmentId") final long appointmentId);
+
 }
