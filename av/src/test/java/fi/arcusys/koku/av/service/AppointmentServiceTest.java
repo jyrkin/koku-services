@@ -83,7 +83,7 @@ public class AppointmentServiceTest {
 
 	@Test
 	public void approveAndDecline() {
-		final AppointmentForEditTO newAppointment = createTestAppointment("new appointment for approve & decline", "appointment description", 2);
+		final AppointmentForEditTO newAppointment = createTestAppointment("new appointment for approve & decline", "appointment description", 3);
 
 		final AppointmentReceipientTO appointmentReceipient = newAppointment.getReceipients().get(0);
         final String receipient = appointmentReceipient.getReceipients().get(0);
@@ -97,39 +97,44 @@ public class AppointmentServiceTest {
 		assertFalse(appointments.isEmpty());
 		
 		final AppointmentSummary appointmentForApprove = getById(appointments, appointmentId);
-		assertEquals("Non-answered appointments should be Created", AppointmentSummaryStatus.Created, serviceFacade.getAppointmentForReply(appointmentId, targetPerson).getResponse());
+		assertEquals("Non-answered appointments should be Created", AppointmentSummaryStatus.Created, serviceFacade.getAppointmentForReply(appointmentId, targetPerson).getAppointmentResponse());
         assertTrue(serviceFacade.getAppointment(appointmentForApprove.getAppointmentId()).getAcceptedSlots().isEmpty());
 		serviceFacade.approveAppointment(targetPerson, receipient, appointmentForApprove.getAppointmentId(), 1, "approved");
 		final AppointmentForReplyTO approvedAppointment = serviceFacade.getAppointmentForReply(appointmentId, targetPerson);
-		assertEquals("Approved appointments should be Approved", AppointmentSummaryStatus.Approved, approvedAppointment.getResponse());
+		assertEquals("Approved appointments should be Approved", AppointmentSummaryStatus.Approved, approvedAppointment.getAppointmentResponse());
 		assertEquals("Chosen slot should be 1", 1, approvedAppointment.getChosenSlot());
 
 		boolean haveChosenSlot = false;
 		for (final AppointmentSlotTO slot : approvedAppointment.getSlots())
 		    if (slot.getSlotNumber() == 1) { haveChosenSlot = true; break; }
-		assertTrue("Chosen slot must remain to ba available for choosing", haveChosenSlot);
+		assertTrue("Chosen slot must remain to be available for choosing", haveChosenSlot);
 
         assertFalse(serviceFacade.getAppointment(appointmentForApprove.getAppointmentId()).getAcceptedSlots().isEmpty());
         assertEquals(AppointmentSummaryStatus.Approved, serviceFacade.getAppointmentRespondedById(appointmentForApprove.getAppointmentId(), targetPerson).getStatus());
         assertNotNull(getById(serviceFacade.getRespondedAppointments(receipient, 1, 10), appointmentId));
         assertNull(getById(serviceFacade.getOldAppointments(receipient, 1, 10), appointmentId));
 
-        serviceFacade.disableSlot(appointmentId, 2);
+        serviceFacade.disableSlot(appointmentId, 1);
 
         boolean haveDisabledSlot = false;
         final AppointmentForReplyTO changedAppointment = serviceFacade.getAppointmentForReply(appointmentId, targetPerson);
         for (final AppointmentSlotTO slot : changedAppointment.getSlots())
-            if (slot.getSlotNumber() == 2 && slot.isDisabled()) { haveDisabledSlot = true; }
+            if (slot.getSlotNumber() == 1 && slot.isDisabled()) { haveDisabledSlot = true; }
 
-        assertTrue("Slot 2 must be disabled", haveDisabledSlot);
+        assertTrue("Slot 1 must be disabled", haveDisabledSlot);
 
         appointments = serviceFacade.getAssignedAppointments(receipient);
         assertFalse(appointments.isEmpty());
 
+        //assertTrue("There must be no accepted slots", serviceFacade.getAppointment(appointmentForApprove.getAppointmentId()).getAcceptedSlots().isEmpty());
+        assertEquals("Status is created since the chosen slot is disabled", AppointmentSummaryStatus.Created, serviceFacade.getAppointmentForReply(appointmentForApprove.getAppointmentId(), targetPerson).getStatus());
+        assertNotNull(getById(serviceFacade.getRespondedAppointments(receipient, 1, 10), appointmentId));
+        assertNull(getById(serviceFacade.getOldAppointments(receipient, 1, 10), appointmentId));
+
         final AppointmentSummary appointmentForDecline = getById(appointments, appointmentId);
         assertTrue(serviceFacade.getAppointment(appointmentForApprove.getAppointmentId()).getUsersRejected().isEmpty());
 		serviceFacade.declineAppointment(targetPersonForDecline, receipientForDecline, appointmentForDecline.getAppointmentId(), "declined");
-		assertEquals("Declied appointments should be Cancelled", AppointmentSummaryStatus.Cancelled, serviceFacade.getAppointmentForReply(appointmentId, targetPersonForDecline).getResponse());
+		assertEquals("Declied appointments should be Cancelled", AppointmentSummaryStatus.Cancelled, serviceFacade.getAppointmentForReply(appointmentId, targetPersonForDecline).getAppointmentResponse());
         assertFalse(serviceFacade.getAppointment(appointmentForApprove.getAppointmentId()).getUsersRejected().isEmpty());
         assertTrue(serviceFacade.getAppointment(appointmentForApprove.getAppointmentId()).getUsersRejected().contains(getKunpoName(targetPersonForDecline)));
         assertNull(getById(serviceFacade.getRespondedAppointments(receipientForDecline, 1, 10), appointmentId));

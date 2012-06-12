@@ -11,7 +11,7 @@ import java.util.List;
  */
 public class AppointmentForReplyTO extends AppointmentSummary {
     private List<AppointmentSlotTO> slots;
-    private AppointmentSummaryStatus response;
+    private AppointmentSummaryStatus appointmentResponse;
     private int chosenSlot;
 
     /**
@@ -34,15 +34,15 @@ public class AppointmentForReplyTO extends AppointmentSummary {
     /**
      * @return the response
      */
-    public AppointmentSummaryStatus getResponse() {
-        return response;
+    public AppointmentSummaryStatus getAppointmentResponse() {
+        return appointmentResponse;
     }
 
     /**
-     * @param response the response to set
+     * @param appointmentResponse the appointmentResponse to set
      */
-    public void setResponse(AppointmentSummaryStatus response) {
-        this.response = response;
+    public void setAppointmentResponse(AppointmentSummaryStatus appointmentResponse) {
+        this.appointmentResponse = appointmentResponse;
     }
 
     /**
