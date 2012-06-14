@@ -12,12 +12,13 @@ import javax.xml.datatype.XMLGregorianCalendar;
  * Jul 21, 2011
  */
 @XmlType (name = "appointmentSlot", namespace = "http://soa.av.koku.arcusys.fi/",
-		  propOrder={"slotNumber" , "appointmentDate", "startTime", "endTime", "location", "comment" })
+		  propOrder={"slotNumber" , "appointmentDate", "startTime", "endTime", "disabled", "location", "comment" })
 public class AppointmentSlotTO {
 	private int slotNumber;
 	private XMLGregorianCalendar appointmentDate;
 	private XMLGregorianCalendar startTime;
 	private XMLGregorianCalendar endTime;
+	private boolean disabled;
 	private String location;
 	private String comment;
 	/**
@@ -75,6 +76,18 @@ public class AppointmentSlotTO {
 		this.endTime = endTime;
 	}
 	/**
+     * @return the disabled
+     */
+    public boolean isDisabled() {
+        return disabled;
+    }
+    /**
+     * @param disabled the disabled to set
+     */
+    public void setDisabled(boolean disabled) {
+        this.disabled = disabled;
+    }
+    /**
 	 * @return the location
 	 */
 	public String getLocation() {

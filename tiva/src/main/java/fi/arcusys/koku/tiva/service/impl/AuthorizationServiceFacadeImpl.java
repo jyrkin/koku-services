@@ -151,7 +151,7 @@ public class AuthorizationServiceFacadeImpl implements AuthorizationServiceFacad
      * @return
      */
     @Override
-    public Long createAuthorization(long authorizationTemplateId, XMLGregorianCalendar endDate, String senderUid, String receiverUid, String targetPersonUid) {
+    public Long createAuthorization(long authorizationTemplateId, XMLGregorianCalendar replyTillDate, XMLGregorianCalendar endDate, String senderUid, String receiverUid, String targetPersonUid) {
         final AuthorizationTemplate template = templateDAO.getById(authorizationTemplateId);
         if (template == null) {
             throw new IllegalArgumentException("Authorization template is not found by id: " + authorizationTemplateId);
@@ -164,6 +164,7 @@ public class AuthorizationServiceFacadeImpl implements AuthorizationServiceFacad
         authorization.setTemplate(template);
         authorization.setCreationType(AuthorizationType.Electronic);
         authorization.setValidTill(getSafeDate(endDate));
+        authorization.setReplyTill(getSafeDate(replyTillDate));
         
         final Authorization newAuthorization = authorizationDAO.create(authorization);
         notificationService.sendNotification(getValueFromBundle(AUTHORIZATION_CREATED_SUBJECT), 
@@ -312,6 +313,7 @@ public class AuthorizationServiceFacadeImpl implements AuthorizationServiceFacad
                     authorization.getStatus() + " to " + replyStatus );
         }
         
+        authorization.setGivenAt(new Date());
         authorization.setStatus(replyStatus);
         authorization.setReplyComment(comment);
         return authorizationDAO.update(authorization);

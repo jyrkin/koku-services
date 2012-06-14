@@ -64,7 +64,7 @@ public class KokuValtakirjaProcessingServiceImpl implements KokuValtakirjaProces
         if (logger.isDebugEnabled()) {
             logger.debug("createAuthorization: " + authorizationTemplateId + ", " + endDate + ", " + senderUid + ", " + receiverUid);
         }
-        return serviceFacade.createAuthorization(authorizationTemplateId, endDate, senderUid, receiverUid, targetPersonUid);
+        return serviceFacade.createAuthorization(authorizationTemplateId, replyTillDate, endDate, senderUid, receiverUid, targetPersonUid);
     }
 
     /**

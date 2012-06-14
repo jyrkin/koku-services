@@ -94,4 +94,14 @@ public class KokuLooraAppointmentServiceImpl implements KokuLooraAppointmentServ
         criteria.setTargetPersonUid(userService.getUserUidByKunpoSsn(criteria.getTargetPersonHetu()));
         return criteria;
     }
+
+    /**
+     * @param appointmentId
+     * @param slotNumber
+     */
+    @Override
+    public void disableSlot(long appointmentId, int slotNumber) {
+        serviceFacade.disableSlot(appointmentId, slotNumber);
+    }
+
 }

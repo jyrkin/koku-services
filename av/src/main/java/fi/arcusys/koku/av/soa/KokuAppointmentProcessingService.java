@@ -18,7 +18,7 @@ public interface KokuAppointmentProcessingService {
 	
 	Long storeAppointment(@WebParam(name = "appointment") final AppointmentForEditTO appointment);
 	
-    AppointmentForReplyTO getAppointmentForReply(@WebParam(name = "appointmentId") final Long appointmentId, final String targetUserUid);
+    AppointmentForReplyTO getAppointmentForReply(@WebParam(name = "appointmentId") final Long appointmentId, @WebParam(name = "targetUser") final String targetUserUid);
 
     void approveAppointment(
             @WebParam(name = "targetUser") final String targetUserUid,

@@ -64,7 +64,7 @@ public class AuthorizationServiceTest {
         }
         final AuthorizationTemplateTO template = serviceFacade.getAuthorizationTemplates(newTemplate.getName(), 1).get(0);
         
-        final Long authorizationId = serviceFacade.createAuthorization(template.getTemplateId(), CalendarUtil.getXmlDate(new Date()), senderUid, receiverUid, targetPersonUid);
+        final Long authorizationId = serviceFacade.createAuthorization(template.getTemplateId(), CalendarUtil.getXmlDate(new Date(new Date().getTime()+24*60*60*1000)), CalendarUtil.getXmlDate(new Date()), senderUid, receiverUid, targetPersonUid);
         return authorizationId;
     }
 

@@ -6,9 +6,13 @@ import static fi.arcusys.koku.common.service.AbstractEntityDAO.MAX_RESULTS_COUNT
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.MessageFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -16,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.TimeZone;
 
 import javax.annotation.PostConstruct;
 import javax.ejb.EJB;
@@ -81,6 +86,10 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
     private static final String APPOINTMENT_CANCELLED_FOR_TARGET_BODY = "appointment.cancelled_for_target.body";
     private static final String APPOINTMENT_CANCELLED_WHOLE_BODY = "appointment.cancelled_whole.body";
     private static final String APPOINTMENT_CANCELLED_SUBJECT = "appointment.cancelled.subject";
+
+    private static final String SLOT_CANCELLED_COMMENT = "slot.cancelled.comment";
+    private static final String SLOT_CANCELLED_SUBJECT = "slot.cancelled.subject";
+    private static final String SLOT_CANCELLED_BODY = "slot.cancelled.body";
 
     private static final String APPOINTMENT_APPROVED_BODY = "appointment.approved.body";
     private static final String APPOINTMENT_APPROVED_SUBJECT = "appointment.approved.subject";
@@ -281,6 +290,7 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
         slotTO.setAppointmentDate(CalendarUtil.getXmlDate(slot.getAppointmentDate()));
         slotTO.setStartTime(CalendarUtil.getXmlTime(slot.getAppointmentDate(), slot.getStartTime()));
         slotTO.setEndTime(CalendarUtil.getXmlTime(slot.getAppointmentDate(), slot.getEndTime()));
+        slotTO.setDisabled(slot.getDisabled());
         slotTO.setLocation(slot.getLocation());
         slotTO.setComment(slot.getComment());
         return slotTO;
@@ -498,6 +508,64 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
 		appointmentDAO.update(appointment);
 	}
 
+	/**
+     * @param appointmentId
+     * @param slotNumber
+     */
+    @Override
+    public void disableSlot(long appointmentId, int slotNumber) {
+        final Appointment appointment = loadAppointment(appointmentId);
+        AppointmentSlot slot = appointment.getSlotByNumber(slotNumber);
+        slot.setDisabled(true);
+
+        AppointmentResponse affectedResponse = null;
+        for (AppointmentResponse response : appointment.getResponses())
+            if (response.getStatus() == AppointmentResponseStatus.Accepted &&
+                response.getSlotNumber() == slot.getSlotNumber()) {
+
+                affectedResponse = response;
+                break;
+            }
+
+
+        if (affectedResponse != null) {
+            affectedResponse.setStatus(AppointmentResponseStatus.Rejected);
+            affectedResponse.setComment(MessageFormat.format(getValueFromBundle(SLOT_CANCELLED_COMMENT), new Object[] {getUserInfoDisplayName(userDao.getOrCreateUser(appointment.getSender().getUid()))}));
+
+            notificationService.sendNotification(getValueFromBundle(SLOT_CANCELLED_SUBJECT),
+                    Collections.singletonList(affectedResponse.getReplier().getUid()),
+                    MessageFormat.format(getValueFromBundle(SLOT_CANCELLED_BODY), new Object[] {
+                        getUserInfoDisplayName(userDao.getOrCreateUser(appointment.getSender().getUid())),
+                        formatDateSlot(slot.getAppointmentDate(), slot.getStartTime(), slot.getEndTime()),
+                        appointment.getSubject()
+                        }));
+        }
+
+        appointmentDAO.update(appointment);
+    }
+
+    protected String formatDateSlot(final Date appointmentDate, int startTime, int endTime) {
+        final TimeZone timeZone = TimeZone.getTimeZone("Europe/Helsinki");
+        final SimpleDateFormat dateFormat = new SimpleDateFormat("d.M.yyyy");
+        final SimpleDateFormat timeFormat = new SimpleDateFormat("hh:mm");
+
+        dateFormat.setTimeZone(timeZone); timeFormat.setTimeZone(timeZone);
+
+        final GregorianCalendar startTimeCalendar = new GregorianCalendar(timeZone);
+        startTimeCalendar.setTime(appointmentDate);
+        startTimeCalendar.set(Calendar.HOUR_OF_DAY, 0);
+        startTimeCalendar.set(Calendar.MINUTE, 0);
+        startTimeCalendar.add(Calendar.MINUTE, startTime);
+
+        final GregorianCalendar endTimeCalendar = new GregorianCalendar(timeZone);
+        endTimeCalendar.setTime(appointmentDate);
+        endTimeCalendar.set(Calendar.HOUR_OF_DAY, 0);
+        endTimeCalendar.set(Calendar.MINUTE, 0);
+        endTimeCalendar.add(Calendar.MINUTE, endTime);
+
+        return String.format("%s (%s - %s)", dateFormat.format(appointmentDate), timeFormat.format(startTimeCalendar.getTime()), timeFormat.format(endTimeCalendar.getTimeInMillis()));
+    }
+
     /**
 	 * @param user
 	 * @param statuses
@@ -567,11 +635,7 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
         if (appointment.getTargetPersonByUid(targetPersonUid) == null) {
             throw new IllegalArgumentException("Appointment id " + appointmentId + " doesn't have target person " + targetPersonUid);
         }
-        
-        if (appointment.getResponseForTargetPerson(targetPersonUid) != null) {
-            throw new IllegalArgumentException("Appointment id " + appointmentId + " already have response for target person " + targetPersonUid);
-        }
-        
+
         final Set<Integer> acceptedSlots = new HashSet<Integer>();
         for (final AppointmentResponse response : appointment.getResponses()) {
             if (response.getStatus() == AppointmentResponseStatus.Accepted) {
@@ -579,12 +643,41 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
             }
         }
         
+        final AppointmentResponse ownResponse = appointment.getResponseForTargetPerson(targetPersonUid);
+
+        if (ownResponse != null) {
+            if (ownResponse.getStatus() == AppointmentResponseStatus.Accepted) {
+                appointmentTO.setAppointmentResponse(AppointmentSummaryStatus.Approved);
+
+                for (AppointmentSlotTO slot : appointmentTO.getSlots())
+                    if (slot.getSlotNumber() == ownResponse.getSlotNumber()) {
+                        appointmentTO.setChosenSlot(slot.getSlotNumber());
+
+                        if (slot.isDisabled()) {
+                            appointmentTO.setAppointmentResponse(AppointmentSummaryStatus.Created);
+                        }
+
+                        acceptedSlots.remove(slot.getSlotNumber()); // do not put away slot accepted by us
+                        break;
+                    }
+
+            } else {
+                appointmentTO.setAppointmentResponse(AppointmentSummaryStatus.Cancelled);
+
+            }
+
+        } else {
+            appointmentTO.setAppointmentResponse(AppointmentSummaryStatus.Created);
+
+        }
+
+        // put away slots accepted by other users
         for (final Iterator<AppointmentSlotTO> iter = appointmentTO.getSlots().iterator(); iter.hasNext();) {
             if (acceptedSlots.contains(iter.next().getSlotNumber())) {
                 iter.remove();
             }
         }
-        
+
         return appointmentTO;
     }
 
