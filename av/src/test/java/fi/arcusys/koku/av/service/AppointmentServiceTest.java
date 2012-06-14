@@ -20,8 +20,10 @@ import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 
+import org.apache.openjpa.jdbc.sql.FirebirdDictionary;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.junit.runners.ParentRunner;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
@@ -41,7 +43,11 @@ import fi.arcusys.koku.common.service.datamodel.Appointment;
 import fi.arcusys.koku.common.service.datamodel.AppointmentResponse;
 import fi.arcusys.koku.common.service.datamodel.AppointmentSlot;
 import fi.arcusys.koku.common.service.datamodel.AppointmentStatus;
+import fi.arcusys.koku.common.service.datamodel.FolderType;
 import fi.arcusys.koku.common.service.datamodel.User;
+import fi.arcusys.koku.kv.service.MessageServiceFacade;
+import fi.arcusys.koku.kv.soa.MessageSummary;
+import fi.arcusys.koku.kv.soa.MessageTO;
 
 /**
  * @author Dmitry Kudinov (dmitry.kudinov@arcusys.fi)
@@ -52,6 +58,9 @@ import fi.arcusys.koku.common.service.datamodel.User;
 public class AppointmentServiceTest {
 	@Autowired
 	private AppointmentServiceFacade serviceFacade;
+
+	@Autowired
+	private MessageServiceFacade messageService;
 
 	@Autowired
 	private CommonTestUtil testUtil;
@@ -85,21 +94,33 @@ public class AppointmentServiceTest {
 	public void approveAndDecline() {
 		final AppointmentForEditTO newAppointment = createTestAppointment("new appointment for approve & decline", "appointment description", 3);
 
-		final AppointmentReceipientTO appointmentReceipient = newAppointment.getReceipients().get(0);
-        final String receipient = appointmentReceipient.getReceipients().get(0);
-        final String targetPerson = appointmentReceipient.getTargetPerson();
-        final String targetPersonForDecline = newAppointment.getReceipients().get(1).getTargetPerson();
-        final String receipientForDecline = newAppointment.getReceipients().get(1).getReceipients().get(1);
-		final Long appointmentId = serviceFacade.storeAppointment(newAppointment);
-		
+		final String sender = newAppointment.getSender();
 
-		List<AppointmentWithTarget> appointments = serviceFacade.getAssignedAppointments(receipient);
-		assertFalse(appointments.isEmpty());
-		
-		final AppointmentSummary appointmentForApprove = getById(appointments, appointmentId);
+		final AppointmentReceipientTO receipientTO = newAppointment.getReceipients().get(0);
+        final String firstParent = receipientTO.getReceipients().get(0);
+        final String secondParent = receipientTO.getReceipients().get(1);
+        final String targetPerson = receipientTO.getTargetPerson();
+
+        final AppointmentReceipientTO receipientForDeclineTO = newAppointment.getReceipients().get(1);
+        final String firstParentForDecline = receipientForDeclineTO.getReceipients().get(0);
+        final String secondParentForDecline = receipientForDeclineTO.getReceipients().get(1);
+        final String targetPersonForDecline = receipientForDeclineTO.getTargetPerson();
+
+        assertEquals("In this case one parent is responsible for two kids", firstParent, firstParentForDecline);
+
+		final Long appointmentId = serviceFacade.storeAppointment(newAppointment);
+
+		assertFalse("There are assigned appointments for "+firstParent, serviceFacade.getAssignedAppointments(firstParent).isEmpty());
+		assertFalse("There are assigned appointments for "+firstParentForDecline, serviceFacade.getAssignedAppointments(firstParentForDecline).isEmpty());
+
 		assertEquals("Non-answered appointments should be Created", AppointmentSummaryStatus.Created, serviceFacade.getAppointmentForReply(appointmentId, targetPerson).getAppointmentResponse());
-        assertTrue(serviceFacade.getAppointment(appointmentForApprove.getAppointmentId()).getAcceptedSlots().isEmpty());
-		serviceFacade.approveAppointment(targetPerson, receipient, appointmentForApprove.getAppointmentId(), 1, "approved");
+		assertEquals("Non-answered appointments should be Created", AppointmentSummaryStatus.Created, serviceFacade.getAppointmentForReply(appointmentId, targetPersonForDecline).getAppointmentResponse());
+
+		assertTrue("There should be no accepted slots", serviceFacade.getAppointment(appointmentId).getAcceptedSlots().isEmpty());
+
+		// firstParent approves the appointment on behalf of targetPerson
+		serviceFacade.approveAppointment(targetPerson, firstParent, appointmentId, 1, "approved");
+
 		final AppointmentForReplyTO approvedAppointment = serviceFacade.getAppointmentForReply(appointmentId, targetPerson);
 		assertEquals("Approved appointments should be Approved", AppointmentSummaryStatus.Approved, approvedAppointment.getAppointmentResponse());
 		assertEquals("Chosen slot should be 1", 1, approvedAppointment.getChosenSlot());
@@ -107,55 +128,151 @@ public class AppointmentServiceTest {
 		boolean haveChosenSlot = false;
 		for (final AppointmentSlotTO slot : approvedAppointment.getSlots())
 		    if (slot.getSlotNumber() == 1) { haveChosenSlot = true; break; }
+
 		assertTrue("Chosen slot must remain to be available for choosing", haveChosenSlot);
 
-        assertFalse(serviceFacade.getAppointment(appointmentForApprove.getAppointmentId()).getAcceptedSlots().isEmpty());
-        assertEquals(AppointmentSummaryStatus.Approved, serviceFacade.getAppointmentRespondedById(appointmentForApprove.getAppointmentId(), targetPerson).getStatus());
-        assertNotNull(getById(serviceFacade.getRespondedAppointments(receipient, 1, 10), appointmentId));
-        assertNull(getById(serviceFacade.getOldAppointments(receipient, 1, 10), appointmentId));
+        assertFalse("There must be some accepted slots", serviceFacade.getAppointment(appointmentId).getAcceptedSlots().isEmpty());
+        assertEquals("Appointment is now Approved from employee perspective", AppointmentSummaryStatus.Approved, serviceFacade.getAppointmentRespondedById(appointmentId, targetPerson).getStatus());
 
+        final String approvalCheckMessage = "After " + firstParent + " approval on behalf of " + targetPerson;
+        assertHaveAssignedRespondedOld(approvalCheckMessage, firstParent, appointmentId, true, true, false); // 1 Assigned 1 Responded
+        // TODO: Second guardian must see the response in the appropriate list
+        //assertHaveAssignedRespondedOld(approvalCheckMessage, secondParent, appointmentId, false, true, false); // 1 Responded
+        assertHaveAssignedRespondedOld(approvalCheckMessage, firstParentForDecline, appointmentId, true, true, false); // 1 Assigned 1 Responded
+        assertHaveAssignedRespondedOld(approvalCheckMessage, secondParentForDecline, appointmentId, true, false, false); // 1 Assigned
+
+        final int messageCountBeforeDisable = messageService.getMessages(firstParent, FolderType.Inbox).size();
+
+        // sender disables slot 1
         serviceFacade.disableSlot(appointmentId, 1);
+
+        final List<MessageSummary> messages = messageService.getMessages(firstParent, FolderType.Inbox);
+        assertEquals("There must me one new message in inbox", 1, messages.size() - messageCountBeforeDisable);
+
+        boolean haveMessage = false;
+        for (MessageSummary ms : messages) {
+            if (ms.getSubject().contains("peruutettu")) {
+                final MessageTO message = messageService.getMessageById(ms.getMessageId());
+                final String originalContent = message.getOriginalContent();
+
+                if (originalContent != null && originalContent.contains("ajalla") && originalContent.contains(newAppointment.getSubject()))
+                    haveMessage = true;
+            }
+        }
+
+        assertTrue("Must have slot disable message", haveMessage);
+
+        final String slotRemovalCheckMessage = "After " + sender + " removes slot 1";
+        assertHaveAssignedRespondedOld(slotRemovalCheckMessage, firstParent, appointmentId, true, false, true); // 1 Assigned 1 Old
+        // TODO: Second guardian must see the response in the appropriate list
+        //assertHaveAssignedRespondedOld(slotRemovalCheckMessage, secondParent, appointmentId, false, false, true); // 1 Old
+        assertHaveAssignedRespondedOld(slotRemovalCheckMessage, firstParentForDecline, appointmentId, true, false, true); // 1 Assigned 1 Old
+        assertHaveAssignedRespondedOld(slotRemovalCheckMessage, secondParentForDecline, appointmentId, true, false, false);  // 1 Assigned
+
+        assertEquals("Appointment should be cancelled after slot removal", AppointmentSummaryStatus.Cancelled, getById(serviceFacade.getOldAppointments(firstParent, 1, 10), appointmentId).getStatus());
+        //assertEquals("Appointment should be cancelled after slot removal", AppointmentSummaryStatus.Cancelled, getById(serviceFacade.getOldAppointments(secondParent, 1, 10), appointmentId).getStatus());
+
+        assertEquals("Appointment should NOT be cancelled for unaffected targets", AppointmentSummaryStatus.Created, getById(serviceFacade.getAssignedAppointments(firstParentForDecline, 1, 10), appointmentId).getStatus());
+        //assertEquals("Appointment should NOT be cancelled for unaffected targets", AppointmentSummaryStatus.Created, getById(serviceFacade.getAssignedAppointments(secondParentForDecline, 1, 10), appointmentId).getStatus());
+
+        final String rejectedComment = serviceFacade.getAppointment(appointmentId).getUsersRejectedWithComments().get(0).getRejectComment();
+        assertTrue("There must be a rejection comment", rejectedComment != null && rejectedComment.length() > 3);
 
         boolean haveDisabledSlot = false;
         final AppointmentForReplyTO changedAppointment = serviceFacade.getAppointmentForReply(appointmentId, targetPerson);
         for (final AppointmentSlotTO slot : changedAppointment.getSlots())
-            if (slot.getSlotNumber() == 1 && slot.isDisabled()) { haveDisabledSlot = true; }
+            if (slot.getSlotNumber() == 1 && slot.isDisabled()) { haveDisabledSlot = true; break; }
 
         assertTrue("Slot 1 must be disabled", haveDisabledSlot);
+        assertTrue("There must be no accepted slots", serviceFacade.getAppointment(appointmentId).getAcceptedSlots().isEmpty());
 
-        appointments = serviceFacade.getAssignedAppointments(receipient);
-        assertFalse(appointments.isEmpty());
+        //assertEquals("Status (for reply) is created since the chosen slot is disabled", AppointmentSummaryStatus.Created, serviceFacade.getAppointmentForReply(appointmentId, targetPerson).getStatus());
 
-        //assertTrue("There must be no accepted slots", serviceFacade.getAppointment(appointmentForApprove.getAppointmentId()).getAcceptedSlots().isEmpty());
-        assertEquals("Status is created since the chosen slot is disabled", AppointmentSummaryStatus.Created, serviceFacade.getAppointmentForReply(appointmentForApprove.getAppointmentId(), targetPerson).getStatus());
-        assertNotNull(getById(serviceFacade.getRespondedAppointments(receipient, 1, 10), appointmentId));
-        assertNull(getById(serviceFacade.getOldAppointments(receipient, 1, 10), appointmentId));
+        // Approve different slot
+        serviceFacade.approveAppointment(targetPerson, firstParent, appointmentId, 2, "approved");
 
-        final AppointmentSummary appointmentForDecline = getById(appointments, appointmentId);
-        assertTrue(serviceFacade.getAppointment(appointmentForApprove.getAppointmentId()).getUsersRejected().isEmpty());
-		serviceFacade.declineAppointment(targetPersonForDecline, receipientForDecline, appointmentForDecline.getAppointmentId(), "declined");
+        assertFalse("There must be an accepted slot", serviceFacade.getAppointment(appointmentId).getAcceptedSlots().isEmpty());
+        assertEquals("Slot 2 is approved", 2, serviceFacade.getAppointmentForReply(appointmentId, targetPerson).getChosenSlot());
+        //assertEquals("Status after approval is approved", AppointmentSummaryStatus.Approved, serviceFacade.getAppointmentForReply(appointmentId, targetPerson).getStatus());
+
+        final String slotReapprovalCheckMessage =  "After " + firstParent + " reapproves with slot 2 on behalf of " + targetPerson;
+        assertHaveAssignedRespondedOld(slotReapprovalCheckMessage, firstParent, appointmentId, true, true, false); // 1 Assigned 1 Responded
+        // TODO: Second guardian must see the response in the appropriate list
+        //assertHaveAssignedRespondedOld(slotRemovalCheckMessage, secondParent, appointmentId, false, true, false); // 1 Responded
+        assertHaveAssignedRespondedOld(slotReapprovalCheckMessage, firstParentForDecline, appointmentId, true, true, false); // 1 Assigned 1 Responded
+        assertHaveAssignedRespondedOld(slotReapprovalCheckMessage, secondParentForDecline, appointmentId, true, false, false);  // 1 Assigned
+
+        assertTrue("No rejected appointments after reapproval", serviceFacade.getAppointment(appointmentId).getUsersRejected().isEmpty());
+
+        // firstParent declines the appointment on behalf of targetPersonForDecline
+        serviceFacade.declineAppointment(targetPersonForDecline, firstParentForDecline, appointmentId, "declined");
+
 		assertEquals("Declied appointments should be Cancelled", AppointmentSummaryStatus.Cancelled, serviceFacade.getAppointmentForReply(appointmentId, targetPersonForDecline).getAppointmentResponse());
-        assertFalse(serviceFacade.getAppointment(appointmentForApprove.getAppointmentId()).getUsersRejected().isEmpty());
-        assertTrue(serviceFacade.getAppointment(appointmentForApprove.getAppointmentId()).getUsersRejected().contains(getKunpoName(targetPersonForDecline)));
-        assertNull(getById(serviceFacade.getRespondedAppointments(receipientForDecline, 1, 10), appointmentId));
-        assertNotNull(getById(serviceFacade.getOldAppointments(receipientForDecline, 1, 10), appointmentId));
 
-        assertNull("All appointments should be processed already", getById(serviceFacade.getAssignedAppointments(receipientForDecline), appointmentId));
-        
-        serviceFacade.approveAppointment(targetPersonForDecline, receipientForDecline, appointmentForDecline.getAppointmentId(), 1, "reconcidered, approved");
+        assertFalse("There should be some rejections", serviceFacade.getAppointment(appointmentId).getUsersRejected().isEmpty());
+        assertTrue("There should be targetPersonForDecline in rejections", serviceFacade.getAppointment(appointmentId).getUsersRejected().contains(getKunpoName(targetPersonForDecline)));
 
-        final AppointmentTO reconcideredAppointment = serviceFacade.getAppointment(appointmentForDecline.getAppointmentId());
-        assertTrue(reconcideredAppointment.getUsersRejected().isEmpty());
-        assertFalse(reconcideredAppointment.getAcceptedSlots().isEmpty());
-        assertEquals(AppointmentSummaryStatus.Approved, serviceFacade.getAppointmentRespondedById(reconcideredAppointment.getAppointmentId(), targetPerson).getStatus());
-        assertNotNull(getById(serviceFacade.getRespondedAppointments(receipientForDecline, 1, 10), appointmentId));
-        assertNull(getById(serviceFacade.getOldAppointments(receipientForDecline, 1, 10), appointmentId));
+        final String declineCheckMessage =  "After " + firstParentForDecline + " declines on behalf of " + targetPersonForDecline;
+        assertHaveAssignedRespondedOld(declineCheckMessage, firstParent, appointmentId, false, true, true); // 1 Responded 1  Old
+        // TODO: Second guardian must see the response in the appropriate list
+        //assertHaveAssignedRespondedOld(declineCheckMessage, secondParent, appointmentId, false, true, false); // 1 Responded
+        assertHaveAssignedRespondedOld(declineCheckMessage, firstParentForDecline, appointmentId, false, true, true); // 1 Responded 1 Old
+        // TODO: Second guardian must see the response in the appropriate list
+        //assertHaveAssignedRespondedOld(declineCheckMessage, secondParentForDecline, appointmentId, false, false, true);  // 1 Old
+
+        assertNull("All appointments should be processed already", getById(serviceFacade.getAssignedAppointments(firstParent), appointmentId));
+        assertNull("All appointments should be processed already", getById(serviceFacade.getAssignedAppointments(secondParent), appointmentId));
+        assertNull("All appointments should be processed already", getById(serviceFacade.getAssignedAppointments(firstParentForDecline), appointmentId));
+        assertNull("All appointments should be processed already", getById(serviceFacade.getAssignedAppointments(secondParentForDecline), appointmentId));
+
+        // firstParent approves the appointment on behalf of targetPersonForDecline
+        serviceFacade.approveAppointment(targetPersonForDecline, firstParentForDecline, appointmentId, 3, "reconcidered, approved");
+
+        assertTrue("There are no rejections", serviceFacade.getAppointment(appointmentId).getUsersRejected().isEmpty());
+        assertFalse("There are accepted slots", serviceFacade.getAppointment(appointmentId).getAcceptedSlots().isEmpty());
+        assertEquals("Appointment is approved", AppointmentSummaryStatus.Approved, serviceFacade.getAppointmentRespondedById(appointmentId, targetPerson).getStatus());
+
+        final String reconsiderCheckMessage =  "After " + firstParentForDecline + " re-considers and approves on behalf of " + targetPersonForDecline;
+        assertHaveAssignedRespondedOld(reconsiderCheckMessage, firstParent, appointmentId, false, true, false); // 2 Responded
+        // TODO: Second guardian must see the response in the appropriate list
+        //assertHaveAssignedRespondedOld(reconsiderCheckMessage, secondParent, appointmentId, false, true, false); // 1 Responded
+        assertHaveAssignedRespondedOld(reconsiderCheckMessage, firstParentForDecline, appointmentId, false, true, false); // 2 Responded
+        // TODO: Second guardian must see the response in the appropriate list
+        //assertHaveAssignedRespondedOld(reconsiderCheckMessage, secondParentForDecline, appointmentId, false, true, false);  // 1 Responded
 
         // cancel appointment
-        serviceFacade.cancelAppointment(targetPerson, receipient, appointmentForApprove.getAppointmentId(), "cancelled");
-        assertEquals(AppointmentSummaryStatus.Cancelled, serviceFacade.getAppointmentRespondedById(appointmentForApprove.getAppointmentId(), targetPerson).getStatus());
+        serviceFacade.cancelAppointment(targetPerson, firstParent, appointmentId, "cancelled");
+        assertEquals("Must be cancelled by targetPerson", AppointmentSummaryStatus.Cancelled, serviceFacade.getAppointmentRespondedById(appointmentId, targetPerson).getStatus());
+        assertEquals("Must be approved by targetPersonForDecline", AppointmentSummaryStatus.Approved, serviceFacade.getAppointmentRespondedById(appointmentId, targetPersonForDecline).getStatus());
+
 	}
-	
+
+	private void assertHaveAssignedRespondedOld(final String message, final String parentName, final Long appointmentId, boolean haveAssigned, boolean haveResponded, boolean haveOld) {
+	    final String s_haveAssigned = message + " parent " + parentName + " must "+(haveAssigned?"":"not ")+"have "+appointmentId+" in assigned appointments";
+        final AppointmentWithTarget o_haveAssigned = getById(serviceFacade.getAssignedAppointments(parentName, 1, 10), appointmentId);
+
+        final String s_haveResponded = message + " parent " + parentName + " must "+(haveResponded?"":"not ")+"have "+appointmentId+" in responded appointments";
+        final AppointmentWithTarget o_haveResponded = getById(serviceFacade.getRespondedAppointments(parentName, 1, 10), appointmentId);
+
+        final String s_haveOld = message + " parent " + parentName + " must "+(haveOld?"":"not ")+"have "+appointmentId+" in old appointments";
+	    final AppointmentWithTarget o_haveOld = getById(serviceFacade.getOldAppointments(parentName, 1, 10), appointmentId);
+
+	    if (haveAssigned)
+            assertNotNull(s_haveAssigned, o_haveAssigned);
+        else
+            assertNull(s_haveAssigned, o_haveAssigned);
+
+	    if (haveResponded)
+            assertNotNull(s_haveResponded, o_haveResponded);
+        else
+            assertNull(s_haveResponded, o_haveResponded);
+
+        if (haveOld)
+            assertNotNull(s_haveOld, o_haveOld);
+        else
+            assertNull(s_haveOld, o_haveOld);
+	}
+
 	@Test
 	public void getAppointmentsWithRole() {
 		final String role1 = "role1";

@@ -87,8 +87,9 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
     private static final String APPOINTMENT_CANCELLED_WHOLE_BODY = "appointment.cancelled_whole.body";
     private static final String APPOINTMENT_CANCELLED_SUBJECT = "appointment.cancelled.subject";
 
+    private static final String SLOT_CANCELLED_COMMENT = "slot.cancelled.comment";
     private static final String SLOT_CANCELLED_SUBJECT = "slot.cancelled.subject";
-    private static final String SLOT_CANCELLED_BODY = "slot.cancelled.subject";
+    private static final String SLOT_CANCELLED_BODY = "slot.cancelled.body";
 
     private static final String APPOINTMENT_APPROVED_BODY = "appointment.approved.body";
     private static final String APPOINTMENT_APPROVED_SUBJECT = "appointment.approved.subject";
@@ -528,13 +529,14 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
 
 
         if (affectedResponse != null) {
-            final String preparedDate = formatDateSlot(slot.getAppointmentDate(), slot.getStartTime(), slot.getEndTime());
+            affectedResponse.setStatus(AppointmentResponseStatus.Rejected);
+            affectedResponse.setComment(MessageFormat.format(getValueFromBundle(SLOT_CANCELLED_COMMENT), new Object[] {getUserInfoDisplayName(userDao.getOrCreateUser(appointment.getSender().getUid()))}));
 
             notificationService.sendNotification(getValueFromBundle(SLOT_CANCELLED_SUBJECT),
                     Collections.singletonList(affectedResponse.getReplier().getUid()),
                     MessageFormat.format(getValueFromBundle(SLOT_CANCELLED_BODY), new Object[] {
                         getUserInfoDisplayName(userDao.getOrCreateUser(appointment.getSender().getUid())),
-                        preparedDate,
+                        formatDateSlot(slot.getAppointmentDate(), slot.getStartTime(), slot.getEndTime()),
                         appointment.getSubject()
                         }));
         }
@@ -675,7 +677,7 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
                 iter.remove();
             }
         }
-        
+
         return appointmentTO;
     }
 
