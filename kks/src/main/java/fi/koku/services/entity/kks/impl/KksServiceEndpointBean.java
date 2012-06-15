@@ -11,7 +11,10 @@
  */
 package fi.koku.services.entity.kks.impl;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.EJB;
@@ -32,6 +35,11 @@ import fi.koku.services.entity.kks.v1.KksCollectionType;
 import fi.koku.services.entity.kks.v1.KksCollectionsCriteriaType;
 import fi.koku.services.entity.kks.v1.KksCollectionsType;
 import fi.koku.services.entity.kks.v1.KksEntryCriteriaType;
+import fi.koku.services.entity.kks.v1.KksGroupCollectionCreationCriteriaType;
+import fi.koku.services.entity.kks.v1.KksGroupCollectionsCriteriaType;
+import fi.koku.services.entity.kks.v1.KksGroupCollectionsType;
+import fi.koku.services.entity.kks.v1.KksPersonCollectionsType;
+import fi.koku.services.entity.kks.v1.KksPersonGroupType;
 import fi.koku.services.entity.kks.v1.KksQueryCriteriaType;
 import fi.koku.services.entity.kks.v1.KksServicePortType;
 import fi.koku.services.entity.kks.v1.KksTagIdsType;
@@ -185,5 +193,50 @@ public class KksServiceEndpointBean implements KksServicePortType {
     kksService.updateCollectionStatus(kksCollectionStateCriteriaType.getCustomer(),
         kksCollectionStateCriteriaType.getCollectionId(), kksCollectionStateCriteriaType.getState(), auditHeader);
     return new VoidType();
+  }
+
+  @Override
+  public KksPersonGroupType opGetGroupKks(
+      KksGroupCollectionsCriteriaType kksGroupCollectionCriteria,
+      AuditInfoType auditHeader) throws ServiceFault {
+
+    LOG.debug("opGetGroupKks");
+    KksPersonGroupType k = new  KksPersonGroupType();
+    KksGroupCollectionsType kksCollectionsType = new KksGroupCollectionsType();
+
+    List<KksCollection> tmp = kksService.getCollections(kksGroupCollectionCriteria.getPic(),
+        kksGroupCollectionCriteria.getKksScope(), auditHeader);
+
+    Map<String, List<KksCollection>> tmpMap = new HashMap<String, List<KksCollection>>();
+    for (KksCollection c : tmp) {
+        if ( tmpMap.containsKey(c.getCustomer())) {
+           tmpMap.get(c.getCustomer()).add(c);
+        } else {
+          List<KksCollection> l = new ArrayList<KksCollection>();
+          l.add(c);
+          tmpMap.put(c.getCustomer(),l);
+        }
+    }
+        
+    for ( String s : tmpMap.keySet() ) {
+      KksPersonCollectionsType pgt = new KksPersonCollectionsType();
+      pgt.setPic(s);
+      
+      for ( KksCollection c : tmpMap.get(s) ) {
+        pgt.getKksCollection().add(KksConverter.toWsType(c));
+      }
+      kksCollectionsType.getKksPersonGroup().add(pgt);
+    }
+
+    k.setKksGroupCollections(kksCollectionsType);
+    return k;
+  }
+
+  @Override
+  public boolean opAddKksCollectionForGroup(
+      KksGroupCollectionCreationCriteriaType kksGroupCollectionCreationCriteria,
+      AuditInfoType auditHeader) throws ServiceFault {
+    LOG.debug("opAddKksCollectionForGroup");    
+    return kksService.addCollectionForGroup(kksGroupCollectionCreationCriteria, auditHeader);
   }
 }
