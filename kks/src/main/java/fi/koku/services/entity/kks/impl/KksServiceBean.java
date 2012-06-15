@@ -26,6 +26,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import fi.koku.calendar.CalendarUtil;
+import fi.koku.services.entity.kks.v1.AuditInfoType;
+import fi.koku.services.entity.kks.v1.KksCollectionsCriteriaType;
+import fi.koku.services.entity.kks.v1.KksGroupCollectionCreationCriteriaType;
 import fi.koku.services.entity.tiva.v1.Consent;
 import fi.koku.services.entity.tiva.v1.ConsentStatus;
 import fi.koku.services.utility.log.v1.LogEntriesType;
@@ -273,6 +276,42 @@ public class KksServiceBean implements KksService {
   @Override
   public Long version(KksCollectionCreation creation, fi.koku.services.entity.kks.v1.AuditInfoType audit) {
     return serviceDAO.copyAndInsert(audit.getUserId(), creation);
+  }
+
+  @Override
+  public List<KksCollection> getCollections(List<String> pics, String scope,
+      AuditInfoType audit) {
+    
+    List<KksCollection> tmp = new ArrayList<KksCollection>();
+    
+    for ( String s : pics ) {
+      List<KksCollection> l = getCollections(s, scope, audit);
+      
+      if ( l != null ) {
+        tmp.addAll(l);
+      }
+    }    
+    return tmp;
+  }
+
+  @Override
+  public boolean addCollectionForGroup(
+      KksGroupCollectionCreationCriteriaType creation, AuditInfoType audit) {
+    List<String> tmp = creation.getPic();
+    
+    if ( tmp != null ) {
+      for ( String s : tmp ) {
+        KksCollectionCreation tmpCreation = new KksCollectionCreation();
+        tmpCreation.setCollectionId(creation.getCollectionTypeId());
+        tmpCreation.setName(creation.getCollectionName());
+        tmpCreation.setCreator(audit.getUserId() );
+        tmpCreation.setCustomer(s);
+        tmpCreation.setEmpty(false);
+        add(tmpCreation, audit);
+      }
+      return true;
+    }
+    return false;
   }
 
 }

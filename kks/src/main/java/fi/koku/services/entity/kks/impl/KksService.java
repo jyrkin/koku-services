@@ -16,6 +16,7 @@ import java.util.List;
 import javax.ejb.Local;
 
 import fi.koku.services.entity.kks.v1.AuditInfoType;
+import fi.koku.services.entity.kks.v1.KksGroupCollectionCreationCriteriaType;
 
 /**
  * Interface for handling KKS related services
@@ -53,6 +54,18 @@ public interface KksService {
    * @return customer collections
    */
   List<KksCollection> getCollections(String pic, String scope, AuditInfoType audit);
+  
+  /**
+   * Gets collections for given customer
+   * 
+   * @param pic
+   *          of customer
+   * @param scope
+   *          of the collections (all, mininmum)
+   * @param audit
+   * @return customer collections
+   */
+  List<KksCollection> getCollections(List<String> pics, String scope, AuditInfoType audit);
 
   /**
    * Adds new KKS collection
@@ -63,6 +76,15 @@ public interface KksService {
    * @return created collection ID
    */
   Long add(KksCollectionCreation creation, AuditInfoType audit);
+  
+  /**
+   * Adds new KKS collection for group
+   * 
+   * @param creation
+   * @param audit
+   * @return true if operation is success false otherwise
+   */
+  boolean addCollectionForGroup(KksGroupCollectionCreationCriteriaType creation, AuditInfoType audit);
 
   /**
    * Versions KKS collection
