@@ -2,6 +2,8 @@ package fi.arcusys.koku.tiva.service.impl;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -774,14 +776,18 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
     }
 
     private String getCommentsCombined(final List<ConsentReply> replies) {
-        final StringBuilder result = new StringBuilder();
+    	StringBuilder result = new StringBuilder();
+    	String comment;
         for (final ConsentReply reply : replies) {
             if (reply.getComment() != null && !reply.getComment().isEmpty()) {
-                result.append(reply.getComment()).append(';');
+            	comment = reply.getReplier().getCitizenPortalName() + ": " + reply.getComment();
+                try {
+					result.append(URLEncoder.encode(comment, "UTF-8"));
+				} catch (UnsupportedEncodingException e) {
+					result.append(comment);
+				}
+                result.append("; ");
             }
-        }
-        if (result.length() > 0) {
-            result.setLength(result.length() - 1);
         }
         return result.toString();
     }
