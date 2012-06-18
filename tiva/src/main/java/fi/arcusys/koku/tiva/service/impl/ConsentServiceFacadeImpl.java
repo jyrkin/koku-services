@@ -778,15 +778,16 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
     private String getCommentsCombined(final List<ConsentReply> replies) {
     	StringBuilder result = new StringBuilder();
     	String comment;
+    	boolean firstReply = true;
         for (final ConsentReply reply : replies) {
             if (reply.getComment() != null && !reply.getComment().isEmpty()) {
-            	comment = reply.getReplier().getCitizenPortalName() + ": " + reply.getComment();
-                try {
-					result.append(URLEncoder.encode(comment, "UTF-8"));
-				} catch (UnsupportedEncodingException e) {
-					result.append(comment);
-				}
-                result.append("; ");
+            	if (firstReply) {
+            		firstReply = false;
+            	} else {
+            		result.append(" ");
+            	}
+            	comment = getUserInfoDisplayName(reply.getReplier()).toString().replaceAll("^User: ", "") + ": " + reply.getComment();
+				result.append(comment);
             }
         }
         return result.toString();
