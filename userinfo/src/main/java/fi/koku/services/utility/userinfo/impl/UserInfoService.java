@@ -11,15 +11,17 @@
  */
 package fi.koku.services.utility.userinfo.impl;
 
+import fi.koku.services.utility.user.v1.GroupIdsQueryParamType;
+import fi.koku.services.utility.user.v1.GroupsType;
+import fi.koku.services.utility.user.v1.PortalUserQueryParamType;
+import fi.koku.services.utility.user.v1.PortalUserType;
+import fi.koku.services.utility.user.v1.PortalUserUpdateType;
+import fi.koku.services.utility.user.v1.UserGroupsIdsQueryParamType;
+import fi.koku.services.utility.user.v1.UserGroupsPicsQueryParamType;
 import fi.koku.services.utility.user.v1.UserIdsQueryParamType;
 import fi.koku.services.utility.user.v1.UserPicsQueryParamType;
 import fi.koku.services.utility.user.v1.UsersType;
-import fi.koku.services.utility.user.v1.GroupIdsQueryParamType;
-import fi.koku.services.utility.user.v1.GroupsType;
-import fi.koku.services.utility.user.v1.UserGroupsIdsQueryParamType;
-import fi.koku.services.utility.user.v1.UserGroupsPicsQueryParamType;
-
-
+import fi.koku.services.utility.user.v1.VoidType;
 
 /**
  * UserInfo service interface.
@@ -73,4 +75,32 @@ public interface UserInfoService {
    * @return the group(s) where the user with given pic belongs to.
    */
   GroupsType getUserGroupsByPics(UserGroupsPicsQueryParamType pics);
+  
+  /**
+   * Add new portal user.
+   * 
+   * @param portalUser
+   *          portalUser-object to be added to database.
+   * @return none.
+   */
+  VoidType addPortalUser(PortalUserType portalUser);
+
+  /**
+   * Update portal user's data.
+   * 
+   * @param portalUser
+   *          portalUser-object to be added to database.
+   * @return update status.
+   */
+  boolean updatePortalUser(PortalUserUpdateType portalUser);
+  
+  /**
+   * Authenticate portal user.
+   * 
+   * @param portalUser
+   *          username and password to be authenticated.
+   * @return authentication status.
+   */
+  boolean authenticatePortalUser(PortalUserQueryParamType portalUser);
+   
 }

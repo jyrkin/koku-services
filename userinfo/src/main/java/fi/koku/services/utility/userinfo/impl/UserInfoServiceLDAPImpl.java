@@ -18,18 +18,21 @@ import org.springframework.ldap.filter.AndFilter;
 import org.springframework.ldap.filter.EqualsFilter;
 import org.springframework.ldap.filter.OrFilter;
 
+import fi.koku.services.utility.user.v1.GroupIdsQueryParamType;
+import fi.koku.services.utility.user.v1.GroupType;
+import fi.koku.services.utility.user.v1.GroupsType;
+import fi.koku.services.utility.user.v1.PortalUserQueryParamType;
+import fi.koku.services.utility.user.v1.PortalUserType;
+import fi.koku.services.utility.user.v1.PortalUserUpdateType;
+import fi.koku.services.utility.user.v1.UserGroupsIdsQueryParamType;
+import fi.koku.services.utility.user.v1.UserGroupsPicsQueryParamType;
 import fi.koku.services.utility.user.v1.UserIdsQueryParamType;
 import fi.koku.services.utility.user.v1.UserPicsQueryParamType;
 import fi.koku.services.utility.user.v1.UserType;
 import fi.koku.services.utility.user.v1.UsersType;
-import fi.koku.services.utility.userinfo.impl.model.LDAPUser;
-
-import fi.koku.services.utility.user.v1.GroupIdsQueryParamType;
-import fi.koku.services.utility.user.v1.GroupsType;
-import fi.koku.services.utility.user.v1.GroupType;
-import fi.koku.services.utility.user.v1.UserGroupsIdsQueryParamType;
-import fi.koku.services.utility.user.v1.UserGroupsPicsQueryParamType;
+import fi.koku.services.utility.user.v1.VoidType;
 import fi.koku.services.utility.userinfo.impl.model.LDAPGroup;
+import fi.koku.services.utility.userinfo.impl.model.LDAPUser;
 
 /**
  * KoKu userInfo service LDAP implementation class.
@@ -147,7 +150,7 @@ public class UserInfoServiceLDAPImpl implements UserInfoService {
     GroupsType groupsType = new GroupsType();
     List<GroupType> groupTypes = groupsType.getGroup();
 
-    //restrict search by first parameter
+    // restrict search by first parameter
     List<LDAPGroup> groups = ldapTemplate.search("ou=Groups,ou=KokuCommunities", query, ctrl,
         new LdapGroupTypeMapper(), new DirContextProcessorNoop());
 
@@ -225,7 +228,7 @@ public class UserInfoServiceLDAPImpl implements UserInfoService {
       groupFilter.and(new EqualsFilter("objectclass", "groupOfNames"));
     }
 
-      // customer won't do this query
+    // customer won't do this query
     if (!UserInfoServiceConstants.USER_INFO_SERVICE_DOMAIN_OFFICER.equals(domain)) {
       // customer won't do this query
       return "";
@@ -315,5 +318,23 @@ public class UserInfoServiceLDAPImpl implements UserInfoService {
     @Override
     public void preProcess(DirContext ctx) throws NamingException {
     }
+  }
+
+  @Override
+  public VoidType addPortalUser(PortalUserType portalUser) {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  @Override
+  public boolean updatePortalUser(PortalUserUpdateType portalUser) {
+    // TODO Auto-generated method stub
+    return false;
+  }
+
+  @Override
+  public boolean authenticatePortalUser(PortalUserQueryParamType portalUser) {
+    // TODO Auto-generated method stub
+    return false;
   }
 }
