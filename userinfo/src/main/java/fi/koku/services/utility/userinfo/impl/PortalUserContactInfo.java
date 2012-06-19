@@ -51,7 +51,7 @@ public class PortalUserContactInfo {
   @Column(name="street_address", nullable=false)
   private String streetAddress;
   
-  @ManyToOne(fetch=FetchType.EAGER)
+  @ManyToOne
   @JoinColumn(name="portal_user_id", nullable=false)
   private PortalUser portalUser;
   

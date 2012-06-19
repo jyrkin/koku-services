@@ -15,6 +15,9 @@ import javax.ejb.Local;
 
 import fi.koku.services.utility.user.v1.PortalUserQueryParamType;
 import fi.koku.services.utility.user.v1.PortalUserUpdateType;
+import fi.koku.services.utility.user.v1.UserIdsQueryParamType;
+import fi.koku.services.utility.user.v1.UserPicsQueryParamType;
+import fi.koku.services.utility.user.v1.UsersType;
 
 /**
  * UserInfoService related data access facilities.
@@ -30,4 +33,7 @@ public interface UserInfoServiceDAO {
 
   boolean authenticatePortalUser(PortalUserQueryParamType user);
 
+  UsersType getUsersByIds(UserIdsQueryParamType ids);
+  
+  UsersType getUsersByPics(UserPicsQueryParamType pics);
 }

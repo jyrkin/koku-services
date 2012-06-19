@@ -81,14 +81,14 @@ public class UserInfoServiceKokuImpl implements UserInfoService {
 
   @Override
   public UsersType getUsersByIds(UserIdsQueryParamType ids) {
-    // TODO Auto-generated method stub
-    return null;
+    logger.info("getUsersByIds (impl: " + userInfoServiceDAOBean + ")");
+    return userInfoServiceDAOBean.getUsersByIds(ids);    
   }
 
   @Override
   public UsersType getUsersByPics(UserPicsQueryParamType pics) {
-    // TODO Auto-generated method stub
-    return null;
+    logger.info("getUsersByPics (impl: " + userInfoServiceDAOBean + ")");    
+    return userInfoServiceDAOBean.getUsersByPics(pics);
   }
 
   @Override

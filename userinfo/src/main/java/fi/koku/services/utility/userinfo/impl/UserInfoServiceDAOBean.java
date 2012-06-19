@@ -11,6 +11,7 @@
  */
 package fi.koku.services.utility.userinfo.impl;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -27,6 +28,10 @@ import fi.koku.KoKuFaultException;
 import fi.koku.services.utility.user.v1.ContactInfoUpdateType;
 import fi.koku.services.utility.user.v1.PortalUserQueryParamType;
 import fi.koku.services.utility.user.v1.PortalUserUpdateType;
+import fi.koku.services.utility.user.v1.UserIdsQueryParamType;
+import fi.koku.services.utility.user.v1.UserPicsQueryParamType;
+import fi.koku.services.utility.user.v1.UserType;
+import fi.koku.services.utility.user.v1.UsersType;
 
 /**
  * UserInfoService related data access facilities implementation. Implements
@@ -99,6 +104,67 @@ public class UserInfoServiceDAOBean implements UserInfoServiceDAO {
     return authenticated;
   }
 
+  @Override
+  public UsersType getUsersByIds(UserIdsQueryParamType ids) {
+    
+    //TODO: make this happens with named query
+    
+    UsersType idUser = new UsersType();
+            
+    for(String user : ids.getId())
+    {
+      PortalUser puser = findPortalUser(user);
+      
+      UserType newUser = new UserType();
+      
+      newUser.setFirstname(puser.getFirstNames());
+      newUser.setLastname(puser.getSurName());
+      newUser.setUserId(puser.getUserName());
+      newUser.setPic(puser.getPic());
+      
+      List<PortalUserContactInfo> infos = puser.getPortalUserContactInfo();
+      for(PortalUserContactInfo info : infos )
+      {
+        newUser.setEmail(info.getEmail());
+      }
+      idUser.getUser().add(newUser);      
+          
+    }
+    
+    return idUser;
+  }
+
+  @Override
+  public UsersType getUsersByPics(UserPicsQueryParamType pics) {
+        
+//TODO: make this happens with named query
+    
+    UsersType idUser = new UsersType();
+            
+    for(String user : pics.getPic())
+    {
+      PortalUser puser = findPortalUserByPic(user);
+      
+      UserType newUser = new UserType();
+      
+      newUser.setFirstname(puser.getFirstNames());
+      newUser.setLastname(puser.getSurName());
+      newUser.setUserId(puser.getUserName());
+      newUser.setPic(puser.getPic());
+      
+      List<PortalUserContactInfo> infos = puser.getPortalUserContactInfo();
+      for(PortalUserContactInfo info : infos )
+      {
+        newUser.setEmail(info.getEmail());
+      }
+      idUser.getUser().add(newUser);      
+          
+    }
+    
+    return idUser;
+
+  }
+  
   private PortalUser findPortalUser(String userName) {
     Query q = em.createNamedQuery(PortalUser.NAMED_QUERY_GET_PORTAL_USER_BY_USERNAME);
     q.setParameter("userName", userName);
@@ -111,7 +177,23 @@ public class UserInfoServiceDAOBean implements UserInfoServiceDAO {
     }
 
   }
+  
+  private PortalUser findPortalUserByPic(String pic) {
+    Query q = em.createNamedQuery(PortalUser.NAMED_QUERY_GET_PORTAL_USER_BY_PIC);
+    q.setParameter("pic", pic);
+    logger.debug("findPortalUserByPic: query: " + q.toString());
+    try {
+      return (PortalUser) q.getSingleResult();
+    } catch (NoResultException e) {
+      UserInfoServiceErrorCode errorCode = UserInfoServiceErrorCode.PORTAL_USER_NOT_FOUND;
+      throw new KoKuFaultException(errorCode.getValue(), errorCode.getDescription(), e);
+    }
 
+  }
+
+  
+  
+  
   private boolean findExistingUser(String userName) {
     boolean existingUser = false;
     Query q = em.createNamedQuery(PortalUser.NAMED_QUERY_GET_PORTAL_USER_BY_USERNAME);
@@ -207,4 +289,5 @@ public class UserInfoServiceDAOBean implements UserInfoServiceDAO {
     em.merge(user);
     em.flush();
   }
+
 }
