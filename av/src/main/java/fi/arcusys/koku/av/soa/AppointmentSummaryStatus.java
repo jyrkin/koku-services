@@ -9,7 +9,7 @@ import fi.arcusys.koku.common.service.datamodel.AppointmentStatus;
  * Sep 2, 2011
  */
 public enum AppointmentSummaryStatus {
-    Created, Approved, Cancelled;
+    Created, New, InProgress, Approved, Declined, Cancelled, Invalidated, Closed;
     
     public static AppointmentSummaryStatus valueOf(final AppointmentStatus dmStatus) {
         if (dmStatus == null) {
