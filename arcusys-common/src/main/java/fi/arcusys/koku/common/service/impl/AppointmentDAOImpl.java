@@ -233,7 +233,7 @@ public class AppointmentDAOImpl extends AbstractEntityDAOImpl<Appointment> imple
     protected Map<String, Object> getRespondedAppointmentsParams(User user) {
         final Map<String, Object> params = new HashMap<String, Object>();
         params.put("user", user);
-        params.put("appointment_approved", Arrays.<AppointmentStatus>asList(AppointmentStatus.Created, AppointmentStatus.Approved));
+        params.put("appointment_approved", Arrays.<AppointmentStatus>asList(AppointmentStatus.Created, AppointmentStatus.InProgress));
         params.put("reply_approved", AppointmentResponseStatus.Accepted);
         return params;
     }

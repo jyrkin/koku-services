@@ -72,7 +72,7 @@ public class KokuAppointmentServiceImpl implements KokuAppointmentService {
 	}
 
 	private Set<AppointmentStatus> getRespondedStatuses() {
-		return new HashSet<AppointmentStatus>(Arrays.asList(AppointmentStatus.Approved));
+		return new HashSet<AppointmentStatus>(Arrays.asList(AppointmentStatus.InProgress, AppointmentStatus.Closed));
 	}
 
 	/**

@@ -7,5 +7,5 @@ package fi.arcusys.koku.common.service.datamodel;
  * Aug 22, 2011
  */
 public enum AppointmentResponseStatus {
-    Accepted, Rejected;
+    Accepted, Rejected, Invalidated;
 }

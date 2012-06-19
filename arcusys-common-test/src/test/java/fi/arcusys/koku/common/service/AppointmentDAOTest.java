@@ -73,7 +73,7 @@ public class AppointmentDAOTest {
 		assertTrue(appointments.contains(appointment));
 		assertEquals(appointments.size(), service.getTotalAppointments(appointment.getSender(), Collections.singleton(AppointmentStatus.Created)).intValue());
 		
-		assertFalse(service.getUserAppointments(appointment.getSender(), Collections.singleton(AppointmentStatus.Approved)).contains(appointment));
+		assertFalse(service.getUserAppointments(appointment.getSender(), Collections.singleton(AppointmentStatus.InProgress)).contains(appointment));
 	}
 
 	@Test

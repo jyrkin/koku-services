@@ -408,14 +408,11 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
 
     private AppointmentStatus getSummaryAppointmentStatus(
             final Appointment appointment) {
-        if (appointment.getStatus() != AppointmentStatus.Cancelled && appointment.getResponses() != null && !appointment.getResponses().isEmpty()) {
-            for (final AppointmentResponse response : appointment.getResponses()) {
-                if (response.getStatus() == AppointmentResponseStatus.Accepted) {
-                    return AppointmentStatus.Approved;
-                }
-            }
-            return AppointmentStatus.Cancelled;
-        }
+
+        if (appointment.getStatus() != AppointmentStatus.Cancelled && appointment.getStatus() != AppointmentStatus.Closed
+                && appointment.getResponses() != null && !appointment.getResponses().isEmpty())
+            return AppointmentStatus.InProgress;
+
         return appointment.getStatus();
     }
 	
@@ -529,8 +526,8 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
 
 
         if (affectedResponse != null) {
-            affectedResponse.setStatus(AppointmentResponseStatus.Rejected);
-            affectedResponse.setComment(MessageFormat.format(getValueFromBundle(SLOT_CANCELLED_COMMENT), new Object[] {getUserInfoDisplayName(userDao.getOrCreateUser(appointment.getSender().getUid()))}));
+            //affectedResponse.setStatus(AppointmentResponseStatus.Rejected);
+            affectedResponse.setComment(MessageFormat.format(getValueFromBundle(SLOT_CANCELLED_COMMENT), new Object[] {getUserInfoDisplayName(appointment.getSender())}));
 
             notificationService.sendNotification(getValueFromBundle(SLOT_CANCELLED_SUBJECT),
                     Collections.singletonList(affectedResponse.getReplier().getUid()),
@@ -647,14 +644,14 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
 
         if (ownResponse != null) {
             if (ownResponse.getStatus() == AppointmentResponseStatus.Accepted) {
-                appointmentTO.setAppointmentResponse(AppointmentSummaryStatus.Approved);
+                appointmentTO.setStatus(AppointmentSummaryStatus.Approved);
 
                 for (AppointmentSlotTO slot : appointmentTO.getSlots())
                     if (slot.getSlotNumber() == ownResponse.getSlotNumber()) {
                         appointmentTO.setChosenSlot(slot.getSlotNumber());
 
                         if (slot.isDisabled()) {
-                            appointmentTO.setAppointmentResponse(AppointmentSummaryStatus.Created);
+                            appointmentTO.setStatus(AppointmentSummaryStatus.Invalidated);
                         }
 
                         acceptedSlots.remove(slot.getSlotNumber()); // do not put away slot accepted by us
@@ -662,12 +659,12 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
                     }
 
             } else {
-                appointmentTO.setAppointmentResponse(AppointmentSummaryStatus.Cancelled);
+                appointmentTO.setStatus(AppointmentSummaryStatus.Declined);
 
             }
 
         } else {
-            appointmentTO.setAppointmentResponse(AppointmentSummaryStatus.Created);
+            appointmentTO.setStatus(AppointmentSummaryStatus.Created);
 
         }
 
@@ -695,6 +692,7 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
     protected List<AppointmentWithTarget> convertResponsesToAppointmentWithTarget(
             final List<AppointmentResponse> appointmentResponses) {
         final List<AppointmentWithTarget> result = new ArrayList<AppointmentWithTarget>();
+
         for (final AppointmentResponse response : appointmentResponses) {
             final AppointmentWithTarget appointmentTO = new AppointmentWithTarget();
             convertAppointmentToDTO(response.getAppointment(), appointmentTO);
@@ -703,6 +701,7 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
             appointmentTO.setStatus(getAppointmentStatusByResponse(response));
             result.add(appointmentTO);
         }
+
         return result;
     }
 
@@ -804,15 +803,27 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
         if (appointmentTO.getStatus() == AppointmentSummaryStatus.Approved) {
             appointmentTO.setApprovedSlot(getSlotTOBySlot(appointment.getSlotByNumber(response.getSlotNumber())));
         }
-        
+
         return appointmentTO;
     }
 
     private AppointmentSummaryStatus getAppointmentStatusByResponse(
             final AppointmentResponse response) {
-        return response.getStatus() == AppointmentResponseStatus.Accepted && response.getAppointment().getStatus() != AppointmentStatus.Cancelled ?
-                AppointmentSummaryStatus.Approved :
-                AppointmentSummaryStatus.Cancelled;
+
+        if (response.getAppointment().getStatus() == AppointmentStatus.Cancelled)
+            return AppointmentSummaryStatus.Cancelled;
+
+        if (response.getStatus() == AppointmentResponseStatus.Accepted) {
+            // Determine if the slot is removed
+            for (AppointmentSlot slot : response.getAppointment().getSlots())
+                if (slot.getSlotNumber() == response.getSlotNumber())
+                    return slot.getDisabled() ? AppointmentSummaryStatus.Invalidated : AppointmentSummaryStatus.Approved;
+
+            return AppointmentSummaryStatus.Invalidated;
+        } else {
+            return AppointmentSummaryStatus.Declined;
+
+        }
     }
 
     private AppointmentResponse getAppointmentResponse(long appointmentId,
