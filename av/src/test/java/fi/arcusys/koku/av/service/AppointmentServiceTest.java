@@ -9,6 +9,7 @@ import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -64,22 +65,26 @@ public class AppointmentServiceTest {
 
 	@Autowired
 	private CommonTestUtil testUtil;
-	
+
+	private static String APPOINTMENT_TARGET = "APPOINTMENT_TARGET";
+	private static String APPOINTMENT_PARENT = "APPOINTMENT_PARENT";
+	private static String APPOINTMENT_STATUS = "APPOINTMENT_STATUS";
+
 	@Test
 	public void testMessageTemplate() {
 	    assertEquals("Sinulle on tietopyynto \"ABC\"", MessageFormat.format("Sinulle on tietopyynto \"{0}\"", "ABC"));
         assertEquals("'app_inbox_citizen'", MessageFormat.format("''app_inbox_citizen''", new Object[] {}));
 	}
-	
+
 	@Test
 	public void getUserAppointments() {
 		final AppointmentForEditTO newAppointment = createTestAppointment("new appointment", "appointment description", 1);
         final AppointmentReceipientTO appointmentReceipient = newAppointment.getReceipients().get(0);
         final String targetPerson = appointmentReceipient.getTargetPerson();
 		final Long appointmentId = serviceFacade.storeAppointment(newAppointment);
-		
+
 		assertNotNull("Appointment is not found in user's appointments", getById(serviceFacade.getCreatedAppointments(newAppointment.getSender(), 1, 10, null), appointmentId));
-		
+
         final AppointmentCriteria criteria = new AppointmentCriteria();
         assertNotNull("Appointment is not found in user's appointments", getById(serviceFacade.getCreatedAppointments(newAppointment.getSender(), 1, 10, criteria), appointmentId));
 
@@ -108,16 +113,41 @@ public class AppointmentServiceTest {
 
         assertEquals("In this case one parent is responsible for two kids", firstParent, firstParentForDecline);
 
+        final List<String> firstParentKids = Arrays.asList(targetPerson, targetPersonForDecline);
+        final List<String> secondParentKids = Arrays.asList(targetPerson);
+        final List<String> firstParentForDeclineKids = Arrays.asList(targetPerson, targetPersonForDecline);
+        final List<String> secondParentForDeclineKids = Arrays.asList(targetPersonForDecline);
+
 		final Long appointmentId = serviceFacade.storeAppointment(newAppointment);
 
 		final String msg_afterCreation = "After creation";
-		assertKunpoAppointment(msg_afterCreation, firstParent, appointmentId, true, false, false, AppointmentSummaryStatus.Created);
-		assertKunpoAppointment(msg_afterCreation, secondParent, appointmentId, true, false, false, AppointmentSummaryStatus.Created);
-		assertKunpoAppointment(msg_afterCreation, firstParentForDecline, appointmentId, true, false, false, AppointmentSummaryStatus.Created);
-		assertKunpoAppointment(msg_afterCreation, secondParentForDecline, appointmentId, true, false, false, AppointmentSummaryStatus.Created);
+
+		assertKunpoAppointment(msg_afterCreation, appointmentId, firstParent, firstParentKids,
+		        new HashMap<String, AppointmentSummaryStatus>() {{
+		            put(targetPerson, AppointmentSummaryStatus.Created);
+		            put(targetPersonForDecline, AppointmentSummaryStatus.Created);
+	            }}, null, null);
+
+		assertKunpoAppointment(msg_afterCreation, appointmentId, secondParent, secondParentKids,
+                new HashMap<String, AppointmentSummaryStatus>() {{
+                    put(targetPerson, AppointmentSummaryStatus.Created);
+                }}, null, null);
+
+		assertKunpoAppointment(msg_afterCreation, appointmentId, firstParentForDecline, firstParentForDeclineKids,
+                new HashMap<String, AppointmentSummaryStatus>() {{
+                    put(targetPerson, AppointmentSummaryStatus.Created);
+                    put(targetPersonForDecline, AppointmentSummaryStatus.Created);
+                }}, null, null);
+
+        assertKunpoAppointment(msg_afterCreation, appointmentId, secondParentForDecline, secondParentForDeclineKids,
+                new HashMap<String, AppointmentSummaryStatus>() {{
+                    put(targetPersonForDecline, AppointmentSummaryStatus.Created);
+                }}, null, null);
+
 		assertLooraAppointment(msg_afterCreation, sender, appointmentId, true, false, AppointmentSummaryStatus.Created);
 		assertLooraAppointmentDetails(msg_afterCreation, appointmentId, AppointmentSummaryStatus.Created);
 		assertEditedAppointment(msg_afterCreation, appointmentId, AppointmentSummaryStatus.Created);
+		assertRepliedAppointment(msg_afterCreation, appointmentId, targetPerson, AppointmentSummaryStatus.Created, 0);
 		assertRepliedAppointment(msg_afterCreation, appointmentId, targetPersonForDecline, AppointmentSummaryStatus.Created, 0);
 
 		assertTrue("There should be no accepted slots", serviceFacade.getAppointment(appointmentId).getAcceptedSlots().isEmpty());
@@ -137,15 +167,41 @@ public class AppointmentServiceTest {
         assertFalse("There must be some accepted slots", serviceFacade.getAppointment(appointmentId).getAcceptedSlots().isEmpty());
 
         final String msg_afterApproval = "After " + firstParent + " approval on behalf of " + targetPerson;
-        assertKunpoAppointment(msg_afterApproval, firstParent, appointmentId, true, true, false, AppointmentSummaryStatus.Created, AppointmentSummaryStatus.Approved, null); // 1 Assigned 1 Responded
+
+        assertKunpoAppointment(msg_afterApproval, appointmentId, firstParent, firstParentKids,
+                new HashMap<String, AppointmentSummaryStatus>() {{
+                    put(targetPersonForDecline, AppointmentSummaryStatus.Created);
+                }},
+                new HashMap<String, AppointmentSummaryStatus>() {{
+                    put(targetPerson, AppointmentSummaryStatus.Approved);
+                }}, null);
+
         // TODO: Second guardian must see the response in the appropriate list
-        //assertKunpoAppointment(approvalCheckMessage, secondParent, appointmentId, false, true, false, AppointmentSummaryStatus.Approved); // 1 Responded
-        assertKunpoAppointment(msg_afterApproval, firstParentForDecline, appointmentId, true, true, false, AppointmentSummaryStatus.Created, AppointmentSummaryStatus.Approved, null); // 1 Assigned 1 Responded
-        assertKunpoAppointment(msg_afterApproval, secondParentForDecline, appointmentId, true, false, false, AppointmentSummaryStatus.Created); // 1 Assigned
+        /*
+        assertKunpoAppointment(msg_afterApproval, appointmentId, secondParent, secondParentKids,
+                null,
+                new HashMap<String, AppointmentSummaryStatus>() {{
+                    put(targetPerson, AppointmentSummaryStatus.Approved);
+                }}, null);
+        */
+        assertKunpoAppointment(msg_afterApproval, appointmentId, firstParentForDecline, firstParentForDeclineKids,
+                new HashMap<String, AppointmentSummaryStatus>() {{
+                    put(targetPersonForDecline, AppointmentSummaryStatus.Created);
+                }},
+                new HashMap<String, AppointmentSummaryStatus>() {{
+                    put(targetPerson, AppointmentSummaryStatus.Approved);
+                }}, null);
+
+        assertKunpoAppointment(msg_afterApproval, appointmentId, secondParentForDecline, secondParentForDeclineKids,
+                new HashMap<String, AppointmentSummaryStatus>() {{
+                    put(targetPersonForDecline, AppointmentSummaryStatus.Created);
+                }}, null, null);
+
         assertKunpoAppointmentDetails(msg_afterApproval, appointmentId, targetPerson, AppointmentSummaryStatus.Approved);
         assertLooraAppointment(msg_afterApproval, sender, appointmentId, false, true, AppointmentSummaryStatus.InProgress);
         assertLooraAppointmentDetails(msg_afterApproval, appointmentId, AppointmentSummaryStatus.InProgress);
         assertRepliedAppointment(msg_afterApproval, appointmentId, targetPerson, AppointmentSummaryStatus.Approved, 1);
+        assertRepliedAppointment(msg_afterApproval, appointmentId, targetPersonForDecline, AppointmentSummaryStatus.Created, 1);
 
         final int messageCountBeforeDisable = messageService.getMessages(firstParent, FolderType.Inbox).size();
 
@@ -169,11 +225,39 @@ public class AppointmentServiceTest {
         assertTrue("Must have slot disable message", haveMessage);
 
         final String msg_afterSlotRemoval = "After " + sender + " removes slot 1";
-        assertKunpoAppointment(msg_afterSlotRemoval, firstParent, appointmentId, true, true, false, AppointmentSummaryStatus.Created, AppointmentSummaryStatus.Invalidated, null); // 1 Assigned 1 Responded
+
+        assertKunpoAppointment(msg_afterSlotRemoval, appointmentId, firstParent, firstParentKids,
+                new HashMap<String, AppointmentSummaryStatus>() {{
+                    put(targetPerson, AppointmentSummaryStatus.Created);
+                    //put(targetPerson, AppointmentSummaryStatus.Invalidated);
+                    put(targetPersonForDecline, AppointmentSummaryStatus.Created);
+                }}, null, null);
+
+        // TODO: Second guardian must see the response in the appropriate list
+        /*
+        assertKunpoAppointment(msg_afterSlotRemoval, appointmentId, secondParent, secondParentKids,
+                new HashMap<String, AppointmentSummaryStatus>() {{
+                    put(targetPerson, AppointmentSummaryStatus.Invalidated);
+                }}, null, null);
+        */
+        assertKunpoAppointment(msg_afterSlotRemoval, appointmentId, firstParentForDecline, firstParentForDeclineKids,
+                new HashMap<String, AppointmentSummaryStatus>() {{
+                    put(targetPerson, AppointmentSummaryStatus.Created);
+                    //put(targetPerson, AppointmentSummaryStatus.Invalidated);
+                    put(targetPersonForDecline, AppointmentSummaryStatus.Created);
+                }}, null, null);
+
+        assertKunpoAppointment(msg_afterSlotRemoval, appointmentId, secondParentForDecline, secondParentForDeclineKids,
+                new HashMap<String, AppointmentSummaryStatus>() {{
+                    put(targetPersonForDecline, AppointmentSummaryStatus.Created);
+                }}, null, null);
+
+
+        /*assertKunpoAppointment(msg_afterSlotRemoval, firstParent, appointmentId, true, true, false, AppointmentSummaryStatus.Created, AppointmentSummaryStatus.Invalidated, null); // 1 Assigned 1 Responded
         // TODO: Second guardian must see the response in the appropriate list
         //assertKunpoAppointment(slotRemovalCheckMessage, secondParent, appointmentId, false, true, false, AppointmentSummaryStatus.Invalidated); // 1 Responded
         assertKunpoAppointment(msg_afterSlotRemoval, firstParentForDecline, appointmentId, true, true, false, AppointmentSummaryStatus.Created, AppointmentSummaryStatus.Invalidated, null); // 1 Assigned 1 Responded
-        assertKunpoAppointment(msg_afterSlotRemoval, secondParentForDecline, appointmentId, true, false, false, AppointmentSummaryStatus.Created);  // 1 Assigned
+        assertKunpoAppointment(msg_afterSlotRemoval, secondParentForDecline, appointmentId, true, false, false, AppointmentSummaryStatus.Created);  // 1 Assigned*/
         assertKunpoAppointmentDetails(msg_afterSlotRemoval, appointmentId, targetPerson, AppointmentSummaryStatus.Invalidated);
         assertLooraAppointment(msg_afterSlotRemoval, sender, appointmentId, false, true, AppointmentSummaryStatus.InProgress);
         assertLooraAppointmentDetails(msg_afterSlotRemoval, appointmentId, AppointmentSummaryStatus.InProgress);
@@ -198,11 +282,36 @@ public class AppointmentServiceTest {
         //assertEquals("Status after approval is approved", AppointmentSummaryStatus.Approved, serviceFacade.getAppointmentForReply(appointmentId, targetPerson).getStatus());
 
         final String msg_afterSlotReapproval =  "After " + firstParent + " reapproves with slot 2 on behalf of " + targetPerson;
-        assertKunpoAppointment(msg_afterSlotReapproval, firstParent, appointmentId, true, true, false, AppointmentSummaryStatus.Created, AppointmentSummaryStatus.Approved, null); // 1 Assigned 1 Responded
+
+        assertKunpoAppointment(msg_afterSlotReapproval, appointmentId, firstParent, firstParentKids,
+                new HashMap<String, AppointmentSummaryStatus>() {{
+                    put(targetPersonForDecline, AppointmentSummaryStatus.Created);
+                }},
+                new HashMap<String, AppointmentSummaryStatus>() {{
+                    put(targetPerson, AppointmentSummaryStatus.Approved);
+                }}, null);
+
         // TODO: Second guardian must see the response in the appropriate list
-        //assertKunpoAppointment(slotRemovalCheckMessage, secondParent, appointmentId, false, true, false, AppointmentSummaryStatus.Approved); // 1 Responded
-        assertKunpoAppointment(msg_afterSlotReapproval, firstParentForDecline, appointmentId, true, true, false, AppointmentSummaryStatus.Created, AppointmentSummaryStatus.Approved, null); // 1 Assigned 1 Responded
-        assertKunpoAppointment(msg_afterSlotReapproval, secondParentForDecline, appointmentId, true, false, false, AppointmentSummaryStatus.Created);  // 1 Assigned
+        /*
+        assertKunpoAppointment(msg_afterSlotReapproval, appointmentId, secondParent, secondParentKids,
+                null,
+                new HashMap<String, AppointmentSummaryStatus>() {{
+                    put(targetPerson, AppointmentSummaryStatus.Approved);
+                }}, null);
+        */
+        assertKunpoAppointment(msg_afterSlotReapproval, appointmentId, firstParentForDecline, firstParentForDeclineKids,
+                new HashMap<String, AppointmentSummaryStatus>() {{
+                    put(targetPersonForDecline, AppointmentSummaryStatus.Created);
+                }},
+                new HashMap<String, AppointmentSummaryStatus>() {{
+                    put(targetPerson, AppointmentSummaryStatus.Approved);
+                }}, null);
+
+        assertKunpoAppointment(msg_afterSlotReapproval, appointmentId, secondParentForDecline, secondParentForDeclineKids,
+                new HashMap<String, AppointmentSummaryStatus>() {{
+                    put(targetPersonForDecline, AppointmentSummaryStatus.Created);
+                }}, null, null);
+
         assertKunpoAppointmentDetails(msg_afterSlotReapproval, appointmentId, targetPerson, AppointmentSummaryStatus.Approved);
         assertLooraAppointment(msg_afterSlotReapproval, sender, appointmentId, false, true, AppointmentSummaryStatus.InProgress);
         assertLooraAppointmentDetails(msg_afterSlotReapproval, appointmentId, AppointmentSummaryStatus.InProgress);
@@ -219,12 +328,43 @@ public class AppointmentServiceTest {
         assertTrue("There should be targetPersonForDecline in rejections", serviceFacade.getAppointment(appointmentId).getUsersRejected().contains(getKunpoName(targetPersonForDecline)));
 
         final String msg_afterDecline =  "After " + firstParentForDecline + " declines on behalf of " + targetPersonForDecline;
-        assertKunpoAppointment(msg_afterDecline, firstParent, appointmentId, false, true, true, null, AppointmentSummaryStatus.Approved, AppointmentSummaryStatus.Declined); // 1 Responded 1  Old
+
+        assertKunpoAppointment(msg_afterDecline, appointmentId, firstParent, firstParentKids,
+                null,
+                new HashMap<String, AppointmentSummaryStatus>() {{
+                    put(targetPerson, AppointmentSummaryStatus.Approved);
+                }},
+                new HashMap<String, AppointmentSummaryStatus>() {{
+                    put(targetPersonForDecline, AppointmentSummaryStatus.Declined);
+                }});
+
         // TODO: Second guardian must see the response in the appropriate list
-        //assertKunpoAppointment(declineCheckMessage, secondParent, appointmentId, false, true, false, AppointmentSummaryStatus.Approved); // 1 Responded
-        assertKunpoAppointment(msg_afterDecline, firstParentForDecline, appointmentId, false, true, true, null, AppointmentSummaryStatus.Approved, AppointmentSummaryStatus.Declined); // 1 Responded 1  Old
+        /*
+        assertKunpoAppointment(msg_afterDecline, appointmentId, secondParent, secondParentKids,
+                null,
+                new HashMap<String, AppointmentSummaryStatus>() {{
+                    put(targetPerson, AppointmentSummaryStatus.Approved);
+                }}, null);
+        */
+        assertKunpoAppointment(msg_afterDecline, appointmentId, firstParentForDecline, firstParentForDeclineKids,
+                null,
+                new HashMap<String, AppointmentSummaryStatus>() {{
+                    put(targetPerson, AppointmentSummaryStatus.Approved);
+                }},
+                new HashMap<String, AppointmentSummaryStatus>() {{
+                    put(targetPersonForDecline, AppointmentSummaryStatus.Declined);
+                }});
+
         // TODO: Second guardian must see the response in the appropriate list
-        //assertKunpoAppointment(declineCheckMessage, secondParentForDecline, appointmentId, false, false, true, AppointmentSummaryStatus.Declined);  // 1 Old
+        /*
+        assertKunpoAppointment(msg_afterDecline, appointmentId, secondParentForDecline, secondParentForDeclineKids,
+                null,
+                null,
+                new HashMap<String, AppointmentSummaryStatus>() {{
+                    put(targetPersonForDecline, AppointmentSummaryStatus.Declined);
+                }});
+        */
+
         assertKunpoAppointmentDetails(msg_afterDecline, appointmentId, targetPerson, AppointmentSummaryStatus.Approved);
         assertKunpoAppointmentDetails(msg_afterDecline, appointmentId, targetPersonForDecline, AppointmentSummaryStatus.Declined);
         assertLooraAppointment(msg_afterDecline, sender, appointmentId, false, true, AppointmentSummaryStatus.InProgress);
@@ -245,12 +385,42 @@ public class AppointmentServiceTest {
         assertEquals("Appointment is approved", AppointmentSummaryStatus.Approved, serviceFacade.getAppointmentRespondedById(appointmentId, targetPerson).getStatus());
 
         final String msg_afterReconsider =  "After " + firstParentForDecline + " re-considers and approves on behalf of " + targetPersonForDecline;
-        assertKunpoAppointment(msg_afterReconsider, firstParent, appointmentId, false, true, false, AppointmentSummaryStatus.Approved); // 2 Responded
+
+        assertKunpoAppointment(msg_afterReconsider, appointmentId, firstParent, firstParentKids,
+                null,
+                new HashMap<String, AppointmentSummaryStatus>() {{
+                    put(targetPerson, AppointmentSummaryStatus.Approved);
+                    put(targetPersonForDecline, AppointmentSummaryStatus.Approved);
+                }},
+                null);
+
         // TODO: Second guardian must see the response in the appropriate list
-        //assertKunpoAppointment(reconsiderCheckMessage, secondParent, appointmentId, false, true, false, AppointmentSummaryStatus.Approved); // 1 Responded
-        assertKunpoAppointment(msg_afterReconsider, firstParentForDecline, appointmentId, false, true, false, AppointmentSummaryStatus.Approved); // 2 Responded
+        /*
+        assertKunpoAppointment(msg_afterReconsider, appointmentId, secondParent, secondParentKids,
+                null,
+                new HashMap<String, AppointmentSummaryStatus>() {{
+                    put(targetPerson, AppointmentSummaryStatus.Approved);
+                }},
+                null);
+        */
+        assertKunpoAppointment(msg_afterReconsider, appointmentId, firstParentForDecline, firstParentForDeclineKids,
+                null,
+                new HashMap<String, AppointmentSummaryStatus>() {{
+                    put(targetPerson, AppointmentSummaryStatus.Approved);
+                    put(targetPersonForDecline, AppointmentSummaryStatus.Approved);
+                }},
+                null);
+
         // TODO: Second guardian must see the response in the appropriate list
-        //assertKunpoAppointment(reconsiderCheckMessage, secondParentForDecline, appointmentId, false, true, false, AppointmentSummaryStatus.Approved);  // 1 Responded
+        /*
+        assertKunpoAppointment(msg_afterReconsider, appointmentId, secondParentForDecline, secondParentForDeclineKids,
+                null,
+                new HashMap<String, AppointmentSummaryStatus>() {{
+                    put(targetPersonForDecline, AppointmentSummaryStatus.Approved);
+                }},
+                null);
+        */
+
         assertKunpoAppointmentDetails(msg_afterReconsider, appointmentId, targetPerson, AppointmentSummaryStatus.Approved);
         assertKunpoAppointmentDetails(msg_afterReconsider, appointmentId, targetPersonForDecline, AppointmentSummaryStatus.Approved);
         assertLooraAppointment(msg_afterReconsider, sender, appointmentId, false, true, AppointmentSummaryStatus.InProgress);
@@ -260,18 +430,46 @@ public class AppointmentServiceTest {
 
         // cancel appointment
         serviceFacade.cancelWholeAppointment(appointmentId, "cancelled");
-        /*assertEquals("Must be declied by targetPerson", AppointmentSummaryStatus.Declined, serviceFacade.getAppointmentRespondedById(appointmentId, targetPerson).getStatus());
+        /*assertEquals("Must be declined by targetPerson", AppointmentSummaryStatus.Declined, serviceFacade.getAppointmentRespondedById(appointmentId, targetPerson).getStatus());
         assertEquals("Must be approved by targetPersonForDecline", AppointmentSummaryStatus.Approved, serviceFacade.getAppointmentRespondedById(appointmentId, targetPersonForDecline).getStatus());*/
 
         final String msg_afterCancel =  "After " + sender + " cancels the whole appointment";
-        // TODO: Must not have cancelled appointments in 'Responded'
-        assertKunpoAppointment(msg_afterCancel, firstParent, appointmentId, false, false, true, AppointmentSummaryStatus.Cancelled); // 2 Old
+
+        assertKunpoAppointment(msg_afterCancel, appointmentId, firstParent, firstParentKids,
+                null,
+                null,
+                new HashMap<String, AppointmentSummaryStatus>() {{
+                    put(targetPerson, AppointmentSummaryStatus.Cancelled);
+                    put(targetPersonForDecline, AppointmentSummaryStatus.Cancelled);
+                }});
+
         // TODO: Second guardian must see the response in the appropriate list
-        //assertKunpoAppointment(msg_afterCancel, secondParent, appointmentId, false, false, true, AppointmentSummaryStatus.Approved); // 2 Old
-        // TODO: Must not have cancelled appointments in 'Responded'
-        assertKunpoAppointment(msg_afterCancel, firstParentForDecline, appointmentId, false, false, true, AppointmentSummaryStatus.Cancelled); // 2 Old
+        /*
+        assertKunpoAppointment(msg_afterCancel, appointmentId, secondParent, secondParentKids,
+                null,
+                null,
+                new HashMap<String, AppointmentSummaryStatus>() {{
+                    put(targetPerson, AppointmentSummaryStatus.Cancelled);
+                }});
+        */
+        assertKunpoAppointment(msg_afterCancel, appointmentId, firstParentForDecline, firstParentForDeclineKids,
+                null,
+                null,
+                new HashMap<String, AppointmentSummaryStatus>() {{
+                    put(targetPerson, AppointmentSummaryStatus.Cancelled);
+                    put(targetPersonForDecline, AppointmentSummaryStatus.Cancelled);
+                }});
+
         // TODO: Second guardian must see the response in the appropriate list
-        //assertKunpoAppointment(msg_afterCancel, secondParentForDecline, appointmentId, false, false, true, AppointmentSummaryStatus.Cancelled);  // 2 Old
+        /*
+        assertKunpoAppointment(msg_afterCancel, appointmentId, secondParentForDecline, secondParentForDeclineKids,
+                null,
+                null,
+                new HashMap<String, AppointmentSummaryStatus>() {{
+                    put(targetPersonForDecline, AppointmentSummaryStatus.Cancelled);
+                }});
+        */
+
         assertKunpoAppointmentDetails(msg_afterCancel, appointmentId, targetPerson, AppointmentSummaryStatus.Cancelled);
         assertKunpoAppointmentDetails(msg_afterCancel, appointmentId, targetPersonForDecline, AppointmentSummaryStatus.Cancelled);
         assertLooraAppointment(msg_afterCancel, sender, appointmentId, false, true, AppointmentSummaryStatus.Cancelled);
@@ -288,7 +486,7 @@ public class AppointmentServiceTest {
 	    assertEquals(msg + " summary status as " + editStatus, editStatus, editAppointment.getStatus());
     }
 
-	private void assertRepliedAppointment(final String message, final Long appointmentId, final String targetPerson, 
+	private void assertRepliedAppointment(final String message, final Long appointmentId, final String targetPerson,
 	                                            AppointmentSummaryStatus status, int chosenSlot) {
 
 	    final String msg = message + " (replying for " + targetPerson + ") must have " + appointmentId;
@@ -342,54 +540,84 @@ public class AppointmentServiceTest {
         assertEquals(msg + status, status, serviceFacade.getAppointmentRespondedById(appointmentId, targetPerson).getStatus());
 	}
 
-	private void assertKunpoAppointment(final String message, final String parentName, final Long appointmentId,
-	        boolean isAssigned, boolean isResponded, boolean isOld, AppointmentSummaryStatus status) {
-	    assertKunpoAppointment(message, parentName, appointmentId, isAssigned, isResponded, isOld, (isAssigned ? status : null), (isResponded ? status : null), (isOld ? status : null));
+	private void assertKunpoAppointment(final String message, final Long appointmentId, final String parentName, final List<String> allTargets,
+	        final Map<String, AppointmentSummaryStatus> assigned, final Map<String, AppointmentSummaryStatus> responded,
+	        final Map<String, AppointmentSummaryStatus> old) {
+
+	    if (assigned != null) {
+	        List<String> excludeTargets = new ArrayList<String>();
+	        excludeTargets.addAll(allTargets);
+	        excludeTargets.removeAll(assigned.keySet());
+
+            assertKunpoAssigned(message, appointmentId, parentName, assigned, excludeTargets);
+	    }
+
+        if (responded != null) {
+            List<String> excludeTargets = new ArrayList<String>();
+            excludeTargets.addAll(allTargets);
+            excludeTargets.removeAll(responded.keySet());
+
+            assertKunpoResponded(message, appointmentId, parentName, responded, excludeTargets);
+        }
+
+        if (old != null) {
+            List<String> excludeTargets = new ArrayList<String>();
+            excludeTargets.addAll(allTargets);
+            excludeTargets.removeAll(old.keySet());
+
+            assertKunpoOld(message, appointmentId, parentName, old, excludeTargets);
+        }
 	}
 
-	private void assertKunpoAppointment(final String message, final String parentName, final Long appointmentId,
-	                                      boolean isAssigned, boolean isResponded, boolean isOld, 
-	                                      AppointmentSummaryStatus assignedStatus, AppointmentSummaryStatus respondedStatus, AppointmentSummaryStatus oldStatus) {
-	    final String s_haveAssigned = message + " parent " + parentName + " must "+(isAssigned?"":"not ")+"have "+appointmentId+" in assigned appointments";
-        final AppointmentWithTarget o_haveAssigned = getById(serviceFacade.getAssignedAppointments(parentName, 1, 10), appointmentId);
+	private void assertKunpoAssigned(final String message, final Long appointmentId, final String parentName, final Map<String, AppointmentSummaryStatus> checkList, final List<String> excludeTargets) {
+	    assertKunpoAppointmentList(message+": Assigned appointments for "+parentName, appointmentId, checkList, excludeTargets, serviceFacade.getAssignedAppointments(parentName, 1, 10));
+	}
 
-        final String s_haveResponded = message + " parent " + parentName + " must "+(isResponded?"":"not ")+"have "+appointmentId+" in responded appointments";
-        final AppointmentWithTarget o_haveResponded = getById(serviceFacade.getRespondedAppointments(parentName, 1, 10), appointmentId);
+	private void assertKunpoResponded(final String message, final Long appointmentId, final String parentName, final Map<String, AppointmentSummaryStatus> checkList, final List<String> excludeTargets) {
+	    assertKunpoAppointmentList(message+": Responded appointments for "+parentName, appointmentId, checkList, excludeTargets, serviceFacade.getRespondedAppointments(parentName, 1, 10));
+    }
 
-        final String s_haveOld = message + " parent " + parentName + " must "+(isOld?"":"not ")+"have "+appointmentId+" in old appointments";
-	    final AppointmentWithTarget o_haveOld = getById(serviceFacade.getOldAppointments(parentName, 1, 10), appointmentId);
+	private void assertKunpoOld(final String message, final Long appointmentId, final String parentName, final Map<String, AppointmentSummaryStatus> checkList, final List<String> excludeTargets) {
+	    assertKunpoAppointmentList(message+": Old appointments "+parentName, appointmentId, checkList, excludeTargets, serviceFacade.getOldAppointments(parentName, 1, 10));
+    }
 
-	    final String s_status = message + " parent " + parentName + " must have "+appointmentId+" with ";
+	private void assertKunpoAppointmentList(final String message, final Long appointmentId,
+	        final Map<String, AppointmentSummaryStatus> checkList, final List<String> excludeTargets, final List<AppointmentWithTarget> appointmentList) {
 
-	    if (isAssigned) {
-            assertNotNull(s_haveAssigned, o_haveAssigned);
-            assertEquals(s_status + assignedStatus  + " status in assigned appointments", assignedStatus, o_haveAssigned.getStatus());
-	    } else
-            assertNull(s_haveAssigned, o_haveAssigned);
+	    // Make sure we have appointments for appropriate targetPersons with appropriate statuses
+	    if (checkList != null) {
+	        for (final String targetPerson: checkList.keySet()) {
+	            AppointmentWithTarget appointment = null;
 
-	    if (isResponded) {
-            assertNotNull(s_haveResponded, o_haveResponded);
-            assertEquals(s_status + respondedStatus  + " status in responded appointments", respondedStatus, o_haveResponded.getStatus());
-	    } else
-            assertNull(s_haveResponded, o_haveResponded);
+	            for (AppointmentWithTarget a : appointmentList)
+	                if (a.getAppointmentId() == appointmentId && a.getTargetPerson().equals(targetPerson))
+	                    appointment = a;
 
-        if (isOld) {
-            assertNotNull(s_haveOld, o_haveOld);
-            assertEquals(s_status + oldStatus  + " status in old appointments", oldStatus, o_haveOld.getStatus());
-        } else
-            assertNull(s_haveOld, o_haveOld);
+                assertNotNull(message + ": Cannot find appointment in list for target person "+targetPerson, appointment);
+
+                final AppointmentSummaryStatus status = checkList.get(targetPerson);
+                assertEquals(message + ": Status must be "+status+" for target person "+targetPerson, status, appointment.getStatus());
+            }
+	    }
+
+	    // TODO: Check for exclusions
+	    // Make sure targetPersons are excluded from this list
+	    /*if (excludeTargets != null)
+	        for (final String targetPerson : excludeTargets)
+	            for (AppointmentWithTarget a : appointmentList)
+                    assertFalse(message + ": Must not contain "+targetPerson, a.getAppointmentId() == appointmentId && a.getTargetPerson().equals(targetPerson));*/
 	}
 
 	@Test
 	public void getAppointmentsWithRole() {
 		final String role1 = "role1";
 		final String role2 = "role2";
-		
+
 		// Spawn three users with different sets of roles
 		String employee1Uid = testUtil.getUserByUidWithRoles("testEmployee1WithRole1", Collections.singletonList(role1)).getUid();
         String employee2Uid = testUtil.getUserByUidWithRoles("testEmployee2WithRole2", Collections.singletonList(role2)).getUid();
         String employee3Uid = testUtil.getUserByUidWithRoles("testEmployee3WithRole2AndRole2", Arrays.asList(role1, role2)).getUid();
-		
+
         // Create appointments
 		final List<AppointmentForEditTO> createdAppointments = Arrays.asList(
 				createTestAppointmentWithRole(employee1Uid, role1, "new appointment 1", "appointment description"),
@@ -398,29 +626,29 @@ public class AppointmentServiceTest {
 				createTestAppointmentWithRole(employee2Uid, role2, "new appointment 4", "appointment description"),
 				createTestAppointmentWithRole(employee2Uid, role2, "new appointment 5", "appointment description"),
 				createTestAppointmentWithRole(employee2Uid, role2, "new appointment 6", "appointment description"));
-		
+
 		// Get default recipient
 		final AppointmentReceipientTO appointmentReceipient = createdAppointments.get(0).getReceipients().get(0);
 		final String targetPerson = appointmentReceipient.getTargetPerson();
-		
+
 		assertEquals("Mock data should contain 2 guardians", 2, appointmentReceipient.getReceipients().size());
-		
+
         final String guardian1 = appointmentReceipient.getReceipients().get(0);
         final String guardian2 = appointmentReceipient.getReceipients().get(1);
-        
+
         final AppointmentCriteria criteria = new AppointmentCriteria();
         criteria.setTargetPersonUid(targetPerson);
-        
+
         int oldAssignedRecipient;
         int newAssignedRecipient;
-                
+
         //
         // Created Appointments
         //
-        
+
         oldAssignedRecipient = serviceFacade.getTotalAssignedAppointments(guardian1);
-        
-        // Get current totals		
+
+        // Get current totals
 		final int oldCreatedEmp1 = serviceFacade.getTotalCreatedAppointments(employee1Uid, null);
 		final int oldCreatedEmpC1 = serviceFacade.getTotalCreatedAppointments(employee1Uid, criteria); // with criteria
 		final int oldCreatedEmpL1 = serviceFacade.getCreatedAppointments(employee1Uid, 1, 10, null).size(); // as list size
@@ -433,30 +661,30 @@ public class AppointmentServiceTest {
 		final int oldCreatedEmpC3 = serviceFacade.getTotalCreatedAppointments(employee3Uid, criteria); // with criteria
 		final int oldCreatedEmpL3 = serviceFacade.getCreatedAppointments(employee3Uid, 1, 10, null).size(); // as list size
 		final int oldCreatedEmpLC3 = serviceFacade.getCreatedAppointments(employee3Uid, 1, 10, criteria).size(); // as list size with criteria
-		
+
 		// Created appointments
 		List<AppointmentWithTarget> assignedAppointments;
-		
+
 		assignedAppointments = serviceFacade.getAssignedAppointments(guardian1);
-		
+
 		// Count individual role occurrences
 		int oldCountRole1 = 0;
 		int oldCountRole2 = 0;
-		
+
 		for (AppointmentWithTarget appointment : assignedAppointments ) {
 			if (appointment.getSenderUserInfo().getUid().equals(employee1Uid) &&
 				appointment.getSenderRole().equals(role1)) oldCountRole1++;
-			
+
 			if (appointment.getSenderUserInfo().getUid().equals(employee2Uid) &&
 					appointment.getSenderRole().equals(role2)) oldCountRole2++;
 		}
-		
+
 		// Store appointments
-		for (AppointmentForEditTO appointment : createdAppointments) 
+		for (AppointmentForEditTO appointment : createdAppointments)
 			serviceFacade.storeAppointment(appointment);
-		
+
 		newAssignedRecipient = serviceFacade.getTotalAssignedAppointments(guardian1);
-        
+
 		// Get new totals
 		final int newCreatedEmp1 = serviceFacade.getTotalCreatedAppointments(employee1Uid, null);
 		final int newCreatedEmpC1 = serviceFacade.getTotalCreatedAppointments(employee1Uid, criteria); // with criteria
@@ -470,13 +698,13 @@ public class AppointmentServiceTest {
 		final int newCreatedEmpC3 = serviceFacade.getTotalCreatedAppointments(employee3Uid, criteria); // with criteria
 		final int newCreatedEmpL3 = serviceFacade.getCreatedAppointments(employee3Uid, 1, 10, null).size(); // as list size
 		final int newCreatedEmpLC3 = serviceFacade.getCreatedAppointments(employee3Uid, 1, 10, criteria).size(); // as list size with criteria
-		
+
 		// Assert total values
 		assertEquals("There should be 6 assigned appointments for this recipient", 6, newAssignedRecipient - oldAssignedRecipient);
 		assertEquals("There should be 3 new appointments for employee1", 3, newCreatedEmp1 - oldCreatedEmp1);
 		assertEquals("There should be 3 new appointments for employee1 (with criteria)", 3, newCreatedEmpC1 - oldCreatedEmpC1);
 		assertEquals("There should be 3 new appointments for employee1 (as list size)", 3, newCreatedEmpL1 - oldCreatedEmpL1);
-		assertEquals("There should be 3 new appointments for employee1 (as list size with criteria)", 3, newCreatedEmpLC1 - oldCreatedEmpLC1);		
+		assertEquals("There should be 3 new appointments for employee1 (as list size with criteria)", 3, newCreatedEmpLC1 - oldCreatedEmpLC1);
 		assertEquals("There should be 3 new appointments for employee2", 3, newCreatedEmp2 - oldCreatedEmp2);
 		assertEquals("There should be 3 new appointments for employee2 (with criteria)", 3, newCreatedEmpC2 - oldCreatedEmpC2);
 		assertEquals("There should be 3 new appointments for employee2 (as list size)", 3, newCreatedEmpL2 - oldCreatedEmpL2);
@@ -485,30 +713,30 @@ public class AppointmentServiceTest {
 		assertEquals("There should be 6 new appointments for employee3 (with criteria)", 6, newCreatedEmpC3 - oldCreatedEmpC3);
 		assertEquals("There should be 6 new appointments for employee3 (as list size)", 6, newCreatedEmpL3 - oldCreatedEmpL3);
 		assertEquals("There should be 6 new appointments for employee3 (as list size with criteria)", 6, newCreatedEmpLC3 - oldCreatedEmpLC3);
-		
+
 		assignedAppointments = serviceFacade.getAssignedAppointments(guardian1);
-		
+
 		// Count individual role occurrences
 		int newCountRole1 = 0;
 		int newCountRole2 = 0;
-			
+
 		for (AppointmentWithTarget appointment : assignedAppointments ) {
 			if (appointment.getSenderUserInfo().getUid().equals(employee1Uid) &&
 				appointment.getSenderRole().equals(role1)) newCountRole1++;
-			
+
 			if (appointment.getSenderUserInfo().getUid().equals(employee2Uid) &&
 				appointment.getSenderRole().equals(role2)) newCountRole2++;
 		}
-		
+
 		assertEquals("There should be 3 non-processed appointments with role 'role1'", 3, newCountRole1 - oldCountRole1);
 		assertEquals("There should be 3 non-processed appointments with role 'role2'", 3, newCountRole2 - oldCountRole2);
-		
+
 		//
 		// Processed appointments
 		//
-		
+
 		oldAssignedRecipient = serviceFacade.getTotalAssignedAppointments(guardian1);
-		
+
 		// Get current totals
 		final int oldProcessedEmp1 = serviceFacade.getTotalProcessedAppointments(employee1Uid, null);
 		final int oldProcessedEmpC1 = serviceFacade.getTotalProcessedAppointments(employee1Uid, criteria); // with criteria
@@ -522,35 +750,35 @@ public class AppointmentServiceTest {
 		final int oldProcessedEmpC3 = serviceFacade.getTotalProcessedAppointments(employee3Uid, criteria); // with criteria
 		final int oldProcessedEmpL3 = serviceFacade.getProcessedAppointments(employee3Uid, 1, 10, null).size(); // as list size
 		final int oldProcessedEmpLC3 = serviceFacade.getProcessedAppointments(employee3Uid, 1, 10, null).size(); // as list size with criteria
-		
+
 		assignedAppointments = serviceFacade.getAssignedAppointments(guardian1);
-		
+
 		// Count individual role occurrences
 		oldCountRole1 = 0;
 		oldCountRole2 = 0;
-		
+
 		for (AppointmentWithTarget appointment : assignedAppointments ) {
 			if (appointment.getSenderUserInfo().getUid().equals(employee1Uid) &&
 				appointment.getSenderRole().equals(role1)) oldCountRole1++;
-			
+
 			if (appointment.getSenderUserInfo().getUid().equals(employee2Uid) &&
 					appointment.getSenderRole().equals(role2)) oldCountRole2++;
 		}
-		
+
 		// Mark 2 appointments from each role as approved
-		
+
 		Long approveId;
-		
+
 		approveId = serviceFacade.getCreatedAppointments(employee1Uid, 1, 1, null).get(0).getAppointmentId();
 		serviceFacade.approveAppointment(targetPerson, guardian1, approveId, 1, "approved");
 		//serviceFacade.approveAppointment(targetPerson, guardian2, approveId, 1, "approved");
-		
+
 		approveId = serviceFacade.getCreatedAppointments(employee2Uid, 1, 1, null).get(0).getAppointmentId();
 		serviceFacade.approveAppointment(targetPerson, guardian1, approveId, 1, "approved");
 		//serviceFacade.approveAppointment(targetPerson, guardian2, approveId, 1, "approved");
-		
+
 		newAssignedRecipient = serviceFacade.getTotalAssignedAppointments(guardian1);
-		
+
 		// Get new totals
 		final int newProcessedEmp1 = serviceFacade.getTotalProcessedAppointments(employee1Uid, null);
 		final int newProcessedEmpC1 = serviceFacade.getTotalProcessedAppointments(employee1Uid, criteria); // with criteria
@@ -564,13 +792,13 @@ public class AppointmentServiceTest {
 		final int newProcessedEmpC3 = serviceFacade.getTotalProcessedAppointments(employee3Uid, criteria); // with criteria
 		final int newProcessedEmpL3 = serviceFacade.getProcessedAppointments(employee3Uid, 1, 10, null).size(); // as list size
 		final int newProcessedEmpLC3 = serviceFacade.getProcessedAppointments(employee3Uid, 1, 10, null).size(); // as list size with criteria
-		
+
 		// Assert total values
 		assertEquals("There should be 4 assigned appointments for this recipient", 4, 6 - Math.abs(newAssignedRecipient - oldAssignedRecipient));
 		assertEquals("There should be 2 non-processed appointments for employee1", 2, 3 - Math.abs(newProcessedEmp1 - oldProcessedEmp1));
 		assertEquals("There should be 2 non-processed appointments for employee1 (with criteria)", 2, 3 - Math.abs(newProcessedEmpC1 - oldProcessedEmpC1));
 		assertEquals("There should be 2 non-processed appointments for employee1 (as list size)", 2, 3 - Math.abs(newProcessedEmpL1 - oldProcessedEmpL1));
-		assertEquals("There should be 2 non-processed appointments for employee1 (as list size with criteria)", 2, 3 - Math.abs(newProcessedEmpLC1 - oldProcessedEmpLC1));		
+		assertEquals("There should be 2 non-processed appointments for employee1 (as list size with criteria)", 2, 3 - Math.abs(newProcessedEmpLC1 - oldProcessedEmpLC1));
 		assertEquals("There should be 2 non-processed appointments for employee2", 2, 3 - Math.abs(newProcessedEmp2 - oldProcessedEmp2));
 		assertEquals("There should be 2 non-processed appointments for employee2 (with criteria)", 2, 3 - Math.abs(newProcessedEmpC2 - oldProcessedEmpC2));
 		assertEquals("There should be 2 non-processed appointments for employee2 (as list size)", 2, 3 - Math.abs(newProcessedEmpL2 - oldProcessedEmpL2));
@@ -581,30 +809,30 @@ public class AppointmentServiceTest {
 		assertEquals("There should be 4 non-processed appointments for employee3 (as list size with criteria)", 4, 6 - Math.abs(newProcessedEmpLC3 - oldProcessedEmpLC3));
 
 		assignedAppointments = serviceFacade.getAssignedAppointments(guardian1);
-		
+
 		// Count individual role occurrences
 		newCountRole1 = 0;
 		newCountRole2 = 0;
-			
+
 		for (AppointmentWithTarget appointment : assignedAppointments ) {
 			if (appointment.getSenderUserInfo().getUid().equals(employee1Uid) &&
 				appointment.getSenderRole().equals(role1)) newCountRole1++;
-			
+
 			if (appointment.getSenderUserInfo().getUid().equals(employee2Uid) &&
 				appointment.getSenderRole().equals(role2)) newCountRole2++;
 		}
-		
+
 		assertEquals("There should be 2 non-processed appointments with role 'role1'", 2, 3 - Math.abs(newCountRole1 - oldCountRole1));
 		assertEquals("There should be 2 non-processed appointments with role 'role2'", 2, 3 - Math.abs(newCountRole2 - oldCountRole2));
 	}
-	
+
 	@Test
 	public void cancelAppointment() {
         final AppointmentForEditTO newAppointment = createTestAppointment("new appointment for cancel", "appointment description", 1);
 
         final Long appointmentId = serviceFacade.storeAppointment(newAppointment);
         serviceFacade.cancelWholeAppointment(appointmentId, "cancelled");
-        
+
         assertNull(getById(serviceFacade.getCreatedAppointments(newAppointment.getSender(), 1, 5, null), appointmentId));
         assertNotNull(getById(serviceFacade.getProcessedAppointments(newAppointment.getSender(), 1, 5, null), appointmentId));
 	}
@@ -612,7 +840,7 @@ public class AppointmentServiceTest {
     private String getKunpoName(final String targetPersonForDecline) {
         return testUtil.getUserByUid(targetPersonForDecline).getCitizenPortalName();
     }
-	
+
 	@Test
 	public void countTotals() {
         final AppointmentForEditTO newAppointment = createTestAppointment("new appointment for counts", "appointment description", 3);
@@ -621,21 +849,21 @@ public class AppointmentServiceTest {
         final String uniqReceipient = appointmentReceipient.getReceipients().get(1);
         final String targetPerson = appointmentReceipient.getTargetPerson();
         final int oldAssignedTotal = serviceFacade.getTotalAssignedAppointments(uniqReceipient);
-        
+
         final Long appointmentId = serviceFacade.storeAppointment(newAppointment);
-        
+
         assertEquals(oldAssignedTotal + 1, serviceFacade.getTotalAssignedAppointments(uniqReceipient));
 
         serviceFacade.approveAppointment(targetPerson, uniqReceipient, appointmentId, 1, "approved");
         assertEquals(oldAssignedTotal, serviceFacade.getTotalAssignedAppointments(uniqReceipient));
 	}
-	
+
 	@Test
 	public void testSkipApprovedSlots() {
 	    // create appointment
         final AppointmentForEditTO newAppointment = createTestAppointment("new appointment for counts", "appointment description", 1);
         final Long appointmentId = serviceFacade.storeAppointment(newAppointment);
-	    
+
         final AppointmentReceipientTO appointmentReceipient = newAppointment.getReceipients().get(0);
         final String receipient = appointmentReceipient.getReceipients().get(0);
         final String targetPerson = appointmentReceipient.getTargetPerson();
@@ -659,7 +887,7 @@ public class AppointmentServiceTest {
     public void testTimeOffset() {
         final AppointmentForEditTO newAppointment = createTestAppointment("new appointment", "appointment description", 1);
         final XMLGregorianCalendar startTime = newAppointment.getSlots().get(0).getStartTime();
-        
+
         assertEquals(10, startTime.getHour());
         assertEquals(0, startTime.getMinute());
 
@@ -667,18 +895,18 @@ public class AppointmentServiceTest {
         final String receipient = appointmentReceipient.getReceipients().get(0);
         final String targetPerson = appointmentReceipient.getTargetPerson();
         final Long appointmentId = serviceFacade.storeAppointment(newAppointment);
-        
+
         List<AppointmentWithTarget> appointments = serviceFacade.getAssignedAppointments(receipient);
         assertNotNull(getById(appointments, appointmentId));
 
         final AppointmentForReplyTO forReply = serviceFacade.getAppointmentForReply(appointmentId, targetPerson);
         final XMLGregorianCalendar forReplyStartTime = forReply.getSlots().get(0).getStartTime();
-        
+
         assertEquals(startTime.getHour(), forReplyStartTime.getHour());
         assertEquals(startTime.getMinute(), forReplyStartTime.getMinute());
         assertEquals("timezone offset", 0, forReplyStartTime.getTimezone());
     }
-    
+
 	private <AS extends AppointmentSummary> AS getById(final List<AS> appointments, final Long appointmentId) {
 		for (final AS appointment : appointments) {
 			if (appointment.getAppointmentId() == appointmentId) {
@@ -687,7 +915,7 @@ public class AppointmentServiceTest {
 		}
 		return null;
 	}
-	
+
 	private AppointmentForEditTO createTestAppointmentWithRole(final String sender, final String senderRole,
 																final String testSubject, final String description)
 	{
@@ -696,16 +924,16 @@ public class AppointmentServiceTest {
 		appointment.setDescription(description);
 		appointment.setSender(sender);
 		appointment.setSenderRole(senderRole);
-		
+
 		final AppointmentReceipientTO receipientTO = new AppointmentReceipientTO();
 		receipientTO.setTargetPerson("testAppReceiver1");
 		receipientTO.setReceipients(Arrays.asList("testGuardian1", "testGuardian2"));
-        
+
 		appointment.setReceipients(Arrays.asList(receipientTO));
 		appointment.setSlots(createTestSlots(2));
 		return appointment;
 	}
-	
+
 	private AppointmentForEditTO createTestAppointment(final String testSubject, final String description, int numberOfSlots) {
 		final AppointmentForEditTO appointment = new AppointmentForEditTO();
 		appointment.setSubject(testSubject);
@@ -725,7 +953,7 @@ public class AppointmentServiceTest {
 
 	private List<AppointmentSlotTO> createTestSlots(int numberOfSlots) {
 		final List<AppointmentSlotTO> slots = new ArrayList<AppointmentSlotTO>();
-		
+
 		final GregorianCalendar calendar = (GregorianCalendar)GregorianCalendar.getInstance();
 		calendar.set(Calendar.HOUR_OF_DAY, 9);
 		calendar.set(Calendar.MINUTE, 30);
@@ -748,7 +976,7 @@ public class AppointmentServiceTest {
 			slotTO.setComment("comment" + i);
 			slots.add(slotTO);
 		}
-		
+
 		return slots;
 	}
 }
