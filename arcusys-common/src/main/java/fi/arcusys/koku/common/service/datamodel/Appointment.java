@@ -18,7 +18,7 @@ import javax.persistence.PrePersist;
 
 /**
  * Entity for representing appointment request in AV functionality.
- * 
+ *
  * @author Dmitry Kudinov (dmitry.kudinov@arcusys.fi)
  * Jul 21, 2011
  */
@@ -54,7 +54,7 @@ import javax.persistence.PrePersist;
             " WHERE (ap.status = :status_cancelled OR EXISTS ( SELECT ar FROM AppointmentResponse ar WHERE ar.appointment = ap ))" +
             "    AND ( :sender = ap.sender OR ap.senderRole in ( :userRoles ) )"),
 
-// Criteria search            
+// Criteria search
     @NamedQuery(name = "findProcessedAppointmentsBySenderAndTarget", query = "SELECT DISTINCT ap FROM Appointment ap JOIN ap.recipients AS tp " +
             " WHERE (ap.status = :status_cancelled OR EXISTS ( SELECT ar FROM AppointmentResponse ar WHERE ar.appointment = ap ))" +
             "    AND :sender = ap.sender " +
@@ -73,13 +73,13 @@ import javax.persistence.PrePersist;
             " WHERE (ap.status = :status_cancelled OR EXISTS ( SELECT ar FROM AppointmentResponse ar WHERE ar.appointment = ap ))" +
             "    AND ( :sender = ap.sender OR ap.senderRole in ( :userRoles ) ) " +
             "    AND tp.targetUser.uid = :targetUserUid "),
-                    
+
     @NamedQuery(name = "findCreatedAppointmentsBySender", query = "SELECT DISTINCT ap FROM Appointment ap " +
             " WHERE ap.status <> :status_cancelled AND NOT EXISTS ( SELECT ar FROM AppointmentResponse ar WHERE ar.appointment = ap )" +
             "    AND :sender = ap.sender  ORDER BY ap.id DESC"),
     @NamedQuery(name = "findCreatedAppointmentsBySenderAndRoles", query = "SELECT DISTINCT ap FROM Appointment ap " +
             " WHERE ap.status <> :status_cancelled AND NOT EXISTS ( SELECT ar FROM AppointmentResponse ar WHERE ar.appointment = ap )" +
-            "    AND ( :sender = ap.sender OR ap.senderRole in ( :userRoles ) ) ORDER BY ap.id DESC"),        
+            "    AND ( :sender = ap.sender OR ap.senderRole in ( :userRoles ) ) ORDER BY ap.id DESC"),
     @NamedQuery(name = "countCreatedAppointmentsBySender", query = "SELECT COUNT(DISTINCT ap) FROM Appointment ap " +
             " WHERE ap.status <> :status_cancelled AND NOT EXISTS ( SELECT ar FROM AppointmentResponse ar WHERE ar.appointment = ap )" +
             "    AND :sender = ap.sender"),
@@ -87,7 +87,7 @@ import javax.persistence.PrePersist;
             " WHERE ap.status <> :status_cancelled AND NOT EXISTS ( SELECT ar FROM AppointmentResponse ar WHERE ar.appointment = ap )" +
             "    AND ( :sender = ap.sender OR ap.senderRole in ( :userRoles ) )"),
 
-// Criteria search            
+// Criteria search
     @NamedQuery(name = "findCreatedAppointmentsBySenderAndTarget", query = "SELECT DISTINCT ap FROM Appointment ap JOIN ap.recipients AS tp " +
             " WHERE ap.status <> :status_cancelled AND NOT EXISTS ( SELECT ar FROM AppointmentResponse ar WHERE ar.appointment = ap )" +
             "    AND :sender = ap.sender " +
@@ -105,17 +105,17 @@ import javax.persistence.PrePersist;
     @NamedQuery(name = "countCreatedAppointmentsBySenderAndRolesAndTarget", query = "SELECT COUNT(DISTINCT ap) FROM Appointment ap JOIN ap.recipients AS tp " +
             " WHERE ap.status <> :status_cancelled AND NOT EXISTS ( SELECT ar FROM AppointmentResponse ar WHERE ar.appointment = ap )" +
             "    AND ( :sender = ap.sender OR ap.senderRole in ( :userRoles ) ) " +
-            "    AND tp.targetUser.uid = :targetUserUid "),        
-    
-    @NamedQuery(name = "findAppointmentResponsesByUser", query = "SELECT DISTINCT ar FROM AppointmentResponse ar " +
-            " WHERE ar.replier = :user " +
+            "    AND tp.targetUser.uid = :targetUserUid "),
+
+    @NamedQuery(name = "findAppointmentResponsesByUser", query = "SELECT DISTINCT ar FROM AppointmentResponse ar LEFT OUTER JOIN ar.target as tp " +
+            " WHERE (ar.replier = :user OR :user MEMBER OF tp.guardians) " +
             " AND ar.status = :reply_approved AND ar.appointment.status IN (:appointment_approved)" +
             " ORDER BY ar.id DESC"),
     @NamedQuery(name = "countAppointmentResponsesByUser", query = "SELECT COUNT(DISTINCT ar) FROM AppointmentResponse ar " +
             " WHERE ar.replier = :user " +
             " AND ar.status = :reply_approved AND ar.appointment.status IN (:appointment_approved)"),
-    @NamedQuery(name = "findOldAppointmentResponsesByUser", query = "SELECT DISTINCT ar FROM AppointmentResponse ar " +
-            " WHERE ar.replier = :user " +
+    @NamedQuery(name = "findOldAppointmentResponsesByUser", query = "SELECT DISTINCT ar FROM AppointmentResponse ar LEFT OUTER JOIN ar.target as tp " +
+            " WHERE (ar.replier = :user OR :user MEMBER OF tp.guardians) " +
             " AND NOT (ar.status = :reply_approved AND ar.appointment.status IN (:appointment_approved))" +
             " ORDER BY ar.id DESC"),
     @NamedQuery(name = "countOldAppointmentResponsesByUser", query = "SELECT COUNT(DISTINCT ar) FROM AppointmentResponse ar " +
@@ -126,14 +126,14 @@ public class Appointment extends AbstractEntity {
 
 	@ManyToOne
 	private User sender;
-	
+
 	private String senderRole;
-	
+
 	@ManyToMany(fetch = FetchType.EAGER)
 	private Set<TargetPerson> recipients;
-	
+
 	private String subject;
-	
+
 	@Enumerated(EnumType.STRING)
 	private AppointmentStatus status;
 
@@ -142,12 +142,12 @@ public class Appointment extends AbstractEntity {
 
 	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
 	private Set<AppointmentSlot> slots;
-	
+
 	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, mappedBy = "appointment")
 	private Set<AppointmentResponse> responses;
-	
+
 	private String cancelComment;
-	
+
 	/**
      * @return the cancelComment
      */
@@ -175,7 +175,7 @@ public class Appointment extends AbstractEntity {
 	public void setSender(User sender) {
 		this.sender = sender;
 	}
-	
+
 	/**
 	 * @return the senderRole
 	 */
@@ -265,7 +265,7 @@ public class Appointment extends AbstractEntity {
 	public void setSlots(Set<AppointmentSlot> slots) {
 		this.slots = slots;
 	}
-	
+
 	/**
      * @return the responses
      */
@@ -284,7 +284,7 @@ public class Appointment extends AbstractEntity {
     }
 
     /**
-	 * 
+	 *
 	 */
 	@Override
 	@PrePersist
@@ -294,7 +294,7 @@ public class Appointment extends AbstractEntity {
 			this.status = AppointmentStatus.Created;
 		}
 	}
-	
+
 	public AppointmentSlot getSlotByNumber(final int slotNumber) {
 		for (final AppointmentSlot slot : this.getSlots()) {
 			if (slot.getSlotNumber() == slotNumber) {

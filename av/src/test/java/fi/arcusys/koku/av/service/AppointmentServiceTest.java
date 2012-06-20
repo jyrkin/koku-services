@@ -176,14 +176,12 @@ public class AppointmentServiceTest {
                     put(targetPerson, AppointmentSummaryStatus.Approved);
                 }}, null);
 
-        // TODO: Second guardian must see the response in the appropriate list
-        /*
         assertKunpoAppointment(msg_afterApproval, appointmentId, secondParent, secondParentKids,
                 null,
                 new HashMap<String, AppointmentSummaryStatus>() {{
                     put(targetPerson, AppointmentSummaryStatus.Approved);
                 }}, null);
-        */
+
         assertKunpoAppointment(msg_afterApproval, appointmentId, firstParentForDecline, firstParentForDeclineKids,
                 new HashMap<String, AppointmentSummaryStatus>() {{
                     put(targetPersonForDecline, AppointmentSummaryStatus.Created);
@@ -237,9 +235,11 @@ public class AppointmentServiceTest {
         /*
         assertKunpoAppointment(msg_afterSlotRemoval, appointmentId, secondParent, secondParentKids,
                 new HashMap<String, AppointmentSummaryStatus>() {{
-                    put(targetPerson, AppointmentSummaryStatus.Invalidated);
+                    put(targetPerson, AppointmentSummaryStatus.Created);
+                    //put(targetPerson, AppointmentSummaryStatus.Invalidated);
                 }}, null, null);
         */
+
         assertKunpoAppointment(msg_afterSlotRemoval, appointmentId, firstParentForDecline, firstParentForDeclineKids,
                 new HashMap<String, AppointmentSummaryStatus>() {{
                     put(targetPerson, AppointmentSummaryStatus.Created);
@@ -252,12 +252,6 @@ public class AppointmentServiceTest {
                     put(targetPersonForDecline, AppointmentSummaryStatus.Created);
                 }}, null, null);
 
-
-        /*assertKunpoAppointment(msg_afterSlotRemoval, firstParent, appointmentId, true, true, false, AppointmentSummaryStatus.Created, AppointmentSummaryStatus.Invalidated, null); // 1 Assigned 1 Responded
-        // TODO: Second guardian must see the response in the appropriate list
-        //assertKunpoAppointment(slotRemovalCheckMessage, secondParent, appointmentId, false, true, false, AppointmentSummaryStatus.Invalidated); // 1 Responded
-        assertKunpoAppointment(msg_afterSlotRemoval, firstParentForDecline, appointmentId, true, true, false, AppointmentSummaryStatus.Created, AppointmentSummaryStatus.Invalidated, null); // 1 Assigned 1 Responded
-        assertKunpoAppointment(msg_afterSlotRemoval, secondParentForDecline, appointmentId, true, false, false, AppointmentSummaryStatus.Created);  // 1 Assigned*/
         assertKunpoAppointmentDetails(msg_afterSlotRemoval, appointmentId, targetPerson, AppointmentSummaryStatus.Invalidated);
         assertLooraAppointment(msg_afterSlotRemoval, sender, appointmentId, false, true, AppointmentSummaryStatus.InProgress);
         assertLooraAppointmentDetails(msg_afterSlotRemoval, appointmentId, AppointmentSummaryStatus.InProgress);
@@ -291,14 +285,12 @@ public class AppointmentServiceTest {
                     put(targetPerson, AppointmentSummaryStatus.Approved);
                 }}, null);
 
-        // TODO: Second guardian must see the response in the appropriate list
-        /*
         assertKunpoAppointment(msg_afterSlotReapproval, appointmentId, secondParent, secondParentKids,
                 null,
                 new HashMap<String, AppointmentSummaryStatus>() {{
                     put(targetPerson, AppointmentSummaryStatus.Approved);
                 }}, null);
-        */
+
         assertKunpoAppointment(msg_afterSlotReapproval, appointmentId, firstParentForDecline, firstParentForDeclineKids,
                 new HashMap<String, AppointmentSummaryStatus>() {{
                     put(targetPersonForDecline, AppointmentSummaryStatus.Created);
@@ -338,14 +330,12 @@ public class AppointmentServiceTest {
                     put(targetPersonForDecline, AppointmentSummaryStatus.Declined);
                 }});
 
-        // TODO: Second guardian must see the response in the appropriate list
-        /*
         assertKunpoAppointment(msg_afterDecline, appointmentId, secondParent, secondParentKids,
                 null,
                 new HashMap<String, AppointmentSummaryStatus>() {{
                     put(targetPerson, AppointmentSummaryStatus.Approved);
                 }}, null);
-        */
+
         assertKunpoAppointment(msg_afterDecline, appointmentId, firstParentForDecline, firstParentForDeclineKids,
                 null,
                 new HashMap<String, AppointmentSummaryStatus>() {{
@@ -355,15 +345,12 @@ public class AppointmentServiceTest {
                     put(targetPersonForDecline, AppointmentSummaryStatus.Declined);
                 }});
 
-        // TODO: Second guardian must see the response in the appropriate list
-        /*
         assertKunpoAppointment(msg_afterDecline, appointmentId, secondParentForDecline, secondParentForDeclineKids,
                 null,
                 null,
                 new HashMap<String, AppointmentSummaryStatus>() {{
                     put(targetPersonForDecline, AppointmentSummaryStatus.Declined);
                 }});
-        */
 
         assertKunpoAppointmentDetails(msg_afterDecline, appointmentId, targetPerson, AppointmentSummaryStatus.Approved);
         assertKunpoAppointmentDetails(msg_afterDecline, appointmentId, targetPersonForDecline, AppointmentSummaryStatus.Declined);
@@ -394,15 +381,13 @@ public class AppointmentServiceTest {
                 }},
                 null);
 
-        // TODO: Second guardian must see the response in the appropriate list
-        /*
         assertKunpoAppointment(msg_afterReconsider, appointmentId, secondParent, secondParentKids,
                 null,
                 new HashMap<String, AppointmentSummaryStatus>() {{
                     put(targetPerson, AppointmentSummaryStatus.Approved);
                 }},
                 null);
-        */
+
         assertKunpoAppointment(msg_afterReconsider, appointmentId, firstParentForDecline, firstParentForDeclineKids,
                 null,
                 new HashMap<String, AppointmentSummaryStatus>() {{
@@ -411,15 +396,12 @@ public class AppointmentServiceTest {
                 }},
                 null);
 
-        // TODO: Second guardian must see the response in the appropriate list
-        /*
         assertKunpoAppointment(msg_afterReconsider, appointmentId, secondParentForDecline, secondParentForDeclineKids,
                 null,
                 new HashMap<String, AppointmentSummaryStatus>() {{
                     put(targetPersonForDecline, AppointmentSummaryStatus.Approved);
                 }},
                 null);
-        */
 
         assertKunpoAppointmentDetails(msg_afterReconsider, appointmentId, targetPerson, AppointmentSummaryStatus.Approved);
         assertKunpoAppointmentDetails(msg_afterReconsider, appointmentId, targetPersonForDecline, AppointmentSummaryStatus.Approved);
@@ -443,15 +425,13 @@ public class AppointmentServiceTest {
                     put(targetPersonForDecline, AppointmentSummaryStatus.Cancelled);
                 }});
 
-        // TODO: Second guardian must see the response in the appropriate list
-        /*
         assertKunpoAppointment(msg_afterCancel, appointmentId, secondParent, secondParentKids,
                 null,
                 null,
                 new HashMap<String, AppointmentSummaryStatus>() {{
                     put(targetPerson, AppointmentSummaryStatus.Cancelled);
                 }});
-        */
+
         assertKunpoAppointment(msg_afterCancel, appointmentId, firstParentForDecline, firstParentForDeclineKids,
                 null,
                 null,
@@ -460,15 +440,12 @@ public class AppointmentServiceTest {
                     put(targetPersonForDecline, AppointmentSummaryStatus.Cancelled);
                 }});
 
-        // TODO: Second guardian must see the response in the appropriate list
-        /*
         assertKunpoAppointment(msg_afterCancel, appointmentId, secondParentForDecline, secondParentForDeclineKids,
                 null,
                 null,
                 new HashMap<String, AppointmentSummaryStatus>() {{
                     put(targetPersonForDecline, AppointmentSummaryStatus.Cancelled);
                 }});
-        */
 
         assertKunpoAppointmentDetails(msg_afterCancel, appointmentId, targetPerson, AppointmentSummaryStatus.Cancelled);
         assertKunpoAppointmentDetails(msg_afterCancel, appointmentId, targetPersonForDecline, AppointmentSummaryStatus.Cancelled);
