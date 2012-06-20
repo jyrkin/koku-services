@@ -16,31 +16,31 @@ import fi.arcusys.koku.common.service.UserDAO;
 
 /**
  * Implementation of external SOA/Web Service interface for providing user/group/role related operations to other parts of the system (UI, Intalio Forms etc.)
- * 
+ *
  * @author Dmitry Kudinov (dmitry.kudinov@arcusys.fi)
  * Oct 10, 2011
  */
 @Stateless
-@WebService(serviceName = "UsersAndGroupsService", portName = "UsersAndGroupsServicePort", 
+@WebService(serviceName = "UsersAndGroupsService", portName = "UsersAndGroupsServicePort",
       endpointInterface = "fi.arcusys.koku.common.soa.UsersAndGroupsService",
       targetNamespace = "http://soa.common.koku.arcusys.fi/")
 public class UsersAndGroupsServiceImpl implements UsersAndGroupsService {
-    
+
     @EJB
     private PyhServiceDAO pyhServiceDao;
-    
+
     @EJB
     private UserDAO userDao;
-    
+
     @EJB
     private CustomerServiceDAO customerDao;
-    
+
     @EJB
     private GroupsDAO groupsDao;
-    
+
     @EJB
     private RolesDAO rolesDao;
-    
+
     /**
      * @param username
      * @return
@@ -61,7 +61,7 @@ public class UsersAndGroupsServiceImpl implements UsersAndGroupsService {
         } else {
             return user.getUid();
         }
-        
+
     }
 
     /**
@@ -75,7 +75,7 @@ public class UsersAndGroupsServiceImpl implements UsersAndGroupsService {
 
     /**
      * @param username
-     * @return
+     * @return userUid or null if not found
      */
     @Override
     public String getUserUidByLooraName(String username) {
@@ -88,7 +88,7 @@ public class UsersAndGroupsServiceImpl implements UsersAndGroupsService {
             if (ssnByLooraName != null && !ssnByLooraName.isEmpty()) {
                 return userDao.getOrCreateUserByEmployeePortalName(username).getUid();
             } else {
-                throw new IllegalArgumentException("Loora user '" + username + "' not found in ldap and DB.");
+                return null;
             }
         } else {
             return user.getUid();
@@ -269,7 +269,7 @@ public class UsersAndGroupsServiceImpl implements UsersAndGroupsService {
         if (ssn == null || ssn.isEmpty()) {
             return customerDao.getKunpoUserInfoBySsn(customerDao.getSsnByKunpoName(kunpoUsername));
         }
-        
+
         return customerDao.getKunpoUserInfoByPortalNameAndSsn(kunpoUsername, ssn);
     }
 
@@ -283,7 +283,7 @@ public class UsersAndGroupsServiceImpl implements UsersAndGroupsService {
         if (ssn == null || ssn.isEmpty()) {
             return customerDao.getEmployeeUserInfoBySsn(customerDao.getSsnByLooraName(looraUsername));
         }
-        
+
         return customerDao.getEmployeeUserInfoByPortalNameAndSsn(looraUsername, ssn);
     }
 
