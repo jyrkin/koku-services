@@ -81,7 +81,7 @@ import fi.koku.settings.KoKuPropertiesUtil;
 
 /**
  * Service facade implementation for all business methods in KV functional area.
- * 
+ *
  * @author Dmitry Kudinov (dmitry.kudinov@arcusys.fi)
  * May 18, 2011
  */
@@ -89,10 +89,10 @@ import fi.koku.settings.KoKuPropertiesUtil;
 @Local({MessageServiceFacade.class, KokuSystemNotificationsService.class, ScheduledTaskExecutor.class})
 public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSystemNotificationsService, ScheduledTaskExecutor {
 	private final static Logger logger = LoggerFactory.getLogger(MessageServiceFacadeImpl.class);
-	
+
 	public static final String SYSTEM_USER_NAME_FOR_NOTIFICATIONS = "KohtiKumppanuutta";
     public static final UserInfo SYSTEM_USER_INFO = new UserInfo(SYSTEM_USER_NAME_FOR_NOTIFICATIONS, SYSTEM_USER_NAME_FOR_NOTIFICATIONS);
-	
+
 	@EJB
 	private MessageDAO messageDao;
 
@@ -101,10 +101,10 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
 
 	@EJB
 	private UserDAO userDao;
-	
+
 	@EJB
 	private MessageFolderDAO folderDAO;
-	
+
 	@EJB
 	private RequestDAO requestDAO;
 
@@ -116,13 +116,13 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
 
     @EJB
     private UsersAndGroupsService usersService;
-    
+
     @EJB
     private CustomerServiceDAO customerDao;
-    
+
     @EJB
     private EmailServiceDAO emailDao;
-    
+
     private String notificationTemplate = "{2}";
 
     private static final String REQUEST_REPLIED_BODY = "request.replied.body";
@@ -136,13 +136,13 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
     private static final String EMAIL_NEW_REQUEST_RECEIVED_SUBJECT = "email.new.request.received.subject";
     private static final String EMAIL_NEW_MESSAGE_RECEIVED_BODY = "email.new.message.received.body";
     private static final String EMAIL_NEW_MESSAGE_RECEIVED_SUBJECT = "email.new.message.received.subject";
-    
+
     private final static String EMAIL_LINKS_MESSAGE_INBOX_PATH = "navigationPortlet.portlet.absolute.path";
     private final static String EMAIL_LINKS_NEW_REQUEST_PATH = "navigationPortlet.link.requests.recievedRequests";
-    
+
     private String notificationsBundleName = "kv_messages.msg";
     private Properties messageTemplates;
-    
+
     @PostConstruct
     public void init() {
         messageTemplates = new Properties();
@@ -156,7 +156,7 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
         } catch (IOException e) {
             throw new EJBException("Incorrect configuration, failed to load message templates:", e);
         }
-    } 
+    }
 
     protected String getValueFromBundle(final String bundleKey) {
         return messageTemplates.getProperty(bundleKey);
@@ -164,15 +164,22 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
 
     @Override
     public Long sendNewMessage(final String fromUserUid, final String role, final String subject, final List<String> receipientUids, final String content,
-            final String originalContent, final boolean sendToFamilyMembers, final boolean sendToGroupSite) {
+            final String originalContent, final boolean sendToFamilyMembers, final boolean sendToGroupSite, final Long replyMessageId) {
 		final User fromUser = getUserByUid(fromUserUid);
-		
+		if (replyMessageId != null) {
+			MessageRef replyMessageRef = messageRefDao.getById(replyMessageId);
+			if (replyMessageRef != null) {
+				Message replyMessage = replyMessageRef.getMessage();
+				replyMessage.setReplied(true);
+				messageDao.update(replyMessage);
+			}
+		}
         final MessageRef storedMessage = createNewMessageInOutbox(subject, receipientUids, content, originalContent, fromUser, role, sendToFamilyMembers, sendToGroupSite);
         final String emailSubject = getValueFromBundle(EMAIL_NEW_MESSAGE_RECEIVED_SUBJECT);
-        final String emailContent = MessageFormat.format(getValueFromBundle(EMAIL_NEW_MESSAGE_RECEIVED_BODY), 
+        final String emailContent = MessageFormat.format(getValueFromBundle(EMAIL_NEW_MESSAGE_RECEIVED_BODY),
                 new Object[] {KoKuPropertiesUtil.get(EMAIL_LINKS_MESSAGE_INBOX_PATH)});
         sendEmailNotifications(getUsersByUids(receipientUids), storedMessage, emailSubject, emailContent);
-        
+
 		return storedMessage.getId();
 	}
 
@@ -187,9 +194,9 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
             final User fromUser, final String roleUid, boolean sendToFamilyMembers, boolean sendToGroupSite) {
         Message msg = new Message();
 		fillMessage(msg, fromUser, roleUid, subject, receipientUids, content, originalContent, sendToFamilyMembers, sendToGroupSite);
-		
+
 		msg = messageDao.create(msg);
-		
+
 		final MessageRef storedMessage = folderDAO.storeMessage(fromUser, FolderType.Outbox, msg);
 		storedMessage.setRead(true);
 		messageRefDao.update(storedMessage);
@@ -222,7 +229,7 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
 		}
         return receipients;
     }
-	
+
 	private User getUserByUid(final String userUid) {
 		return userDao.getOrCreateUser(userUid);
 	}
@@ -232,9 +239,9 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
 	 * @return
 	 */
 	public List<MessageTO> getSentMessages(final String userUid) {
-		final List<MessageRef> messages = folderDAO.getMessagesByUserWithRoleAndFolderType(getUserByUid(userUid), getUserRoles(userUid), FolderType.Outbox, 
+		final List<MessageRef> messages = folderDAO.getMessagesByUserWithRoleAndFolderType(getUserByUid(userUid), getUserRoles(userUid), FolderType.Outbox,
 				null, FIRST_RESULT_NUMBER, FIRST_RESULT_NUMBER + MAX_RESULTS_COUNT - 1);
-		
+
 		final List<MessageTO> result = new ArrayList<MessageTO>();
 		for (final MessageRef messageRef : messages) {
 			final MessageTO msg = new MessageTO();
@@ -255,7 +262,8 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
 		msg.setCreationDate(CalendarUtil.getXmlGregorianCalendar(message.getCreatedDate()));
 		msg.setMessageStatus(MessageStatus.getStatus(messageRef.isRead()));
 		msg.setMessageType(messageRef.getFolder().getFolderType());
-		
+		msg.setReplied(message.getReplied());
+
 		if (message.getUser().getUid()
 		        .equals(SYSTEM_USER_NAME_FOR_NOTIFICATIONS) ||
 		    messageRef.getFolder()
@@ -263,7 +271,7 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
 		    msg.setReplyDisabled(true);
 		else
 		    msg.setReplyDisabled(false);
-		
+
 		msg.setRecipients(getDisplayNamesByUsers(message.getReceipients()));
 		msg.setRecipientUserInfos(getUserInfos(message.getReceipients()));
 		return msg;
@@ -277,7 +285,7 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
         if (users == null || users.isEmpty()) {
             return Collections.emptyList();
         }
-        
+
         final List<UserInfo> result = new ArrayList<UserInfo>(users.size());
         for (final User user : users) {
             result.add(getUserInfo(user));
@@ -314,7 +322,7 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
 	    if (receipients2.isEmpty()) {
 	        return Collections.emptyList();
 	    }
-	    
+
 		final List<String> receipients = new ArrayList<String>();
 		for (final User receipient : receipients2) {
 			receipients.add(getDisplayName(receipient));
@@ -367,7 +375,7 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
 
         final User toUser = getUserByUid(toUserUid);
         final Message message = sentMessage.getMessage();
-        
+
         return doReceiveNewMessage(toUser, message).getId();
 	}
 
@@ -402,7 +410,7 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
 
     private void doArchiveMessages(final List<MessageRef> messageRefs) {
         final Map<User, Folders> folders = new HashMap<User, Folders>();
-		
+
 		for (final MessageRef messageRef : messageRefs) {
 			final User user = messageRef.getFolder().getUser();
 			if (!folders.containsKey(user)) {
@@ -419,14 +427,14 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
 		}
 		messageRefDao.updateAll(messageRefs);
     }
-	
+
 	private static class Folders {
 		private Folder archiveInbox;
 		private Folder archiveOutbox;
 		public Folders(final Folder archiveInbox, final Folder archiveOutbox) {
-			this.archiveInbox = archiveInbox; 
+			this.archiveInbox = archiveInbox;
 			this.archiveOutbox = archiveOutbox;
-		} 
+		}
 	}
 
 	/**
@@ -447,7 +455,7 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
 		if (messages.isEmpty()) {
 			return;
 		}
-		
+
 		for (final MessageRef message : messages) {
 			message.setRead(status.isRead());
 		}
@@ -473,7 +481,7 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
 	public int getUnreadMessagesCount(final String userId, final FolderType folderType) {
 		return getIntValue(folderDAO.getUnreadMessagesCountByUserAndRoles(getUserByUid(userId), getUserRoles(userId), folderType));
 	}
-	
+
 	private int getIntValue(final Long count) {
 		if (count == null) {
 			return 0;
@@ -494,10 +502,10 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
 		final int startNum = query.getStartNum();
 		final int maxNum = query.getMaxNum();
 		validateStartAndMaxNum(startNum, maxNum);
-		
-		final List<MessageRef> messages = folderDAO.getMessagesByUserWithRoleAndFolderType(getUserByUid(userUid), 
+
+		final List<MessageRef> messages = folderDAO.getMessagesByUserWithRoleAndFolderType(getUserByUid(userUid),
 		        getUserRoles(userUid), folderType, query, startNum, maxNum - startNum + 1);
-		
+
 		final List<MessageSummary> result = new ArrayList<MessageSummary>();
 		for (final MessageRef messageRef : messages) {
 			result.add(convertMessageToDTO(messageRef, new MessageSummary()));
@@ -521,7 +529,7 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
 	@Override
 	public RequestTO getRequestById(final Long requestId) {
 		final RequestTO result = new RequestTO();
-		
+
 		final Request request = requestDAO.getById(requestId);
 		final List<UserInfo> receipientsNotResponded = getUserInfos(request.getReceipients());
 		final List<ResponseTO> responseTOs = new ArrayList<ResponseTO>();
@@ -569,7 +577,7 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
 			final List<UserInfo> receipientsNotResponded,
 			final List<ResponseTO> responseTOs) {
 		fillRequestShortSummary(result, request);
-		
+
 		for (final Response response : request.getResponses()) {
 			final ResponseTO responseTO = new ResponseTO();
             responseTO.setAnswers(convertAnswersToAnswerTO(response.getAnswers()));
@@ -579,7 +587,7 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
 			receipientsNotResponded.remove(getUserInfo(response.getReplier()));
 			responseTOs.add(responseTO);
 		}
-		
+
         result.setRespondedAmount(request.getResponses().size());
 		result.setMissedAmout(receipientsNotResponded.size());
 	}
@@ -605,7 +613,7 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
 		result.setSubject(request.getSubject());
 		result.setCreationDate(CalendarUtil.getXmlGregorianCalendar(request.getCreatedDate()));
 		result.setEndDate(CalendarUtil.getXmlGregorianCalendar(request.getReplyTill()));
-		
+
 		return result;
     }
 
@@ -618,16 +626,16 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
 	 * @return
 	 */
 	@Override
-	public Long sendRequest(final String fromUserId, final String subject, final List<String> receipients, final String content, 
+	public Long sendRequest(final String fromUserId, final String subject, final List<String> receipients, final String content,
 	        final List<QuestionTO> questionTOs, final List<MultipleChoiceTO> choices, final RequestTemplateVisibility visibility,
             final XMLGregorianCalendar replyTill, final Integer notifyBeforeDays) {
 	    final RequestTemplateTO templateTO = createTemplateTO(fromUserId,
                 subject, questionTOs, choices, visibility);
-	    
+
 	    final RequestProcessingTO requestTO = createRequestProcessingTO(
                 fromUserId, subject, receipients, content, replyTill,
                 notifyBeforeDays);
-	    
+
 		final RequestTemplate template = doCreateRequestTemplate(templateTO);
 
 		return doCreateRequest(template, requestTO).getId();
@@ -663,7 +671,7 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
     }
 
     private Request doCreateRequest(final RequestTemplate template, final RequestProcessingTO requestTO) {
-        
+
         final User fromUser = getUserByUid(requestTO.getFromUserUid());
 
         Request request = new Request();
@@ -677,16 +685,16 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
         request.setFromRoleUid(requestTO.getFromRole());
 
         final MessageRef msgRef = createNewMessageInOutbox(requestTO.getSubject(), requestTO.getReceipients(), requestTO.getContent(), requestTO.getContent(), fromUser, requestTO.getFromRole(), false);
-        
+
         final String emailSubject = getValueFromBundle(EMAIL_NEW_REQUEST_RECEIVED_SUBJECT);
-        final String emailContent = MessageFormat.format(getValueFromBundle(EMAIL_NEW_REQUEST_RECEIVED_BODY), 
+        final String emailContent = MessageFormat.format(getValueFromBundle(EMAIL_NEW_REQUEST_RECEIVED_BODY),
                 new Object[] {KoKuPropertiesUtil.get(EMAIL_LINKS_MESSAGE_INBOX_PATH) + KoKuPropertiesUtil.get(EMAIL_LINKS_NEW_REQUEST_PATH),
                               request.getReplyTill()});
 
         sendEmailNotifications(recipients, msgRef, emailSubject, emailContent);
-        
+
 		request = requestDAO.create(request);
-		
+
         return request;
     }
 
@@ -695,10 +703,10 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
             final String emailContent) {
         final Set<User> deliveryFailed = new HashSet<User>();
         for (final User recipient : recipients) {
-            if (!emailDao.sendMessage(recipient, emailSubject, 
+            if (!emailDao.sendMessage(recipient, emailSubject,
                     emailContent)) {
                 deliveryFailed.add(recipient);
-            } 
+            }
         }
         if (!deliveryFailed.isEmpty()) {
             // report message delivery failure
@@ -711,7 +719,7 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
      * @param fromUserId
      * @param subject
      * @param questionTOs
-     * @param visibility 
+     * @param visibility
      * @return
      */
     private RequestTemplate doCreateRequestTemplate(final RequestTemplateTO templateTO) {
@@ -766,11 +774,11 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
 		}
 
 		final User toUser = getUserByUid(toUserId);
-		
+
         Message msg = new Message();
         fillMessage(msg, sentRequest.getFromUser(), null, sentRequest.getSubject(), Collections.singletonList(toUserId), content, content);
         msg = messageDao.create(msg);
-        
+
         final MessageRef msgRef = doReceiveNewMessage(toUser, msg);
 
         return msgRef.getId();
@@ -785,12 +793,12 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
 	@Override
 	public Long replyToRequest(final String toUserId, final Long requestId, final List<Answer> answers, final String comment) {
 		final User replier = getUserByUid(toUserId);
-		
+
 		final Request sentRequest = requestDAO.getById(requestId);
 		if (sentRequest == null) {
 			throw new IllegalArgumentException("Request with ID " + requestId + " not found.");
 		}
-		
+
 		final Response response = new Response();
 		response.setReplier(replier);
 		response.setRequest(sentRequest);
@@ -807,16 +815,16 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
 			}
 			answer.setComment(answerSoa.getComment());
 			answer.setIndex(answerSoa.getQuestionNumber());
-			answersList.add(answer); 
+			answersList.add(answer);
 		}
 		response.setAnswers(answersList);
-		
+
 		final Response newResponse = responseDAO.create(response);
         doDeliverMessage(SYSTEM_USER_NAME_FOR_NOTIFICATIONS, Collections.singletonList(sentRequest.getFromUser().getUid()),
-                getValueFromBundle(REQUEST_REPLIED_SUBJECT), 
-                MessageFormat.format(getValueFromBundle(REQUEST_REPLIED_BODY), 
+                getValueFromBundle(REQUEST_REPLIED_SUBJECT),
+                MessageFormat.format(getValueFromBundle(REQUEST_REPLIED_BODY),
                         new Object[] {sentRequest.getSubject(), getUserInfo(replier).getDisplayName()}));
-        
+
         return newResponse.getId();
 	}
 
@@ -850,7 +858,7 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
         final List<RequestSummary> result = new ArrayList<RequestSummary>();
 		for (final Request request : requests) {
 			final RequestSummary requestSummary = new RequestSummary();
-			
+
 			fillRequestSummary(requestSummary, request, getUserInfos(request.getReceipients()), new ArrayList<ResponseTO>());
 			result.add(requestSummary);
 		}
@@ -876,12 +884,12 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
     private void doDeliverMessage(final String fromUser,
             List<String> receipients, String subject, String content) {
         final String contentByTemplate = MessageFormat.format(notificationTemplate, new Object[] {getReceipientNames(receipients), subject, content});
-        final Long messageId = sendNewMessage(fromUser, null, subject, receipients, contentByTemplate, content, false, false);
+        final Long messageId = sendNewMessage(fromUser, null, subject, receipients, contentByTemplate, content, false, false, null);
         for (final String receipient : receipients) {
             receiveMessage(receipient, messageId);
         }
     }
-    
+
     /**
      * @param receipients
      * @return
@@ -986,11 +994,11 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
      * @return
      */
     @Override
-    public Long sendRequestWithTemplate(String fromUserUid, long requestTemplateId, final String subject, 
+    public Long sendRequestWithTemplate(String fromUserUid, long requestTemplateId, final String subject,
             List<String> receipients, String content,
             final XMLGregorianCalendar replyTill, final Integer notifyBeforeDays) {
         final RequestTemplate template = loadRequestTemplate(requestTemplateId);
-        
+
         return doCreateRequest(template, createRequestProcessingTO(fromUserUid, subject, receipients, content, replyTill, notifyBeforeDays)).getId();
     }
 
@@ -1014,7 +1022,7 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
         final User user = getUserByUid(fromUserUid);
         fillMessage(msg, user, null, subject, Collections.singletonList(toUserUid), content, originalContent, false, false);
         msg = messageDao.create(msg);
-        
+
         return doReceiveNewMessage(getUserByUid(toUserUid), msg).getId();
     }
 
@@ -1060,13 +1068,13 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
         final RequestTemplate template = getTemplateBySubject(subject);
         if (template == null) {
             throw new IllegalStateException("Error in update: request template with subject '" + subject + "' is not found.");
-        } 
+        }
         if (!template.getCreator().getUid().equals(userUid)) {
             throw new IllegalStateException("Error in update: request template with subject '" + subject + "' is created by different user.");
-        } 
+        }
         if (getIntValue(requestDAO.getTotalByTemplate(template)) > 0) {
             throw new IllegalStateException("Error in update: request template with subject '" + subject + "' is active.");
-        } 
+        }
 
         fillRequestTemplate(createTemplateTO(userUid, subject, questions, choices, visibility), template);
         requestTemplateDAO.update(template);
@@ -1172,14 +1180,14 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
         if (response == null) {
             throw new IllegalArgumentException("Response is not found by ID " + responseId);
         }
-        
+
         final ResponseDetail responseDetail = new ResponseDetail();
-        
+
         fillResponseSummary(response, responseDetail);
         responseDetail.setQuestions(getQuestionsTObyDTO(response.getRequest().getTemplate().getQuestions()));
         responseDetail.setAnswers(convertAnswersToAnswerTO(response.getAnswers()));
         responseDetail.setComment(response.getComment());
-        
+
         return responseDetail;
     }
 
@@ -1203,29 +1211,29 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
     @Override
     public Long sendRequestWithTemplate(long requestTemplateId, RequestProcessingTO request) {
         final RequestTemplate template = loadRequestTemplate(requestTemplateId);
-        
+
         return doCreateRequest(template, request).getId();
     }
 
     /**
-     * 
+     *
      */
     @Override
     public void performTask() {
         logger.info("Perform scheduled tasks.");
-        
+
         logger.debug("Start deletion of old messages.");
         final int messagesDeleted = deleteOldMessages();
-        logger.debug("Deleted " + messagesDeleted + " messages."); 
-        
+        logger.debug("Deleted " + messagesDeleted + " messages.");
+
         logger.debug("Start archiving of old messages");
         final int messagesArchived = archiveOldMessages();
-        logger.debug("Archived " + messagesArchived + " messages."); 
-        
+        logger.debug("Archived " + messagesArchived + " messages.");
+
         logger.debug("Start reminding about requests");
         final int remindersSent = sendReminderForRequests();
-        logger.debug("Sent " + remindersSent + " reminders."); 
-        
+        logger.debug("Sent " + remindersSent + " reminders.");
+
     }
 
     /**
@@ -1237,7 +1245,7 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
     }
 
     /**
-     * 
+     *
      */
     @Override
     public int deleteOldMessages() {
@@ -1262,8 +1270,8 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
         doArchiveMessages(messagesForArchive);
         for (final Map.Entry<String, Integer> entry : msgCounts.entrySet()) {
             doDeliverMessage(SYSTEM_USER_NAME_FOR_NOTIFICATIONS, Collections.singletonList(entry.getKey()),
-                    getValueFromBundle(MESSAGES_ARCHIVED_SUBJECT), 
-                    MessageFormat.format(getValueFromBundle(MESSAGES_ARCHIVED_BODY), 
+                    getValueFromBundle(MESSAGES_ARCHIVED_SUBJECT),
+                    MessageFormat.format(getValueFromBundle(MESSAGES_ARCHIVED_BODY),
                             new Object[] {entry.getValue()}));
         }
         return messagesForArchive.size();
@@ -1279,14 +1287,14 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
         // messages older then 3 month
         final Calendar calendar = Calendar.getInstance();
         calendar.set(Calendar.MONTH, calendar.get(Calendar.MONTH) - 3);
-        final List<MessageRef> messagesForArchive = messageRefDao.getMessagesByUserAndFolderTypeAndCreateDate(getUserByUid(userUid), 
+        final List<MessageRef> messagesForArchive = messageRefDao.getMessagesByUserAndFolderTypeAndCreateDate(getUserByUid(userUid),
                 Collections.singleton(folderType), calendar.getTime());
         doArchiveMessages(messagesForArchive);
         return messagesForArchive.size();
     }
 
     /**
-     * 
+     *
      */
     @Override
     public int sendReminderForRequests() {
@@ -1299,14 +1307,14 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
             }
             for (final User user : receipients) {
                 doDeliverMessage(SYSTEM_USER_NAME_FOR_NOTIFICATIONS, Collections.singletonList(user.getUid()),
-                        getValueFromBundle(REQUEST_NOT_REPLIED_REMINDER_SUBJECT), 
-                        MessageFormat.format(getValueFromBundle(REQUEST_NOT_REPLIED_REMINDER_BODY), 
+                        getValueFromBundle(REQUEST_NOT_REPLIED_REMINDER_SUBJECT),
+                        MessageFormat.format(getValueFromBundle(REQUEST_NOT_REPLIED_REMINDER_BODY),
                                 new Object[] {request.getSubject()}));
                 remindersSent++;
             }
         }
         return remindersSent;
     }
-    
-    
+
+
 }

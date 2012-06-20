@@ -7,7 +7,7 @@ import javax.jws.WebService;
 
 /**
  * Interface with KV-Message-processing operations, called from the KV-Message Intalio process.
- * 
+ *
  * @author Dmitry Kudinov (dmitry.kudinov@arcusys.fi)
  * Jun 15, 2011
  */
@@ -16,21 +16,22 @@ public interface KokuMessageProcessingService {
 	@WebResult(name = "messageId")
 	Long sendMessage(@WebParam(name = "fromUser") final String fromUserUid,
 	        @WebParam(name = "fromRoleUid") final String fromRoleUid,
-	        @WebParam(name = "subject") final String subject, 
-	        @WebParam(name = "receipients") final Receipients receipients, 
+	        @WebParam(name = "subject") final String subject,
+	        @WebParam(name = "receipients") final Receipients receipients,
 	        @WebParam(name = "messageContent") final String content,
 	        @WebParam(name = "originalContent") final String originalContent,
 	        @WebParam(name = "sendToFamilyMembers") final Boolean sendToFamilyMembers,
-	        @WebParam(name = "sendToGroupSite") final Boolean sendToGroupSite);
-	
-	void receiveMessage(@WebParam(name = "toUser") final String toUserUid, 
+	        @WebParam(name = "sendToGroupSite") final Boolean sendToGroupSite,
+	        @WebParam(name = "replyMessageId") final Long replyMessageId);
+
+	void receiveMessage(@WebParam(name = "toUser") final String toUserUid,
 						@WebParam(name = "messageId") final Long messageId);
 
     @WebResult(name = "messageId")
     Long receiveNewMessage(
-            @WebParam(name = "fromUser") final String fromUserUid, 
+            @WebParam(name = "fromUser") final String fromUserUid,
             @WebParam(name = "subject") final String subject,
-            @WebParam(name = "toUser") final String toUserUid, 
+            @WebParam(name = "toUser") final String toUserUid,
             @WebParam(name = "messageContent") final String content,
             @WebParam(name = "originalContent") final String originalContent);
 }

@@ -49,7 +49,7 @@ import fi.arcusys.koku.kv.soa.ResponseSummary;
 import fi.arcusys.koku.kv.soa.ResponseTO;
 
 /**
- * 
+ *
  * @author Dmitry Kudinov (dmitry.kudinov@arcusys.fi) May 18, 2011
  */
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -399,7 +399,7 @@ public class MessageServiceTest {
 
     private long sendMessage(final String fromUserId, final String role, final String subject, final List<String> toUsers, final String content,
             final boolean sendToFamilyMembers, final boolean sendToGroupSite) {
-        return serviceFacade.sendNewMessage(fromUserId, role, subject, toUsers, content, content, sendToFamilyMembers, sendToGroupSite);
+        return serviceFacade.sendNewMessage(fromUserId, role, subject, toUsers, content, content, sendToFamilyMembers, sendToGroupSite, null);
     }
 
     private RequestTemplateTO createRequestTemplate(final String fromUserId) {
@@ -651,7 +651,7 @@ public class MessageServiceTest {
         assertEquals("no more reminders received", totalInboxMessages + 2, serviceFacade.getTotalMessagesCount(toUserId, FolderType.Inbox, null));
 
     }
-    
+
     private void assertMessageFound(final String userId, FolderType folderType, final MessageQuery query, final String subject) {
         List<MessageSummary> messages = serviceFacade.getMessages(userId, folderType, query);
         assertNotNull(messages);

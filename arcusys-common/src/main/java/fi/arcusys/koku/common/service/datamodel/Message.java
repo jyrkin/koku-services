@@ -13,7 +13,7 @@ import javax.persistence.ManyToOne;
 
 /**
  * Entity for representing whole message in KV-Requests functionality.
- * 
+ *
  * @author Dmitry Kudinov (dmitry.kudinov@arcusys.fi)
  * Apr 6, 2011
  */
@@ -23,7 +23,7 @@ public class Message extends AbstractEntity {
 	@Lob
 	@Column(name = "content")
 	private String text;
-	
+
 	@Lob
 	@Column(name = "originalContent")
 	private String plainText;
@@ -31,15 +31,16 @@ public class Message extends AbstractEntity {
 	private String subject;
 	private Boolean sendToFamilyMembers;
 	private Boolean sendToGroupSite;
-	
+	private Boolean replied;
+
 	@ManyToOne
 	private User fromUser;
-	
+
 	private String fromRoleUid;
 
 	@ManyToMany(fetch = FetchType.EAGER)
 	private Set<User> receipients;
-	
+
 	/**
      * @return the sendToFamilyMembers
      */
@@ -63,7 +64,7 @@ public class Message extends AbstractEntity {
     public Boolean getSendToGroupSite() {
         if (sendToGroupSite == null) {
             sendToGroupSite = Boolean.FALSE;
-        } 
+        }
         return sendToGroupSite;
     }
 
@@ -77,7 +78,7 @@ public class Message extends AbstractEntity {
     public String getText() {
 		return text;
 	}
-	
+
 	public void setText(final String text) {
 		this.text = text;
 	}
@@ -102,11 +103,11 @@ public class Message extends AbstractEntity {
 	public void setFrom(final User fromUser) {
 		this.fromUser = fromUser;
 	}
-	
+
 	public User getUser() {
 		return this.fromUser;
 	}
-	
+
 	/**
      * @return the fromRoleUid
      */
@@ -150,6 +151,17 @@ public class Message extends AbstractEntity {
 	 */
 	public void setReceipients(final Set<User> receipients) {
 		this.receipients = receipients;
+	}
+
+	public Boolean getReplied() {
+        if (replied == null) {
+            replied = Boolean.FALSE;
+        }
+		return replied;
+	}
+
+	public void setReplied(Boolean replied) {
+		this.replied = replied;
 	}
 
 }

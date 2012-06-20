@@ -25,7 +25,7 @@ import fi.arcusys.koku.kv.soa.ResponseSummary;
 
 /**
  * Service facade interface for all business methods related to KV function area.
- * 
+ *
  * @author Dmitry Kudinov (dmitry.kudinov@arcusys.fi)
  * May 20, 2011
  */
@@ -33,16 +33,16 @@ import fi.arcusys.koku.kv.soa.ResponseSummary;
 public interface MessageServiceFacade {
 
 	List<MessageTO> getSentMessages(final String userUid);
-	
+
 	Long sendNewMessage(final String fromUserUid, final String role, final String subject, final List<String> receipients, final String content,
-			final String originalContent, final boolean sendToFamilyMembers, final boolean sendToGroupSite);
-	
+			final String originalContent, final boolean sendToFamilyMembers, final boolean sendToGroupSite, final Long replyMessageId);
+
 	Long receiveMessage(final String toUserUid, final Long messageId);
-	
+
 	List<MessageSummary> getMessages(final String userUid, final FolderType folderType);
-	
+
 	MessageTO getMessageById(final Long messageId);
-	
+
 	void archiveMessages(final List<Long> messageIds);
 
 	void deleteMessages(final List<Long> messageIds);
@@ -56,13 +56,13 @@ public interface MessageServiceFacade {
 	/**
 	 * @deprecated use sendRequest(RequestTemplateTO, RequestProcessingTO) instead - roles implementation added there
 	 */
-	Long sendRequest(final String fromUserId, final String subject, final List<String> receipients, final String content, 
+	Long sendRequest(final String fromUserId, final String subject, final List<String> receipients, final String content,
 	        final List<QuestionTO> questions, final List<MultipleChoiceTO> choices, RequestTemplateVisibility visibility,
-            XMLGregorianCalendar replyTill, 
+            XMLGregorianCalendar replyTill,
             Integer notifyBeforeDays);
-	
+
 	Long sendRequest(final RequestTemplateTO template, final RequestProcessingTO request);
-	
+
 	RequestTO getRequestById(final Long requestId);
 
 	Long receiveRequest(final String toUserId, final Long requestId, final String content);
@@ -84,29 +84,29 @@ public interface MessageServiceFacade {
 	 * @return
 	 */
 	List<MessageSummary> getMessages(final String userId, final FolderType folderType, final MessageQuery query);
-	
-    void createRequestTemplate(final String userUid, 
-            final String subject, 
+
+    void createRequestTemplate(final String userUid,
+            final String subject,
             final List<QuestionTO> questions,
             final List<MultipleChoiceTO> choices, RequestTemplateVisibility visibility);
-    
+
     List<RequestTemplateSummary> getRequestTemplateSummary(
-            final String userUid, 
+            final String userUid,
             final String subjectPrefix, final int limit);
-    
+
     RequestTemplateTO getRequestTemplateById(
             final long requestTemplateId);
-    
+
     /**
      * @deprecated - use sendRequestWithTemplate(long, RequestProcessingTO) instead, roles implementation added there
      */
     Long sendRequestWithTemplate(
-            final String fromUserUid, 
-            final long requestTemplateId, 
+            final String fromUserUid,
+            final long requestTemplateId,
             final String subject,
             final List<String> receipients,
-            final String content, 
-            XMLGregorianCalendar replyTill, 
+            final String content,
+            XMLGregorianCalendar replyTill,
             Integer notifyBeforeDays);
 
     Long sendRequestWithTemplate(final long requestTemplateId, final RequestProcessingTO request);
@@ -184,19 +184,19 @@ public interface MessageServiceFacade {
     ResponseDetail getResponseDetail(long responseId);
 
     /**
-     * 
+     *
      */
     int deleteOldMessages();
 
     /**
-     * 
+     *
      */
     int archiveOldMessages();
-    
+
     int archiveOldMessagesByUserAndFolderType(final String userUid, final FolderType folderType);
 
     /**
-     * 
+     *
      */
     int sendReminderForRequests();
 }

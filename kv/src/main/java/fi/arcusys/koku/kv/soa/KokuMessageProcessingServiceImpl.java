@@ -9,12 +9,12 @@ import fi.arcusys.koku.kv.service.MessageServiceFacade;
 
 /**
  * Implementation of KV-Message-processing operations, called from the KV-Message Intalio process.
- * 
+ *
  * @author Dmitry Kudinov (dmitry.kudinov@arcusys.fi)
  * Jun 15, 2011
  */
 @Stateless
-@WebService(serviceName = "KokuMessageProcessingService", portName = "KokuMessageProcessingServicePort", 
+@WebService(serviceName = "KokuMessageProcessingService", portName = "KokuMessageProcessingServicePort",
 		endpointInterface = "fi.arcusys.koku.kv.soa.KokuMessageProcessingService",
 		targetNamespace = "http://soa.kv.koku.arcusys.fi/")
 @Interceptors(KokuMessageInterceptor.class)
@@ -22,13 +22,13 @@ public class KokuMessageProcessingServiceImpl implements KokuMessageProcessingSe
 
 	@EJB
 	private MessageServiceFacade kvFacade;
-	
+
 	/**
 	 * @param toUserUid
 	 * @param messageId
 	 */
 	@Override
-	public void receiveMessage(final String toUserUid, final Long messageId) {
+	public void receiveMessage(String toUserUid, Long messageId) {
 		kvFacade.receiveMessage(toUserUid, messageId);
 	}
 
@@ -40,8 +40,8 @@ public class KokuMessageProcessingServiceImpl implements KokuMessageProcessingSe
 	 * @return
 	 */
 	@Override
-	public Long sendMessage(String fromUserUid, final String roleUid, String subject, Receipients receipients, String content, String origialContent, final Boolean sendToFamilyMembers, final Boolean sendToGroupSite) {
-		return kvFacade.sendNewMessage(fromUserUid, roleUid, subject, receipients.getReceipients(), content, origialContent, Boolean.TRUE.equals(sendToFamilyMembers), Boolean.TRUE.equals(sendToGroupSite));
+	public Long sendMessage(String fromUserUid, String roleUid, String subject, Receipients receipients, String content, String origialContent, Boolean sendToFamilyMembers, Boolean sendToGroupSite, Long replyMessageId) {
+		return kvFacade.sendNewMessage(fromUserUid, roleUid, subject, receipients.getReceipients(), content, origialContent, Boolean.TRUE.equals(sendToFamilyMembers), Boolean.TRUE.equals(sendToGroupSite), replyMessageId);
 	}
 
     /**

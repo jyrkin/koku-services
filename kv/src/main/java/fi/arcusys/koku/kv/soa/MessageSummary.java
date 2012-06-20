@@ -12,7 +12,7 @@ import fi.arcusys.koku.common.soa.UserInfo;
 
 /**
  * Data transfer object for communication with UI/Intalio process. Holds summary data about message.
- * 
+ *
  * @author Dmitry Kudinov (dmitry.kudinov@arcusys.fi) Jun 9, 2011
  */
 @XmlType (name = "messageSummary", namespace = "http://soa.kv.koku.arcusys.fi/")
@@ -27,6 +27,7 @@ public class MessageSummary {
 	private FolderType messageType;
 	private MessageStatus messageStatus;
 	private Boolean replyDisabled;
+	private Boolean replied;
 
 	/**
      * @return the senderUserInfo
@@ -208,5 +209,13 @@ public class MessageSummary {
 			return false;
 		}
 		return true;
+	}
+
+	public Boolean getReplied() {
+		return replied;
+	}
+
+	public void setReplied(Boolean replied) {
+		this.replied = replied;
 	}
 }
