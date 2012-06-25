@@ -63,7 +63,7 @@ import fi.arcusys.koku.common.soa.UsersAndGroupsService;
 
 /**
  * Service facade implementation for all business methods in AV functional area.
- * 
+ *
  * @author Dmitry Kudinov (dmitry.kudinov@arcusys.fi)
  * Jul 22, 2011
  */
@@ -101,28 +101,28 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
     private static final String APPOINTMENT_RECEIVED_SUBJECT = "appointment.received.subject";
 
     private final static Logger logger = LoggerFactory.getLogger(AppointmentServiceFacadeImpl.class);
-    
+
 	@EJB
 	private AppointmentDAO appointmentDAO;
-	
+
 	@EJB
 	private UserDAO userDao;
-	
+
 	@EJB
     private UsersAndGroupsService usersService;
-	
+
 	@EJB
 	private TargetPersonDAO targetPersonDao;
-	
+
 	@EJB
-	private CustomerServiceDAO customerDao; 
-	
+	private CustomerServiceDAO customerDao;
+
 	@EJB
 	private KokuSystemNotificationsService notificationService;
 
 	private String notificationsBundleName = "appointment.msg";
 	private Properties messageTemplates;
-	
+
 	@PostConstruct
 	public void init() {
 	    messageTemplates = new Properties();
@@ -136,8 +136,8 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
 	    } catch (IOException e) {
 	        throw new EJBException("Incorrect configuration, failed to load message templates:", e);
 	    }
-	} 
-	
+	}
+
 	/**
 	 * @param appointmentId
 	 * @param slotNumber
@@ -146,7 +146,7 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
 	@Override
 	public void approveAppointment(final String targetPersonUid, final String userUid, final Long appointmentId, final int slotNumber, final String comment) {
 		final Appointment appointment = loadAppointment(appointmentId);
-        
+
         if(appointment.getSlotByNumber(slotNumber) == null) {
             throw new IllegalStateException("There is no slot with number " + slotNumber + " in appointment id = " + appointmentId);
         }
@@ -154,12 +154,12 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
         final AppointmentResponse response = processReply(targetPersonUid, userUid, comment, appointment);
         response.setSlotNumber(slotNumber);
         response.setStatus(AppointmentResponseStatus.Accepted);
-		
+
 		appointmentDAO.update(appointment);
-        notificationService.sendNotification(getValueFromBundle(APPOINTMENT_APPROVED_SUBJECT), 
-                Collections.singletonList(response.getAppointment().getSender().getUid()), 
-                MessageFormat.format(getValueFromBundle(APPOINTMENT_APPROVED_BODY), 
-                        new Object[] {response.getAppointment().getSubject(), 
+        notificationService.sendNotification(getValueFromBundle(APPOINTMENT_APPROVED_SUBJECT),
+                Collections.singletonList(response.getAppointment().getSender().getUid()),
+                MessageFormat.format(getValueFromBundle(APPOINTMENT_APPROVED_BODY),
+                        new Object[] {response.getAppointment().getSubject(),
                     getUserInfoDisplayName(response.getTarget().getTargetUser()), getUserInfoDisplayName(response.getReplier())}));
 	}
 
@@ -170,15 +170,15 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
 	@Override
 	public void declineAppointment(final String targetPersonUid, final String userUid, final Long appointmentId, final String comment) {
 		final Appointment appointment = loadAppointment(appointmentId);
-        
+
         final AppointmentResponse response = processReply(targetPersonUid, userUid, comment, appointment);
         response.setStatus(AppointmentResponseStatus.Rejected);
-		
+
 		appointmentDAO.update(appointment);
-        notificationService.sendNotification(getValueFromBundle(APPOINTMENT_DECLINED_SUBJECT), 
-                Collections.singletonList(response.getAppointment().getSender().getUid()), 
-                MessageFormat.format(getValueFromBundle(APPOINTMENT_DECLINED_BODY), 
-                        new Object[] {response.getAppointment().getSubject(), 
+        notificationService.sendNotification(getValueFromBundle(APPOINTMENT_DECLINED_SUBJECT),
+                Collections.singletonList(response.getAppointment().getSender().getUid()),
+                MessageFormat.format(getValueFromBundle(APPOINTMENT_DECLINED_BODY),
+                        new Object[] {response.getAppointment().getSubject(),
                     getUserInfoDisplayName(response.getTarget().getTargetUser()), getUserInfoDisplayName(response.getReplier())}));
 	}
 
@@ -194,7 +194,7 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
 		if(targetPerson == null) {
 			throw new IllegalStateException("There is no target person with uid '" + userUid + "' in appointment id = " + appointment.getId());
 		}
-		
+
 		final User replier = targetPerson.getGuardianByUid(userUid);
         if(replier == null) {
             throw new IllegalStateException("There is no guardian with uid '" + userUid + "' for target person " + targetPersonUid);
@@ -221,10 +221,10 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
 	@Override
 	public AppointmentTO getAppointment(final Long appointmentId) {
 		final Appointment appointment = loadAppointment(appointmentId);
-		
+
 		return fillAppointmentTO(appointment, new AppointmentTO());
 	}
- 
+
     private String getDisplayName(final User user) {
         if (user == null) {
             return "";
@@ -323,15 +323,17 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
 	 */
 	@Override
 	public List<AppointmentWithTarget> getAssignedAppointments(final String userUid) {
-		return getAssignedAppointments(userUid, FIRST_RESULT_NUMBER, FIRST_RESULT_NUMBER + MAX_RESULTS_COUNT - 1);		
+		return getAssignedAppointments(userUid, FIRST_RESULT_NUMBER, FIRST_RESULT_NUMBER + MAX_RESULTS_COUNT - 1);
 	}
-	
+
 	@Override
 	public List<AppointmentWithTarget> getAssignedAppointments(final String userUid, final int startNum, final int maxNum) {
 		final List<AppointmentWithTarget> result = new ArrayList<AppointmentWithTarget>();
 		for (final Appointment appointment : appointmentDAO.getAssignedAppointments(userDao.getOrCreateUser(userUid), startNum, maxNum - startNum + 1)) {
 		    for (final TargetPerson target : appointment.getRecipients()) {
-		        if (target.getGuardianByUid(userUid) != null) {
+		        final String targetUid = target.getTargetUser().getUid();
+
+		        if (target.getGuardianByUid(userUid) != null && appointment.getResponseForTargetPerson(targetUid) == null) {
 		            final AppointmentWithTarget appointmentTO = convertAppointmentToDTO(appointment, new AppointmentWithTarget());
 		            appointmentTO.setTargetPerson(target.getTargetUser().getUid());
 		            appointmentTO.setTargetPersonUserInfo(getUserInfo(target.getTargetUser()));
@@ -350,24 +352,24 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
 		appointmentSummary.setSenderRole(appointment.getSenderRole());
 		appointmentSummary.setSenderUserInfo(getUserInfo(appointment.getSender()));
 		appointmentSummary.setStatus(AppointmentSummaryStatus.valueOf(appointment.getStatus()));
-		
+
 		return appointmentSummary;
 	}
-	
+
 	private AppointmentTO fillAppointmentTO(final Appointment appointment, final AppointmentTO appointmentTO) {
         convertAppointmentToDTO(appointment, appointmentTO);
-        
+
         appointmentTO.setStatus(AppointmentSummaryStatus.valueOf(getSummaryAppointmentStatus(appointment)));
         if (appointment.getStatus() == AppointmentStatus.Cancelled) {
             appointmentTO.setCancelComment(appointment.getCancelComment());
         }
-        
+
         appointmentTO.setRecipients(getReceipientsDTOByAppointment(appointment, true));
-        
+
         final HashMap<Integer, UserInfo> acceptedSlots = new HashMap<Integer, UserInfo>();
         final List<String> usersRejected = new ArrayList<String>();
         final List<AppointmentUserRejected> usersRejectedWithComments = new ArrayList<AppointmentUserRejected>();
-        
+
         for (final AppointmentResponse response : appointment.getResponses()) {
             final User targetUser = response.getTarget().getTargetUser();
             final String targetPersonUid = getDisplayName(targetUser);
@@ -387,12 +389,12 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
         appointmentTO.setAcceptedSlots(acceptedSlots);
         appointmentTO.setUsersRejected(usersRejected);
         appointmentTO.setUsersRejectedWithComments(usersRejectedWithComments);
-        
+
         appointmentTO.setSlots(getSlotTOsByAppointment(appointment));
-        
+
         return appointmentTO;
 	}
-	
+
 	private UserInfo getUserInfo(final User user) {
 	    return customerDao.getUserInfo(user);
 	}
@@ -415,7 +417,7 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
 
         return appointment.getStatus();
     }
-	
+
 	private Appointment fillAppointmentByDto(final AppointmentForEditTO appointmentTO, final Appointment appointment) {
 		appointment.setDescription(appointmentTO.getDescription());
 		appointment.setSubject(appointmentTO.getSubject());
@@ -426,7 +428,7 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
 			recipients.add(targetPersonDao.getOrCreateTargetPerson(receipient.getTargetPerson(), receipient.getReceipients()));
 		}
 		appointment.setRecipients(recipients);
-		
+
 		final Map<Integer, AppointmentSlot> oldSlots = new HashMap<Integer, AppointmentSlot>();
 		for (final AppointmentSlot slot : appointment.getSlots()) {
 			oldSlots.put(slot.getSlotNumber(), slot);
@@ -449,7 +451,7 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
 			slots.add(slot);
 		}
 		appointment.setSlots(slots);
-		
+
 		return appointment;
 	}
 
@@ -477,9 +479,9 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
 		} else {
 			result = appointmentDAO.update(appointment);
 		}
-		
-        notificationService.sendNotification(getValueFromBundle(APPOINTMENT_RECEIVED_SUBJECT), 
-                getReceipienUids(appointment.getRecipients()), 
+
+        notificationService.sendNotification(getValueFromBundle(APPOINTMENT_RECEIVED_SUBJECT),
+                getReceipienUids(appointment.getRecipients()),
                 MessageFormat.format(getValueFromBundle(APPOINTMENT_RECEIVED_BODY), new Object[] {result.getSubject()}));
 
         return result.getId();
@@ -526,7 +528,7 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
 
 
         if (affectedResponse != null) {
-            //affectedResponse.setStatus(AppointmentResponseStatus.Rejected);
+            affectedResponse.setStatus(AppointmentResponseStatus.Invalidated);
             affectedResponse.setComment(MessageFormat.format(getValueFromBundle(SLOT_CANCELLED_COMMENT), new Object[] {getUserInfoDisplayName(appointment.getSender())}));
 
             notificationService.sendNotification(getValueFromBundle(SLOT_CANCELLED_SUBJECT),
@@ -594,7 +596,7 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
     public AppointmentForEditTO getAppointmentForEdit(Long appointmentId) {
         final AppointmentForEditTO appointmentTO = new AppointmentForEditTO();
         final Appointment appointment = fillAppointmentTOForReply(appointmentId, appointmentTO);
-        
+
         appointmentTO.setReceipients(getReceipientsDTOByAppointment(appointment, false));
 
         return appointmentTO;
@@ -602,12 +604,12 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
 
     private Appointment fillAppointmentTOForReply(final Long appointmentId, final AppointmentForReplyTO appointmentTO) {
         final Appointment appointment = loadAppointment(appointmentId);
-        
+
         convertAppointmentToDTO(appointment, appointmentTO);
         appointmentTO.setSlots(getSlotTOsByAppointment(appointment));
         //userUid fix
 //        appointmentTO.setSender(appointment.getSender().getUid());
-        
+
         return appointment;
     }
 
@@ -628,7 +630,7 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
     public AppointmentForReplyTO getAppointmentForReply(Long appointmentId, String targetPersonUid) {
         final AppointmentForReplyTO appointmentTO = new AppointmentForReplyTO();
         final Appointment appointment = fillAppointmentTOForReply(appointmentId, appointmentTO);
-        
+
         if (appointment.getTargetPersonByUid(targetPersonUid) == null) {
             throw new IllegalArgumentException("Appointment id " + appointmentId + " doesn't have target person " + targetPersonUid);
         }
@@ -639,29 +641,28 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
                 acceptedSlots.add(response.getSlotNumber());
             }
         }
-        
+
         final AppointmentResponse ownResponse = appointment.getResponseForTargetPerson(targetPersonUid);
 
         if (ownResponse != null) {
-            if (ownResponse.getStatus() == AppointmentResponseStatus.Accepted) {
+            switch (ownResponse.getStatus()) {
+            case Accepted:
                 appointmentTO.setStatus(AppointmentSummaryStatus.Approved);
+                break;
+            case Invalidated:
+                appointmentTO.setStatus(AppointmentSummaryStatus.Invalidated);
+                break;
+            default:
+                appointmentTO.setStatus(AppointmentSummaryStatus.Declined);
+                break;
+            }
 
+            if (ownResponse.getStatus() == AppointmentResponseStatus.Accepted || ownResponse.getStatus() == AppointmentResponseStatus.Invalidated)
                 for (AppointmentSlotTO slot : appointmentTO.getSlots())
                     if (slot.getSlotNumber() == ownResponse.getSlotNumber()) {
-                        appointmentTO.setChosenSlot(slot.getSlotNumber());
-
-                        if (slot.isDisabled()) {
-                            appointmentTO.setStatus(AppointmentSummaryStatus.Invalidated);
-                        }
-
+                        appointmentTO.setChosenSlot(ownResponse.getSlotNumber());
                         acceptedSlots.remove(slot.getSlotNumber()); // do not put away slot accepted by us
-                        break;
                     }
-
-            } else {
-                appointmentTO.setStatus(AppointmentSummaryStatus.Declined);
-
-            }
 
         } else {
             appointmentTO.setStatus(AppointmentSummaryStatus.Created);
@@ -722,7 +723,7 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
     public int getTotalCreatedAppointments(String user, AppointmentCriteria criteria) {
         return getIntValue(appointmentDAO.getTotalCreatedAppointments(userDao.getOrCreateUser(user), getUserRoles(user), getDtoCriteria(criteria)));
     }
-    
+
     /**
      * @param userId
      * @return
@@ -786,9 +787,9 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
     @Override
     public AppointmentRespondedTO getAppointmentRespondedById(long appointmentId, final String targetPerson) {
         final AppointmentResponse response = getAppointmentResponse(appointmentId, targetPerson);
-        
+
         final Appointment appointment = response.getAppointment();
-        
+
         final AppointmentRespondedTO appointmentTO = new AppointmentRespondedTO();
         convertAppointmentToDTO(appointment, appointmentTO);
         appointmentTO.setTargetPerson(getDisplayName(response.getTarget().getTargetUser()));
@@ -813,23 +814,19 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
         if (response.getAppointment().getStatus() == AppointmentStatus.Cancelled)
             return AppointmentSummaryStatus.Cancelled;
 
-        if (response.getStatus() == AppointmentResponseStatus.Accepted) {
-            // Determine if the slot is removed
-            for (AppointmentSlot slot : response.getAppointment().getSlots())
-                if (slot.getSlotNumber() == response.getSlotNumber())
-                    return slot.getDisabled() ? AppointmentSummaryStatus.Invalidated : AppointmentSummaryStatus.Approved;
+        if (response.getStatus() == AppointmentResponseStatus.Accepted)
+            return AppointmentSummaryStatus.Approved;
 
+        if (response.getStatus() == AppointmentResponseStatus.Invalidated)
             return AppointmentSummaryStatus.Invalidated;
-        } else {
-            return AppointmentSummaryStatus.Declined;
 
-        }
+        return AppointmentSummaryStatus.Declined;
     }
 
     private AppointmentResponse getAppointmentResponse(long appointmentId,
             final String targetPerson) {
         final Appointment appointment = loadAppointment(appointmentId);
-        
+
         final AppointmentResponse response = appointment.getResponseForTargetPerson(targetPerson);
         if (response == null) {
             throw new IllegalArgumentException("Can't find response to appointment ID " + appointmentId + " for target person " + targetPerson);
@@ -850,14 +847,14 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
         if (!replierUid.equals(user)) {
             logger.warn("Appointment id " + appointmentId + " replied by " + replierUid + " but cancelled by " + user);
         }
-        
+
         response.setStatus(AppointmentResponseStatus.Rejected);
         response.setComment(comment);
         appointmentDAO.update(response.getAppointment());
-        notificationService.sendNotification(getValueFromBundle(APPOINTMENT_CANCELLED_SUBJECT), 
-                Collections.singletonList(response.getAppointment().getSender().getUid()), 
+        notificationService.sendNotification(getValueFromBundle(APPOINTMENT_CANCELLED_SUBJECT),
+                Collections.singletonList(response.getAppointment().getSender().getUid()),
                 MessageFormat.format(getValueFromBundle(APPOINTMENT_CANCELLED_FOR_TARGET_BODY), new Object[] {
-                    response.getAppointment().getSubject(), getUserInfoDisplayName(response.getTarget().getTargetUser()), 
+                    response.getAppointment().getSubject(), getUserInfoDisplayName(response.getTarget().getTargetUser()),
                     getUserInfoDisplayName(userDao.getOrCreateUser(user))}));
     }
 
@@ -872,7 +869,7 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
     @Override
     public void cancelWholeAppointment(long appointmentId, String comment) {
         final Appointment appointment = loadAppointment(appointmentId);
-        
+
         appointment.setStatus(AppointmentStatus.Cancelled);
         appointment.setCancelComment(comment);
         appointmentDAO.update(appointment);
@@ -888,8 +885,8 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
                 }
             }
         }
-        notificationService.sendNotification(getValueFromBundle(APPOINTMENT_CANCELLED_SUBJECT), 
-                new ArrayList<String>(notificationReceivers), 
+        notificationService.sendNotification(getValueFromBundle(APPOINTMENT_CANCELLED_SUBJECT),
+                new ArrayList<String>(notificationReceivers),
                 MessageFormat.format(getValueFromBundle(APPOINTMENT_CANCELLED_WHOLE_BODY), new Object[] {appointment.getSubject()}));
     }
 

@@ -21,7 +21,7 @@ import fi.arcusys.koku.common.service.dto.AppointmentDTOCriteria;
 
 /**
  * DAO implementation for CRUD operations with 'Appointment' Entity
- * 
+ *
  * @author Dmitry Kudinov (dmitry.kudinov@arcusys.fi)
  * Jul 21, 2011
  */
@@ -33,17 +33,17 @@ public class AppointmentDAOImpl extends AbstractEntityDAOImpl<Appointment> imple
 	public AppointmentDAOImpl() {
 		super(Appointment.class);
 	}
-	
+
 	@Override
 	public Appointment create(Appointment entity) {
-	    final Set<TargetPerson> receipients = new HashSet<TargetPerson>(); 
+	    final Set<TargetPerson> receipients = new HashSet<TargetPerson>();
 	    for (final TargetPerson receipient : entity.getRecipients()) {
 	        receipients.add(em.merge(receipient));
-	    } 
+	    }
 	    entity.setRecipients(receipients);
 	    return super.create(entity);
 	}
-	
+
 	public List<Appointment> getUserAppointments(final User user, final Set<AppointmentStatus> statuses) {
 		return getUserAppointments(user, statuses, FIRST_RESULT_NUMBER, FIRST_RESULT_NUMBER + MAX_RESULTS_COUNT - 1);
 	}
@@ -127,7 +127,7 @@ public class AppointmentDAOImpl extends AbstractEntityDAOImpl<Appointment> imple
         params.put("status_cancelled", AppointmentStatus.Cancelled);
         return params;
     }
-    
+
     private Map<String, Object> getParamsForSenderAndRoles(User user, List<String> userRoles) {
         final Map<String, Object> params = new HashMap<String, Object>();
         params.put("sender", user);
@@ -143,7 +143,7 @@ public class AppointmentDAOImpl extends AbstractEntityDAOImpl<Appointment> imple
         params.put("status_cancelled", AppointmentStatus.Cancelled);
         return params;
     }
-    
+
     private Map<String, Object> getParamsForSenderAndRolesAndTarget(User user, List<String> userRoles, final String targetUserUid) {
         final Map<String, Object> params = new HashMap<String, Object>();
         params.put("sender", user);
@@ -170,7 +170,7 @@ public class AppointmentDAOImpl extends AbstractEntityDAOImpl<Appointment> imple
 	            return getSingleResult("countProcessedAppointmentsBySenderAndTarget", getParamsForSenderAndTarget(user, criteria.getTargetPersonUid()));
 	        } else {
 	            return getSingleResult("countProcessedAppointmentsBySender", getParamsForSender(user));
-	        }    		
+	        }
     	}
     }
 

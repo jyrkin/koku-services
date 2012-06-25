@@ -11,7 +11,7 @@ import fi.arcusys.koku.common.service.dto.AppointmentDTOCriteria;
 
 /**
  * DAO interface for CRUD operations with 'Appointment' Entity
- * 
+ *
  * @author Dmitry Kudinov (dmitry.kudinov@arcusys.fi)
  * Jul 21, 2011
  */
@@ -19,7 +19,7 @@ public interface AppointmentDAO extends AbstractEntityDAO<Appointment>{
 
     @Override
     Appointment create(final Appointment entity);
-    
+
 	/**
 	 * @param string
 	 * @param created

@@ -7,24 +7,17 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
-import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.ResourceBundle;
-import java.util.Set;
-import java.util.TimeZone;
 
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 
-import org.apache.openjpa.jdbc.sql.FirebirdDictionary;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.ParentRunner;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
@@ -40,12 +33,7 @@ import fi.arcusys.koku.av.soa.AppointmentSummaryStatus;
 import fi.arcusys.koku.av.soa.AppointmentTO;
 import fi.arcusys.koku.av.soa.AppointmentWithTarget;
 import fi.arcusys.koku.common.service.CommonTestUtil;
-import fi.arcusys.koku.common.service.datamodel.Appointment;
-import fi.arcusys.koku.common.service.datamodel.AppointmentResponse;
-import fi.arcusys.koku.common.service.datamodel.AppointmentSlot;
-import fi.arcusys.koku.common.service.datamodel.AppointmentStatus;
 import fi.arcusys.koku.common.service.datamodel.FolderType;
-import fi.arcusys.koku.common.service.datamodel.User;
 import fi.arcusys.koku.kv.service.MessageServiceFacade;
 import fi.arcusys.koku.kv.soa.MessageSummary;
 import fi.arcusys.koku.kv.soa.MessageTO;
@@ -226,26 +214,28 @@ public class AppointmentServiceTest {
 
         assertKunpoAppointment(msg_afterSlotRemoval, appointmentId, firstParent, firstParentKids,
                 new HashMap<String, AppointmentSummaryStatus>() {{
-                    put(targetPerson, AppointmentSummaryStatus.Created);
-                    //put(targetPerson, AppointmentSummaryStatus.Invalidated);
                     put(targetPersonForDecline, AppointmentSummaryStatus.Created);
-                }}, null, null);
-
-        // TODO: Second guardian must see the response in the appropriate list
-        /*
-        assertKunpoAppointment(msg_afterSlotRemoval, appointmentId, secondParent, secondParentKids,
+                }},
+                null,
                 new HashMap<String, AppointmentSummaryStatus>() {{
-                    put(targetPerson, AppointmentSummaryStatus.Created);
-                    //put(targetPerson, AppointmentSummaryStatus.Invalidated);
-                }}, null, null);
-        */
+                    put(targetPerson, AppointmentSummaryStatus.Invalidated);
+                }});
+
+        assertKunpoAppointment(msg_afterSlotRemoval, appointmentId, secondParent, secondParentKids,
+                null,
+                null,
+                new HashMap<String, AppointmentSummaryStatus>() {{
+                    put(targetPerson, AppointmentSummaryStatus.Invalidated);
+                }});
 
         assertKunpoAppointment(msg_afterSlotRemoval, appointmentId, firstParentForDecline, firstParentForDeclineKids,
                 new HashMap<String, AppointmentSummaryStatus>() {{
-                    put(targetPerson, AppointmentSummaryStatus.Created);
-                    //put(targetPerson, AppointmentSummaryStatus.Invalidated);
                     put(targetPersonForDecline, AppointmentSummaryStatus.Created);
-                }}, null, null);
+                }},
+                null,
+                new HashMap<String, AppointmentSummaryStatus>() {{
+                    put(targetPerson, AppointmentSummaryStatus.Invalidated);
+                }});
 
         assertKunpoAppointment(msg_afterSlotRemoval, appointmentId, secondParentForDecline, secondParentForDeclineKids,
                 new HashMap<String, AppointmentSummaryStatus>() {{
@@ -577,12 +567,11 @@ public class AppointmentServiceTest {
             }
 	    }
 
-	    // TODO: Check for exclusions
 	    // Make sure targetPersons are excluded from this list
-	    /*if (excludeTargets != null)
+	    if (excludeTargets != null)
 	        for (final String targetPerson : excludeTargets)
 	            for (AppointmentWithTarget a : appointmentList)
-                    assertFalse(message + ": Must not contain "+targetPerson, a.getAppointmentId() == appointmentId && a.getTargetPerson().equals(targetPerson));*/
+                    assertFalse(message + ": Must not contain "+targetPerson, a.getAppointmentId() == appointmentId && a.getTargetPerson().equals(targetPerson));
 	}
 
 	@Test
