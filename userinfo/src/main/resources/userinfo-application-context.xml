@@ -27,10 +27,10 @@
   <bean id="userInfoServiceKokuImpl" class="fi.koku.services.utility.userinfo.impl.UserInfoServiceKokuImpl">
      <property name="userInfoServiceDAOBean" ref="userInfoServiceDB" />  
   </bean>
-    
+
   <bean id="userInfoServiceMockImpl" class="fi.koku.services.utility.userinfo.impl.UserInfoServiceMockImpl">
   </bean>
-
+  
   <bean id="userInfoServiceLdapImpl" class="fi.koku.services.utility.userinfo.impl.UserInfoServiceLDAPImpl" lazy-init="true">
     <property name="ldapTemplate" ref="ldapTemplate"/>
   </bean>
@@ -39,6 +39,16 @@
     <constructor-arg ref="contextSource"/>
   </bean>
 
+  <bean id="userInfoServiceKokuMockImpl" class="fi.koku.services.utility.userinfo.impl.UserInfoServiceKokuMockImpl">
+    <property name="userInfoServiceDAOBean" ref="userInfoServiceDB" />  
+    <property name="userInfoMockService" ref="userInfoServiceMockImpl" />
+  </bean>
+  
+  <bean id="userInfoServiceKokuLDAPImpl" class="fi.koku.services.utility.userinfo.impl.UserInfoServiceKokuLDAPImpl">
+    <property name="userInfoServiceDAOBean" ref="userInfoServiceDB" />  
+    <property name="userInfoMockService" ref="userInfoServiceLdapImpl" /> 
+  </bean>
+  
   <bean id="contextSource" class="org.springframework.ldap.pool.factory.PoolingContextSource" lazy-init="true">
     <property name="contextSource" ref="contextSourceTarget" />
     <property name="dirContextValidator" ref="dirContextValidator" />
