@@ -368,7 +368,7 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
 	 * @param messageId
 	 */
 	@Override
-	public Long receiveMessage(final String toUserUid, final  Long messageId) {
+	public Long receiveMessage(final String toUserUid, final Long messageId) {
 		final MessageRef sentMessage = messageRefDao.getById(messageId);
 		if (sentMessage == null) {
 			throw new IllegalArgumentException("Message with ID " + messageId + " not found.");

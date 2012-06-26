@@ -34,4 +34,7 @@ public interface KokuMessageProcessingService {
             @WebParam(name = "toUser") final String toUserUid,
             @WebParam(name = "messageContent") final String content,
             @WebParam(name = "originalContent") final String originalContent);
+
+    @WebResult(name = "message")
+	public MessageTO getMessageById(@WebParam(name = "messageId") long messageId);
 }
