@@ -253,28 +253,29 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
 		return result;
 	}
 
-	private <M extends MessageSummary> M convertMessageToDTO(final MessageRef messageRef, final M msg) {
+	private <M extends MessageSummary> M convertMessageToDTO(final MessageRef messageRef, final M msgTO) {
 		final Message message = messageRef.getMessage();
-		msg.setMessageId(messageRef.getId());
-		msg.setSender(getDisplayName(message.getUser()));
-		msg.setSenderUserInfo(getUserInfo(message.getUser()));
-		msg.setSubject(message.getSubject());
-		msg.setCreationDate(CalendarUtil.getXmlGregorianCalendar(message.getCreatedDate()));
-		msg.setMessageStatus(MessageStatus.getStatus(messageRef.isRead()));
-		msg.setMessageType(messageRef.getFolder().getFolderType());
-		msg.setReplied(message.getReplied());
+		msgTO.setMessageId(messageRef.getId());
+		msgTO.setSender(getDisplayName(message.getUser()));
+		msgTO.setSenderUserInfo(getUserInfo(message.getUser()));
+		msgTO.setSubject(message.getSubject());
+		msgTO.setCreationDate(CalendarUtil.getXmlGregorianCalendar(message.getCreatedDate()));
+		msgTO.setMessageStatus(MessageStatus.getStatus(messageRef.isRead()));
+		msgTO.setMessageType(messageRef.getFolder().getFolderType());
+		msgTO.setReplied(message.getReplied());
+		msgTO.setFromRoleUid(message.getFromRoleUid());
 
 		if (message.getUser().getUid()
 		        .equals(SYSTEM_USER_NAME_FOR_NOTIFICATIONS) ||
 		    messageRef.getFolder()
 		        .getFolderType() != FolderType.Inbox)
-		    msg.setReplyDisabled(true);
+		    msgTO.setReplyDisabled(true);
 		else
-		    msg.setReplyDisabled(false);
+		    msgTO.setReplyDisabled(false);
 
-		msg.setRecipients(getDisplayNamesByUsers(message.getReceipients()));
-		msg.setRecipientUserInfos(getUserInfos(message.getReceipients()));
-		return msg;
+		msgTO.setRecipients(getDisplayNamesByUsers(message.getReceipients()));
+		msgTO.setRecipientUserInfos(getUserInfos(message.getReceipients()));
+		return msgTO;
 	}
 
     /**
