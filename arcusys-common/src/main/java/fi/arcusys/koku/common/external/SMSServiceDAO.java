@@ -1,18 +1,17 @@
 package fi.arcusys.koku.common.external;
 
-import fi.arcusys.koku.common.service.GenericNotificationService;
 import fi.arcusys.koku.common.service.datamodel.User;
 
 /**
- * DAO interface to email service.
+ * DAO interface to SMS service.
  *
- * @author Dmitry Kudinov (dmitry.kudinov@arcusys.fi)
- * Jan 2, 2012
+ * @author Mikhail Kpaitonov (mikhail.kapitonov@arcusys.fi)
+ * Jun 25, 2012
  */
-public interface EmailServiceDAO {
+public interface SMSServiceDAO {
 
     /**
-     * Sends the message using email
+     * Sends the message using SMS
      *
      * @param toUser     Receiver of the message
      * @param subject    Message subject

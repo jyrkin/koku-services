@@ -31,8 +31,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import fi.arcusys.koku.common.external.CustomerServiceDAO;
-import fi.arcusys.koku.common.external.EmailServiceDAO;
 import fi.arcusys.koku.common.service.CalendarUtil;
+import fi.arcusys.koku.common.service.GenericNotificationService;
 import fi.arcusys.koku.common.service.KokuSystemNotificationsService;
 import fi.arcusys.koku.common.service.MessageDAO;
 import fi.arcusys.koku.common.service.MessageFolderDAO;
@@ -121,7 +121,7 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
     private CustomerServiceDAO customerDao;
 
     @EJB
-    private EmailServiceDAO emailDao;
+    private GenericNotificationService genericNotify;
 
     private String notificationTemplate = "{2}";
 
@@ -178,7 +178,7 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
         final String emailSubject = getValueFromBundle(EMAIL_NEW_MESSAGE_RECEIVED_SUBJECT);
         final String emailContent = MessageFormat.format(getValueFromBundle(EMAIL_NEW_MESSAGE_RECEIVED_BODY),
                 new Object[] {KoKuPropertiesUtil.get(EMAIL_LINKS_MESSAGE_INBOX_PATH)});
-        sendEmailNotifications(getUsersByUids(receipientUids), storedMessage, emailSubject, emailContent);
+        sendGenericNotifications(getUsersByUids(receipientUids), storedMessage, emailSubject, emailContent);
 
 		return storedMessage.getId();
 	}
@@ -691,22 +691,20 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
                 new Object[] {KoKuPropertiesUtil.get(EMAIL_LINKS_MESSAGE_INBOX_PATH) + KoKuPropertiesUtil.get(EMAIL_LINKS_NEW_REQUEST_PATH),
                               request.getReplyTill()});
 
-        sendEmailNotifications(recipients, msgRef, emailSubject, emailContent);
+        sendGenericNotifications(recipients, msgRef, emailSubject, emailContent);
 
 		request = requestDAO.create(request);
 
         return request;
     }
 
-    private void sendEmailNotifications(final Set<User> recipients,
+    private void sendGenericNotifications(final Set<User> recipients,
             final MessageRef msgRef, final String emailSubject,
             final String emailContent) {
         final Set<User> deliveryFailed = new HashSet<User>();
         for (final User recipient : recipients) {
-            if (!emailDao.sendMessage(recipient, emailSubject,
-                    emailContent)) {
+            if (!genericNotify.sendMessage(recipient, emailSubject, emailContent))
                 deliveryFailed.add(recipient);
-            }
         }
         if (!deliveryFailed.isEmpty()) {
             // report message delivery failure

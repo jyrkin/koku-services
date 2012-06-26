@@ -19,21 +19,21 @@ import fi.tampere.schema.municipalityportal.ccs.SendEmailMessageType;
 
 /**
  * DAO implementation for sending email notifications to citizens through Gofore's provided email service.
- * 
+ *
  * @author Dmitry Kudinov (dmitry.kudinov@arcusys.fi)
  * Jan 2, 2012
  */
-@Stateless
-public class EmailServiceDAOImpl implements EmailServiceDAO {
+@Stateless(mappedName = "TampereEmailServiceDAO")
+public class TampereEmailServiceDAOImpl implements EmailServiceDAO {
 
-    private static final Logger logger = LoggerFactory.getLogger(EmailServiceDAOImpl.class);
-    
+    private static final Logger logger = LoggerFactory.getLogger(TampereEmailServiceDAOImpl.class);
+
     @EJB
     CustomerServiceDAO customerDao;
-    
+
     private CustomerCommunicationServicePortType communicationService;
     private final ObjectFactory objectFactory = new ObjectFactory();
-    
+
     private String communicationServiceUserUid;
     private String communicationServiceUserPwd;
     private String communicationServiceEndpoint = KoKuPropertiesUtil.get("customercommunication.service.endpointaddress.full.url");
@@ -53,7 +53,7 @@ public class EmailServiceDAOImpl implements EmailServiceDAO {
             communicationService = communicationServiceFactory.getCustomerCommunicationService();
         } catch(Exception re) {
             logger.error(null, re);
-        } 
+        }
     }
 
     /**
@@ -66,12 +66,12 @@ public class EmailServiceDAOImpl implements EmailServiceDAO {
         if (toUser == null) {
             return false;
         }
-        
+
         if (toUser.getEmployeePortalName() != null && !toUser.getEmployeePortalName().isEmpty()) {
             logger.info("Sending of the emails to employees is not implemented. Skip email sending to user " + toUser.getUid());
             return false;
         }
-        
+
         try {
             final SendEmailMessageType createSendEmailMessageType = objectFactory.createSendEmailMessageType();
             createSendEmailMessageType.setSsn(customerDao.getSsnByKunpoName(toUser.getCitizenPortalName()));

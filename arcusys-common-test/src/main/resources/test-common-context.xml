@@ -110,7 +110,9 @@
     <bean id="rolesDao" class="fi.arcusys.koku.common.external.RolesDAOImpl" />
     <bean id="pyhServiceDao" class="fi.arcusys.koku.common.external.PyhServiceDAOImpl" />
     <bean id="ldapDao" class="fi.arcusys.koku.common.external.LdapDAOImpl" />
-    <bean id="emailDao" class="fi.arcusys.koku.common.external.EmailServiceDAOImpl" />
+    <bean id="emailDao" class="fi.arcusys.koku.common.external.DummyEmailServiceDAOImpl" />
+    <bean id="smsDao" class="fi.arcusys.koku.common.external.DummySMSServiceDAOImpl" />
+    <bean id="genericNotify" class="fi.arcusys.koku.common.service.GenericNotificationServiceTestImpl" />
 
     <!-- Test service implementations -->
     <bean id="userDao" class="fi.arcusys.koku.common.service.UserDAOTestImpl" />
