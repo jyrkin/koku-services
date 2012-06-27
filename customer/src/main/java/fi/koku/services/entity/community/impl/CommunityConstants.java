@@ -7,6 +7,9 @@ package fi.koku.services.entity.community.impl;
  */
 public class CommunityConstants {
   
+  /** 
+   * Class constructor.
+   */
   private CommunityConstants() {
   }
   

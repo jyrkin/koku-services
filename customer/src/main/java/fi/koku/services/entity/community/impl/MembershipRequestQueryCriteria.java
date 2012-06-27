@@ -25,23 +25,49 @@ public class MembershipRequestQueryCriteria {
   public MembershipRequestQueryCriteria() {
   }
 
+  /** 
+   * Class constructor.
+   * 
+   * @param requester's pic
+   * @param approver's pic
+   */
   public MembershipRequestQueryCriteria(String requesterPic, String approverPic) {
     this.requesterPic = requesterPic;
     this.approverPic = approverPic;
   }
 
+  /**
+   * Get requester's pic
+   * 
+   * @return requester's pic
+   */
   public String getRequesterPic() {
     return requesterPic;
   }
 
+  /**
+   * Set requester's pic
+   * 
+   * @param requester's pic
+   */
   public void setRequesterPic(String requesterPic) {
     this.requesterPic = requesterPic;
   }
 
+  /**
+   * Get approver's pic
+   * 
+   * @return approver's pic
+   */
   public String getApproverPic() {
     return approverPic;
   }
 
+  /**
+   * Set approver's pic
+   * 
+   * @param approver's pic
+   */
   public void setApproverPic(String approverPic) {
     this.approverPic = approverPic;
   }

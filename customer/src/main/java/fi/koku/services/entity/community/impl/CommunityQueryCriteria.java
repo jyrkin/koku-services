@@ -24,15 +24,31 @@ public class CommunityQueryCriteria {
   
   private String communityType;
 
+  /** 
+   * Class constructor.
+   * 
+   * @param member pics
+   * @param  community type
+   */
   public CommunityQueryCriteria(Set<String> memberPics, String communityType) {
     this.memberPics = memberPics;
     this.communityType = communityType;
   }
 
+  /**
+   * Sets community type
+   * 
+   * @return community type
+   */
   public String getCommunityType() {
     return communityType;
   }
 
+  /**
+   * Gets members pics
+   * 
+   * @return member pics
+   */
   public Set<String> getMemberPics() {
     return memberPics;
   }

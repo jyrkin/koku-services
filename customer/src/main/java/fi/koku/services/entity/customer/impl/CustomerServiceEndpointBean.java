@@ -65,34 +65,70 @@ public class CustomerServiceEndpointBean implements CustomerServicePortType {
 	
 	private CustomerConverter customerConverter;
 	
+	/** 
+   * Class constructor.
+   */
 	public CustomerServiceEndpointBean() {
 	  customerConverter = new CustomerConverter();
 	}
 
-  @Override
+	/**
+	 * Add customer
+	 * 
+	 * @param customer
+	 * @param auditing info
+	 * @return customer id 
+	 */
+	@Override	
   public String opAddCustomer(CustomerType customer, AuditInfoType auditHeader) {
     Long id = customerService.add(customerConverter.fromWsType(customer));
     return id.toString();
   }
 	
-	@Override
+	/**
+	 * Get customer
+	 * 
+	 * @param customer pic
+	 * @param auditing info
+	 * @return found customer
+	 */
+	@Override  
 	public CustomerType opGetCustomer(String pic, AuditInfoType auditHeader) {
 		return customerConverter.toWsType(customerService.get(pic), CustomerConstants.FULL_DATA_QUERY);
 	}
 
-	@Override
+	/**
+	 * Update customer
+	 * 
+	 * @param customer
+	 * @param auditing info 
+	 */
+	@Override	
 	public VoidType opUpdateCustomer(CustomerType customer, AuditInfoType auditHeader) {
 		customerService.update(customerConverter.fromWsType(customer));
     return new VoidType();
 	}
 
-	@Override
+	/**
+	 * Delete customer
+	 * 
+	 * @param customer pic
+	 * @param auditing info
+	 */
+	@Override	
 	public VoidType opDeleteCustomer(String pic, AuditInfoType auditHeader) {
 		customerService.delete(pic);
     return new VoidType();
 	}
 
-	@Override
+	/**
+	 * Query customer(s)
+	 * 
+	 * @param customer query criteria
+	 * @param auditing info
+	 * @return customer(s) queried
+	 */
+	@Override	
 	public CustomersType opQueryCustomers(CustomerQueryCriteriaType criteria, AuditInfoType auditHeader) {
     CustomerQueryCriteria customerQueryCriteria = new CustomerQueryCriteria(new HashSet<String>(
         criteria.getPics() != null ? criteria.getPics().getPic() : new HashSet<String>()), criteria.getSelection());
@@ -105,6 +141,11 @@ public class CustomerServiceEndpointBean implements CustomerServicePortType {
 		return r;
 	}
 
+	/**
+	 * Sets the customer service.
+	 *
+	 * @param cs the new customer service
+	 */
 	public void setCustomerService(CustomerService cs) {
 	  this.customerService = cs;
 	}

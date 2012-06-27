@@ -12,6 +12,9 @@ public class CustomerConstants {
    */
   public static final String FULL_DATA_QUERY = "full";
   
+  /** 
+   * Class constructor.
+   */
   private CustomerConstants() {
   } 
 }
