@@ -19,28 +19,52 @@ package fi.koku.services.utility.log.impl;
 public enum LogServiceErrorCode {
 
   LOG_ERROR_INVALID_LOGTYPE(2010, "Invalid logtype"),
+  
   LOG_ERROR_MISSING_TIMESTAMP(2100, "Timestamp missing when writing to log"),
+  
   LOG_ERROR_MISSING_USERPIC(2110, "User pic missing when writing to log"),
+  
   LOG_ERROR_MISSING_OPERATION(2120, "Operation missing when writing to log"),
+  
   LOG_ERROR_MISSING_DATAITEMTYPE(2140, "Date item type missing when writing to log"),
+  
   LOG_ERROR_MISSING_CLIENTSYSTEMID(2150, "Client system id missing when writing to log"),
+  
   LOG_ERROR_ARCHIVE_LOG_NOT_AVAILABLE(2160, "Archive log not available"),
+  
   LOG_ERROR_INVALID_QUERY_CRITERIA(2170, "Invalid query criteria"),
+  
   LOG_ERROR_INVALID_ARCHIVE_DATE(2180, "Invalid archive date");
   
   private final int value;
 
   private final String description;
   
+  /**
+   * Instantiates a new log service error code.
+   *
+   * @param value the value
+   * @param description the description
+   */
   LogServiceErrorCode(int value, String description) {
     this.value = value;
     this.description = description;
   }
 
+  /**
+   * Gets the value.
+   *
+   * @return the value
+   */
   public int getValue() {
     return value;
   }
 
+  /**
+   * Gets the description.
+   *
+   * @return the description
+   */
   public String getDescription() {
     return description;
   }

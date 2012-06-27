@@ -9,50 +9,34 @@
  * (kohtikumppanuutta@ixonos.com).
  *
  */
-package fi.koku.services.entity.customer.impl;
+package fi.koku.services.utility.userinfo.impl;
 
 /**
- * Error codes for customer service.
+ * Error codes for userinfo service.
  * 
- * @author laukksa
+ * @author hekkata
  */
-public enum CustomerServiceErrorCode {
+public enum UserInfoServiceErrorCode {
 
-  CUSTOMER_NOT_FOUND(1001, "Customer not found."),
-  
+  PORTAL_USER_NOT_FOUND(1001, "User not found."),
   NO_QUERY_CRITERIA(1002, "Query criteria missing."),
-  
-  UNAUTHORIZED(1003,"Unauthorized to use operation");
+  UNAUTHORIZED(1003,"Unauthorized to use operation"),
+  PORTAL_USER_ALREADY_EXISTS(1004, "User already exists."),
+  PASSWORD_ENCRYPTION_ERROR(1005, "Error on password encryption");
   
   private final int value;
 
   private final String description;
   
-  /**
-   * Class constructor.
-   *
-   * @param value error code
-   * @param description the error description
-   */
-  CustomerServiceErrorCode(int value, String description) {
+  UserInfoServiceErrorCode(int value, String description) {
     this.value = value;
     this.description = description;
   }
 
-  /**
-   * Gets the error value.
-   *
-   * @return the error value
-   */
   public int getValue() {
     return value;
   }
 
-  /**
-   * Gets the error description.
-   *
-   * @return the error description
-   */
   public String getDescription() {
     return description;
   }

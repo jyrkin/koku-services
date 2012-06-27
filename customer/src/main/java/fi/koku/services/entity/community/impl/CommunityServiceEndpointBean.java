@@ -69,6 +69,14 @@ public class CommunityServiceEndpointBean implements CommunityServicePortType {
     membershipRequestConverter = new MembershipRequestConverter();
   }
 
+  /**
+   * Add community
+   * 
+   * @param community to be added
+   * @param auditing info
+   * @return community id added
+   * 
+   */
   @Override
   public String opAddCommunity(CommunityType community, AuditInfoType auditHeader) {
     logger.debug("opAddCommunity");
@@ -76,11 +84,24 @@ public class CommunityServiceEndpointBean implements CommunityServicePortType {
     return id != null ? id.toString() : "null";
   }
 
+  /**
+   * Get community
+   * 
+   * @param community id
+   * @param auditing info
+   * @return community queried    
+   */
   @Override
   public CommunityType opGetCommunity(String communityId, AuditInfoType auditHeader) {
     return communityConverter.toWsType(communityService.get(communityId));
   }
 
+  /**
+   * Update community
+   * 
+   * @param community to be updated
+   * @param auditing info    
+   */
   @Override
   public VoidType opUpdateCommunity(CommunityType community, AuditInfoType auditHeader) {
     Community c = communityConverter.fromWsType(community);
@@ -89,12 +110,25 @@ public class CommunityServiceEndpointBean implements CommunityServicePortType {
     return new VoidType();
   }
 
+  /**
+   * Delete community
+   * 
+   * @param community to be deleted
+   * @param auditing info   * 
+   */
   @Override
   public VoidType opDeleteCommunity(String communityId, AuditInfoType auditHeader) {
     communityService.delete(communityId);
     return new VoidType();
   }
 
+  /**
+   * Query for communities
+   * 
+   *  @param query criteria
+   *  @param auditing info
+   *  @return communities queried    
+   */
   @Override
   public CommunitiesType opQueryCommunities(CommunityQueryCriteriaType query, AuditInfoType auditHeader) {
     CommunityQueryCriteria qc = new CommunityQueryCriteria(
@@ -107,6 +141,13 @@ public class CommunityServiceEndpointBean implements CommunityServicePortType {
     return ret;
   }
 
+  /**
+   * Add membership request
+   * 
+   * @param membership request
+   * @param auditing info
+   * @return id of membership added
+   */
   @Override
   public String opAddMembershipRequest(MembershipRequestType membershipRequest, AuditInfoType auditHeader)
       throws ServiceFault {
@@ -116,6 +157,13 @@ public class CommunityServiceEndpointBean implements CommunityServicePortType {
     return id.toString();
   }
 
+  /**
+   * Query membership requests
+   * 
+   * @param query criteria for membership(s)
+   * @param auditing info
+   * @return membership request(s) queried
+   */
   @Override
   public MembershipRequestsType opQueryMembershipRequests(MembershipRequestQueryCriteriaType mrqc, AuditInfoType auditHeader)
       throws ServiceFault {
@@ -127,6 +175,12 @@ public class CommunityServiceEndpointBean implements CommunityServicePortType {
     return ret;
   }
 
+  /**
+   * Update membership approval
+   * 
+   * @param approval type
+   * @param auditing info    
+   */
   @Override
   public VoidType opUpdateMembershipApproval(MembershipApprovalType ma, AuditInfoType auditHeader)
       throws ServiceFault {
@@ -136,6 +190,12 @@ public class CommunityServiceEndpointBean implements CommunityServicePortType {
     return new VoidType();
   }
   
+  /**
+   * Delete membership request
+   * 
+   * @param membership request id
+   * @param auditing info   * 
+   */
   @Override
   public VoidType opDeleteMembershipRequest(String membershipRequestId, AuditInfoType auditHeader) {
     communityService.deleteMembershipRequest(membershipRequestId);
@@ -152,6 +212,9 @@ public class CommunityServiceEndpointBean implements CommunityServicePortType {
     @SuppressWarnings("unused")
     private Logger logger = LoggerFactory.getLogger(CommunityConverter.class);
     
+    /** 
+     * Class constructor.
+     */
     public CommunityConverter() {
     }
 

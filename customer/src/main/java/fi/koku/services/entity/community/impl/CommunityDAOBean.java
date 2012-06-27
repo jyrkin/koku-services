@@ -38,9 +38,18 @@ public class CommunityDAOBean implements CommunityDAO {
   @PersistenceContext
   private EntityManager em;
   
+  /** 
+   * Class constructor.
+   */
   public CommunityDAOBean() {
   }
 
+  /**
+   *  Gets the community
+   * 
+   * @param community id
+   * @return  community 
+   */
   @Override
   public Community getCommunity(Long id) {
     Query q = em.createNamedQuery(Community.QUERY_GET_COMMUNITY_BY_ID);
@@ -48,6 +57,12 @@ public class CommunityDAOBean implements CommunityDAO {
     return (Community) q.getSingleResult();
   }
   
+  /**
+   * Inserts community
+   * 
+   * @param community
+   * @return community id
+   */
   @Override
   public Long insertCommunity(Community c) {
     c.setId(null);
@@ -57,6 +72,8 @@ public class CommunityDAOBean implements CommunityDAO {
   
   /**
    * Merge from c2 to c1.
+   * 
+   * @param community to merge from
    */
   @Override
   public void updateCommunity(Community c2) {
@@ -96,6 +113,12 @@ public class CommunityDAOBean implements CommunityDAO {
     }
   }
 
+  /**
+   *  Communities query
+   * 
+   * @param query criteria
+   * @return  communities
+   */  
   @Override
   public Collection<Community> queryCommunities(CommunityQueryCriteria qc) {
     // JPQL generates an unnecessary join in the SQL subquery.
@@ -130,6 +153,12 @@ public class CommunityDAOBean implements CommunityDAO {
     return r;
   }
 
+  /**
+   *  Membership query
+   * 
+   * @return  membership requests
+   * @param query criteria 
+   */  
   @Override
   public Collection<MembershipRequest> queryMembershipRequests(MembershipRequestQueryCriteria qc) {
     Query q = null;
@@ -158,17 +187,34 @@ public class CommunityDAOBean implements CommunityDAO {
     return requests;
   }
 
+  /**
+   *  Update membership
+   * 
+   * @param membership approval
+   */
+  
   @Override
   public void updateMembershipApproval(MembershipApproval a) {
     em.merge(a);
   }
 
+  /**
+   *  Delete community
+   *  
+   *  @param community id
+   */
   @Override
   public void deleteCommunity(Long id) {
     Community c = em.find(Community.class, id);
     em.remove(c);
   }
 
+  /**
+   *  Gets the community
+   * 
+   * @param community
+   * @return  community id    
+   */
   @Override
   public Long insertMembershipRequest(MembershipRequest rq) {
     rq.setId(null);
@@ -176,6 +222,12 @@ public class CommunityDAOBean implements CommunityDAO {
     return rq.getId();
   }
 
+  /**
+   *  Gets the community membership
+   * 
+   * @param request id
+   * @return  community request id
+   */
   @Override
   public MembershipRequest getMembershipRequest(Long requestId) {
     Query q = em.createNamedQuery(MembershipRequest.QUERY_GET_MEM_REQUEST_BY_ID);
@@ -185,6 +237,11 @@ public class CommunityDAOBean implements CommunityDAO {
     return rq;
   }
 
+  /**
+   *  Deletes the community membership
+   * 
+   * @param  community request id 
+   */
   @Override
   public void deleteMembershipRequest(Long requestId) {
     MembershipRequest rq = getMembershipRequest(requestId);

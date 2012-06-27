@@ -18,9 +18,8 @@
       <port-component>
         <port-component-name>UserInfoService</port-component-name>
         <auth-method>BASIC</auth-method>
-      </port-component>
+      </port-component>      
     </session>
   </enterprise-beans>
-
 
 </jboss>

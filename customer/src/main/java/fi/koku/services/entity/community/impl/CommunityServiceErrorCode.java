@@ -26,15 +26,31 @@ public enum CommunityServiceErrorCode {
 
   private final String description;
   
+  /**
+   * Class constructor
+   * 
+   * @param value
+   * @param description
+   */
   CommunityServiceErrorCode(int value, String description) {
     this.value = value;
     this.description = description;
   }
 
+  /**
+   * Get value for error code
+   * 
+   * @return error code
+   */
   public int getValue() {
     return value;
   }
 
+  /**
+   * Get error description
+   * 
+   * @return error description
+   */
   public String getDescription() {
     return description;
   }

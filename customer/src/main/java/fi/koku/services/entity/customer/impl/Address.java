@@ -66,89 +66,155 @@ public class Address {
   @JoinColumn(name="customer_id", nullable=false)
   private Customer customer;
   
+  /** 
+   * Class constructor.
+   */
   public Address() {
   }
 
+  /**
+   * @return
+   */
   public Long getId() {
     return id;
   }
 
+  /**
+   * @param id
+   */
   protected void setId(Long id) {
     this.id = id;
   }
 
+  /**
+   * @return
+   */
   public String getType() {
     return type;
   }
 
+  /**
+   * @param type
+   */
   public void setType(String type) {
     this.type = type;
   }
 
+  /**
+   * @return
+   */
   public String getStreetAddress() {
     return streetAddress;
   }
 
+  /**
+   * @param streetAddress
+   */
   public void setStreetAddress(String streetAddress) {
     this.streetAddress = streetAddress;
   }
 
+  /**
+   * @return
+   */
   public String getPostalDistrict() {
     return postalDistrict;
   }
 
+  /**
+   * @param postalDistrict
+   */
   public void setPostalDistrict(String postalDistrict) {
     this.postalDistrict = postalDistrict;
   }
 
+  /**
+   * @return
+   */
   public String getPostalCode() {
     return postalCode;
   }
 
+  /**
+   * @param postalCode
+   */
   public void setPostalCode(String postalCode) {
     this.postalCode = postalCode;
   }
 
+  /**
+   * @return
+   */
   public String getPoBox() {
     return poBox;
   }
 
+  /**
+   * @param poBox
+   */
   public void setPoBox(String poBox) {
     this.poBox = poBox;
   }
 
+  /**
+   * @return
+   */
   public String getCountryCode() {
     return countryCode;
   }
 
+  /**
+   * @param countryCode
+   */
   public void setCountryCode(String countryCode) {
     this.countryCode = countryCode;
   }
 
+  /**
+   * @return
+   */
   public Date getValidFrom() {
     return validFrom;
   }
 
+  /**
+   * @param validFrom
+   */
   public void setValidFrom(Date validFrom) {
     this.validFrom = validFrom;
   }
 
+  /**
+   * @return
+   */
   public Date getValidTo() {
     return validTo;
   }
 
+  /**
+   * @param validTo
+   */
   public void setValidTo(Date validTo) {
     this.validTo = validTo;
   }
 
+  /**
+   * @return
+   */
   public Customer getCustomer() {
     return customer;
   }
 
+  /**
+   * @param customer
+   */
   public void setCustomer(Customer customer) {
     this.customer = customer;
   }
   
+  /**
+   * @param a
+   */
   public void setAddress(Address a) {
     setType(a.getType());
     setStreetAddress(a.getStreetAddress());

@@ -34,6 +34,13 @@ public class CommunityServiceFaultInterceptor {
 
   private static Logger logger = LoggerFactory.getLogger(CommunityServiceFaultInterceptor.class);
   
+  /**
+   * Convert exception
+   * 
+   * @param invocationContext
+   * @return
+   * @throws converted ServiceFault 
+   */
   @AroundInvoke
   public Object intercept(final InvocationContext invocationContext) throws Exception {
     try {

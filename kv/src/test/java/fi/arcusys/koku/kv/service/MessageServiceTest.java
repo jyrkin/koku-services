@@ -390,6 +390,8 @@ public class MessageServiceTest {
 
         assertNull("Message should not be visible to another user with different role.",
                 getMessageById(serviceFacade.getMessages(anotherEmployeeUserId, FolderType.Outbox, new MessageQuery(1, 10)), messageId));
+
+        assertEquals(fromRole, serviceFacade.getMessageById(messageId).getFromRoleUid());
     }
 
     private long sendMessage(final String fromUserId, final String subject, final List<String> toUsers, final String content,

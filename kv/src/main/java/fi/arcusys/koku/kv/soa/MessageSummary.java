@@ -28,6 +28,7 @@ public class MessageSummary {
 	private MessageStatus messageStatus;
 	private Boolean replyDisabled;
 	private Boolean replied;
+	private String fromRoleUid;
 
 	/**
      * @return the senderUserInfo
@@ -217,5 +218,13 @@ public class MessageSummary {
 
 	public void setReplied(Boolean replied) {
 		this.replied = replied;
+	}
+
+	public String getFromRoleUid() {
+		return fromRoleUid;
+	}
+
+	public void setFromRoleUid(String fromRoleUid) {
+		this.fromRoleUid = fromRoleUid;
 	}
 }

@@ -24,15 +24,49 @@ import javax.ejb.Local;
 @Local
 public interface LogDAO {
   
+  /**
+   * Archive log.
+   *
+   * @param date the date
+   * @return the int
+   */
   int archiveLog(Date date);
   
+  /**
+   * Write log.
+   *
+   * @param entry the entry
+   */
   void writeLog(LogEntry entry);
 
+  /**
+   * Query log.
+   *
+   * @param criteria the criteria
+   * @return the collection
+   */
   Collection<LogEntry> queryLog(LogQueryCriteria criteria);
   
+  /**
+   * Query admin log.
+   *
+   * @param criteria the criteria
+   * @return the collection
+   */
   Collection<AdminLogEntry> queryAdminLog(LogQueryCriteria criteria);
 
+  /**
+   * Write admin log.
+   *
+   * @param entry the entry
+   */
   void writeAdminLog(AdminLogEntry entry);
 
+  /**
+   * Gets the earliest.
+   *
+   * @param date the date
+   * @return the earliest
+   */
   Date getEarliest(Date date);
 }

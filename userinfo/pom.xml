@@ -12,8 +12,8 @@
   <properties>
     <spring.version>3.0.5.RELEASE</spring.version>
     <spring-ldap.version>1.3.1.RELEASE</spring-ldap.version>
-    <userinfo-api.version>0.0.4</userinfo-api.version>
     <commons-pool.version>1.5.4</commons-pool.version>
+    <userinfo-api.version>0.0.6</userinfo-api.version>
   </properties>
 
   <build>

@@ -43,23 +43,44 @@ public class CommunityServiceBean implements CommunityService {
   @EJB
   private CommunityDAO communityDAO;
   
+  /**
+   *  Add community
+   *  
+   *  @param community to be added
+   */
   @Override
   public Long add(Community c) {    
     verifyUserRole(c); 
     return communityDAO.insertCommunity(c);
   }
 
+  /**
+   * Get community
+   * 
+   * @param community id
+   * @return community
+   */
   @Override
   public Community get(String communityId) {
     return communityDAO.getCommunity(Long.valueOf(communityId));
   }
   
+  /**
+   * Update community
+   * 
+   * @param community to be updated   * 
+   */
   @Override
   public void update(Community c) {
     verifyUserRole(c); 
     communityDAO.updateCommunity(c);
   }
 
+  /**
+   * Delete community
+   * 
+   * @param community to be deleted   * 
+   */
   @Override
   public void delete(String communityId) {
     long id = Long.valueOf(communityId);
@@ -68,16 +89,35 @@ public class CommunityServiceBean implements CommunityService {
     communityDAO.deleteCommunity(id);
   }
 
+  /**
+   * Query for communities
+   * 
+   * @param query criteria
+   * @return communities queried
+   * 
+   */
   @Override
   public Collection<Community> query(CommunityQueryCriteria qc) {
     return communityDAO.queryCommunities(qc);
   }
 
+  /**
+   * Add membership request
+   * 
+   * @param membership request
+   * @return membership request id 
+   */
   @Override
   public Long addMembershipRequest(MembershipRequest rq) {
     return communityDAO.insertMembershipRequest(rq);
   }
 
+  /**
+   * Query membership request(s)
+   * 
+   * @param query criteria for membership
+   * @return memberships queried
+   */
   @Override
   public Collection<MembershipRequest> queryMembershipRequests(MembershipRequestQueryCriteria qc) {    
     return communityDAO.queryMembershipRequests(qc);
@@ -85,6 +125,8 @@ public class CommunityServiceBean implements CommunityService {
 
   /**
    * Update MembershipApproval based on approval's status
+   * 
+   * @param membership approval
    */
   @Override
   public void updateMembershipApproval(MembershipApproval approval) {
@@ -119,6 +161,11 @@ public class CommunityServiceBean implements CommunityService {
     
   }
   
+  /**
+   * Delete membership request
+   * 
+   * @param membership request to be deleted   * 
+   */
   @Override
   public void deleteMembershipRequest(String membershipRequestId) {
     communityDAO.deleteMembershipRequest(Long.valueOf(membershipRequestId));

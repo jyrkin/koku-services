@@ -48,10 +48,20 @@ public class CommunityMember implements Serializable {
   @JoinColumn(name="community_id")
   private Community community;
 
-  
+  /** 
+   * Class constructor.
+   */
   public CommunityMember() {
   }
   
+  /** 
+   * Class constructor.
+   * 
+   * @param community
+   * @param member id
+   * @param member pic
+   * @param member role
+   */
   public CommunityMember(Community c, String memberId, String memberPic, String role) {
     this.community = c;
     this.memberId = memberId;
@@ -59,38 +69,83 @@ public class CommunityMember implements Serializable {
     this.role = role;
   }
 
+  /**
+   * Gets the community id.
+   *
+   * @return the community id
+   */
   public Long getId() {
     return id;
   }
 
+  /**
+   * Gets the community member id.
+   *
+   * @return the community member id
+   */
   public String getMemberId() {
     return memberId;
   }
 
+  /**
+   * Sets the community member id.
+   *
+   * @param the community member id
+   */
   public void setMemberId(String memberId) {
     this.memberId = memberId;
   }
 
+  /**
+   * Gets the community member pic.
+   *
+   * @return the community member pic
+   */
   public String getMemberPic() {
     return memberPic;
   }
 
+  /**
+   * Sets the community member pic.
+   *
+   * @param the community member pic
+   */
   public void setMemberPic(String memberPic) {
     this.memberPic = memberPic;
   }
 
+  /**
+   * Gets the community member role.
+   *
+   * @return the community member role
+   */
   public String getRole() {
     return role;
   }
 
+  /**
+   * Sets the community member role.
+   *
+   * @param the community member role
+   */
   public void setRole(String role) {
     this.role = role;
   }
   
+  /**
+   * Gets the community .
+   *
+   * @return community
+   */
   public Community getCommunity() {
     return community;
   }
   
+  /**
+   * Sets the community.
+   *
+   * @param the community
+   */
   public void setCommunity(Community c) {
     this.community = c;
   }

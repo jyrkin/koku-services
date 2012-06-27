@@ -16,4 +16,5 @@ public class UserInfoServiceHolder {
   public void setUserInfoService(UserInfoService userInfoService) {
     this.userInfoService = userInfoService;
   }
+
 }

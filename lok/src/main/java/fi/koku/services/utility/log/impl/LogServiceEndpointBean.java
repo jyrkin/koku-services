@@ -66,6 +66,9 @@ public class LogServiceEndpointBean implements LogServicePortType {
 
   private AuthorizationInfoService authInfoService;
 
+  /**
+   * Instantiates a new log service endpoint bean.
+   */
   public LogServiceEndpointBean() {
     logConverter = new LogConverter();
     logUtils = new LogUtils();
@@ -78,8 +81,10 @@ public class LogServiceEndpointBean implements LogServicePortType {
 
   /**
    * Implements the use case LOK-1 (Tallenna lokitieto).
-   * 
-   * @return
+   *
+   * @param logEntriesType the log entries type
+   * @param auditInfoType the audit info type
+   * @return the void type
    */
   @Override
   public VoidType opLog(LogEntriesType logEntriesType, AuditInfoType auditInfoType) {
@@ -107,6 +112,10 @@ public class LogServiceEndpointBean implements LogServicePortType {
   /**
    * Implements the use cases LOK-3 (Etsi lokitieto) and LOK-4 (Tarkista lokin
    * käsittelyloki).
+   *
+   * @param criteriaType the criteria type
+   * @param auditInfoType the audit info type
+   * @return the log entries type
    */
   @Override
   public LogEntriesType opQueryLog(LogQueryCriteriaType criteriaType, AuditInfoType auditInfoType) { 
@@ -162,6 +171,10 @@ public class LogServiceEndpointBean implements LogServicePortType {
 
   /**
    * Implements the use case LOK-2 (Arkistoi lokitietoa).
+   *
+   * @param archivalParameters the archival parameters
+   * @param auditInfoType the audit info type
+   * @return the archival results type
    */
   @Override
   public ArchivalResultsType opArchiveLog(LogArchivalParametersType archivalParameters, AuditInfoType auditInfoType) {

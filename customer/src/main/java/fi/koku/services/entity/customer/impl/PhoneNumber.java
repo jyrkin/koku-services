@@ -35,6 +35,7 @@ public class PhoneNumber {
   @Column(nullable=false)
   private String type;
 
+  /** The number class. */
   @Column(name="class", nullable=false)
   private String numberClass;
 
@@ -46,46 +47,107 @@ public class PhoneNumber {
   private Customer customer;
 
   
+  /** 
+   * Class constructor.
+   */
   public PhoneNumber() {
   }
   
+  /**
+   * Gets the id.
+   *
+   * @return the id
+   */
   public Long getId() {
     return id;
   }
 
+  /**
+   * Sets the id.
+   *
+   * @param id the new id
+   */
   protected void setId(Long id) {
     this.id = id;
   }
 
+  /**
+   * Gets the number class.
+   *
+   * @return the number class
+   */
   public String getNumberClass() {
     return numberClass;
   }
 
+  /**
+   * Sets the number class.
+   *
+   * @param numberClass the new number class
+   */
   public void setNumberClass(String numberClass) {
     this.numberClass = numberClass;
   }
 
+  /**
+   * Gets the type.
+   *
+   * @return the type
+   */
   public String getType() {
     return type;
   }
+  
+  /**
+   * Sets the type.
+   *
+   * @param type the new type
+   */
   public void setType(String type) {
     this.type = type;
   }
+  
+  /**
+   * Gets the number.
+   *
+   * @return the number
+   */
   public String getNumber() {
     return number;
   }
+  
+  /**
+   * Sets the number.
+   *
+   * @param number the new number
+   */
   public void setNumber(String number) {
     this.number = number;
   }
 
+  /**
+   * Gets the customer.
+   *
+   * @return the customer
+   */
   public Customer getCustomer() {
     return customer;
   }
 
+  /**
+   * Sets the customer.
+   *
+   * @param customer the new customer
+   */
   public void setCustomer(Customer customer) {
     this.customer = customer;
   }
 
+  /**
+   * Sets the phone number.
+   *
+   * @param phoneNumber the new phone number
+   */
   public void setPhoneNumber(PhoneNumber phoneNumber) {
     setType(phoneNumber.getType());
     setNumber(phoneNumber.getNumber());
