@@ -91,14 +91,17 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
     private static final String SLOT_CANCELLED_SUBJECT = "slot.cancelled.subject";
     private static final String SLOT_CANCELLED_BODY = "slot.cancelled.body";
 
-    private static final String APPOINTMENT_APPROVED_BODY = "appointment.approved.body";
     private static final String APPOINTMENT_APPROVED_SUBJECT = "appointment.approved.subject";
+    private static final String APPOINTMENT_APPROVED_BODY = "appointment.approved.body";
 
-    private static final String APPOINTMENT_DECLINED_BODY = "appointment.declined.body";
     private static final String APPOINTMENT_DECLINED_SUBJECT = "appointment.declined.subject";
+    private static final String APPOINTMENT_DECLINED_BODY = "appointment.declined.body";
 
-    private static final String APPOINTMENT_RECEIVED_BODY = "appointment.received.body";
     private static final String APPOINTMENT_RECEIVED_SUBJECT = "appointment.received.subject";
+    private static final String APPOINTMENT_RECEIVED_BODY = "appointment.received.body";
+
+    private static final String APPOINTMENT_MODIFIED_SUBJECT = "appointment.modified.subject";
+    private static final String APPOINTMENT_MODIFIED_BODY = "appointment.modified.body";
 
     private final static Logger logger = LoggerFactory.getLogger(AppointmentServiceFacadeImpl.class);
 
@@ -466,6 +469,7 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
 	@Override
 	public Long storeAppointment(AppointmentForEditTO appointmentTO) {
 		final Appointment appointment;
+		boolean existingAppointment;
 		if (appointmentTO.getAppointmentId() > 0) {
 			final long appointmentId = appointmentTO.getAppointmentId();
             appointment = loadAppointment(appointmentId);
@@ -476,13 +480,25 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
 		final Appointment result;
 		if (appointment.getId() == null) {
 		    result = appointmentDAO.create(appointment);
+			existingAppointment = false;
 		} else {
 			result = appointmentDAO.update(appointment);
+			existingAppointment = true;
 		}
 
-        notificationService.sendNotification(getValueFromBundle(APPOINTMENT_RECEIVED_SUBJECT),
-                getReceipienUids(appointment.getRecipients()),
-                MessageFormat.format(getValueFromBundle(APPOINTMENT_RECEIVED_BODY), new Object[] {result.getSubject()}));
+		if (existingAppointment) {
+			notificationService.sendNotification(
+					getValueFromBundle(APPOINTMENT_MODIFIED_SUBJECT),
+					getReceipienUids(appointment.getRecipients()),
+					MessageFormat.format(getValueFromBundle(APPOINTMENT_MODIFIED_BODY), new Object[] {result.getSubject()})
+			);
+		} else {
+			notificationService.sendNotification(
+					getValueFromBundle(APPOINTMENT_RECEIVED_SUBJECT),
+					getReceipienUids(appointment.getRecipients()),
+					MessageFormat.format(getValueFromBundle(APPOINTMENT_RECEIVED_BODY), new Object[] {result.getSubject()})
+			);
+		}
 
         return result.getId();
 	}
