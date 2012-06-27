@@ -7,7 +7,7 @@ import fi.arcusys.koku.common.soa.Role;
 
 /**
  * DAO interface for accessing user/group/role information from LDAP
- * 
+ *
  * @author Dmitry Kudinov (dmitry.kudinov@arcusys.fi)
  * Dec 2, 2011
  */
@@ -79,4 +79,8 @@ public interface LdapDAO {
     List<Role> searchRoles(String searchString);
 
     List<String> getRoleMembers(String groupUid);
+
+    String getKunpoUserPropertyBySsn(String ssn, String property);
+
+    String getLooraUserPropertyBySsn(String ssn, String property);
 }

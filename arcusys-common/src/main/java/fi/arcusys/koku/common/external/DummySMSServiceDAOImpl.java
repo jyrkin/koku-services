@@ -15,22 +15,32 @@ import fi.arcusys.koku.common.soa.UserInfo;
  * @author Mikhail Kapitonov (mikhail.kapitonov@arcusys.fi)
  * Jun 25, 2012
  */
-
 @Stateless(mappedName = "DummySMSServiceDAO")
 public class DummySMSServiceDAOImpl implements SMSServiceDAO {
+
+    private static final String phoneProperty = "telephoneNumber";
 
     private static final Logger logger = LoggerFactory.getLogger(DummySMSServiceDAOImpl.class);
 
     @EJB
-    private CustomerServiceDAO customerDao;
+    private LdapDAO ldapDao;
 
     @Override
-    public boolean sendMessage(User toUser, String subject, String content) {
-        UserInfo info = customerDao.getUserInfo(toUser);
+    public boolean sendMessage(final String receiverSSN, final String subject, final String content) {
+        if (receiverSSN == null)
+            return false;
 
-        final String phoneNumber = info.getPhoneNumber();
+        String phoneNumber = ldapDao.getKunpoUserPropertyBySsn(receiverSSN, phoneProperty);
 
-        logger.info("sendMessage phone = '"+phoneNumber+"' user = '"+toUser.getUid()+"' subject = '"+subject+"'");
+        if (phoneNumber == null)
+            phoneNumber = ldapDao.getLooraUserPropertyBySsn(receiverSSN, phoneProperty);
+
+        if (phoneNumber == null) {
+            logger.info("No phone number data found for SSN '"+receiverSSN+"'");
+            return false;
+        }
+
+        logger.info("sendMessage phone = '"+phoneNumber+"' ssn = '"+receiverSSN+"' subject = '"+subject+"'");
         return true;
     }
 

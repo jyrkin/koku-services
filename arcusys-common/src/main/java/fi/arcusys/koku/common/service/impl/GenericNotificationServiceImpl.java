@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import fi.arcusys.koku.common.external.CustomerServiceDAO;
 import fi.arcusys.koku.common.external.EmailServiceDAO;
+import fi.arcusys.koku.common.external.LdapDAO;
 import fi.arcusys.koku.common.external.SMSServiceDAO;
 import fi.arcusys.koku.common.service.GenericNotificationService;
 import fi.arcusys.koku.common.service.datamodel.User;
@@ -36,7 +37,7 @@ public class GenericNotificationServiceImpl implements GenericNotificationServic
     private final static Logger logger = LoggerFactory.getLogger(GenericNotificationServiceImpl.class);
 
     @EJB
-    private CustomerServiceDAO customerDao;
+    private LdapDAO ldapDao;
 
     private EmailServiceDAO emailDao;
     private SMSServiceDAO smsDao;
@@ -140,26 +141,34 @@ public class GenericNotificationServiceImpl implements GenericNotificationServic
     /**
      * Sends the message using all configured means of delivery
      *
-     * @param toUser     Receiver of the message
+     * @param receiver   Receiver of the message
      * @param subject    Message subject
      * @param content    Message body
      * @return           True if all of the notification methods succeed
      */
     @Override
-    public boolean sendMessage(User toUser, String subject, String content) {
+    public boolean sendMessage(final User receiver, final String subject, final String content) {
         boolean delivered = true;
 
-        UserInfo info = customerDao.getUserInfo(toUser);
+        String ssn = null;
 
-        final String email = info.getEmail();
-        final String phoneNumber = info.getPhoneNumber();
+        if (receiver.getCitizenPortalName() != null)
+            ssn = ldapDao.getSsnByKunpoName(receiver.getCitizenPortalName());
 
-        if (emailDao != null && email != null && email.trim().length() > 0)
-            if (!emailDao.sendMessage(toUser, subject, content))
+        if (ssn == null && receiver.getEmployeePortalName() != null)
+            ssn = ldapDao.getSsnByLooraName(receiver.getEmployeePortalName());
+
+        if (ssn == null) {
+            logger.warn("No user SSN found for '"+receiver.getUid()+"'");
+            return false;
+        }
+
+        if (emailDao != null)
+            if (!emailDao.sendMessage(ssn, subject, content))
                 delivered = false;
 
-        if (smsDao != null && phoneNumber != null && phoneNumber.trim().length() > 0)
-            if (!smsDao.sendMessage(toUser, subject, content))
+        if (smsDao != null)
+            if (!smsDao.sendMessage(ssn, subject, content))
                 delivered = false;
 
         return delivered;

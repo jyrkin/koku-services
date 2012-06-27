@@ -19,10 +19,10 @@ public interface GenericNotificationService {
     /**
      * Sends the message using all configured means of delivery
      *
-     * @param toUser     Receiver of the message
+     * @param receiver   Receiver of the message
      * @param subject    Message subject
      * @param content    Message body
      * @return           True if all of the notification methods succeed
      */
-    boolean sendMessage(User toUser, String subject, String content);
+    boolean sendMessage(final User receiver, String subject, String content);
 }

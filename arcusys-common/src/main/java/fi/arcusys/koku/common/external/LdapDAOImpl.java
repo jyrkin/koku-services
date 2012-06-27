@@ -32,7 +32,7 @@ import fi.koku.services.entity.customer.v1.CustomerServiceFactory;
 /**
  * DAO implementation for general access to LDAP, where users/groups/roles
  * related information is stored.
- * 
+ *
  * @author Dmitry Kudinov (dmitry.kudinov@arcusys.fi) Dec 2, 2011
  */
 @Stateless
@@ -54,7 +54,7 @@ public class LdapDAOImpl implements LdapDAO {
     private String groupsSearchFilter;
     private String groupNameAttribute;
     private String groupUidAttribute;
-    
+
     private boolean allowKunpoUserModificaiton = true;
     private boolean allowLooraUserModificaiton = false;
 
@@ -153,7 +153,7 @@ public class LdapDAOImpl implements LdapDAO {
     /**
      * KOKU-1070 - preventing of LDAP injection in search filter. Taken from
      * https://www.owasp.org/index.php/Preventing_LDAP_Injection_in_Java
-     * 
+     *
      * @param filter
      * @return
      */
@@ -187,7 +187,7 @@ public class LdapDAOImpl implements LdapDAO {
     /**
      * KOKU-1070 - preventing of LDAP injection in DN. Taken from
      * https://www.owasp.org/index.php/Preventing_LDAP_Injection_in_Java
-     * 
+     *
      * @param name
      * @return
      */
@@ -627,5 +627,23 @@ public class LdapDAOImpl implements LdapDAO {
         if (allowLooraUserModificaiton) {
             doUpdateLdapNameAndMembership(ldapNameBySsn, looraUsername);
         }
+    }
+
+    /**
+     * @param ssn       Kunpo user's SSN
+     * @param property  Property name
+     */
+    @Override
+    public String getKunpoUserPropertyBySsn(String ssn, String property) {
+        return getUsersAttrNameByFilter(ssnAttributeName, escapeLDAPSearchFilter(ssn), property, citizensGroupUid);
+    }
+
+    /**
+     * @param ssn       Loora user's SSN
+     * @param property  Property name
+     */
+    @Override
+    public String getLooraUserPropertyBySsn(String ssn, String property) {
+        return getUsersAttrNameByFilter(ssnAttributeName, escapeLDAPSearchFilter(ssn), property, employeesGroupUid);
     }
 }

@@ -109,7 +109,7 @@
     <bean id="groupsDao" class="fi.arcusys.koku.common.external.GroupsDAOImpl" />
     <bean id="rolesDao" class="fi.arcusys.koku.common.external.RolesDAOImpl" />
     <bean id="pyhServiceDao" class="fi.arcusys.koku.common.external.PyhServiceDAOImpl" />
-    <bean id="ldapDao" class="fi.arcusys.koku.common.external.LdapDAOImpl" />
+    <bean id="ldapDao" class="fi.arcusys.koku.common.external.LdapDAOTestImpl" />
     <bean id="emailDao" class="fi.arcusys.koku.common.external.DummyEmailServiceDAOImpl" />
     <bean id="smsDao" class="fi.arcusys.koku.common.external.DummySMSServiceDAOImpl" />
     <bean id="genericNotify" class="fi.arcusys.koku.common.service.GenericNotificationServiceTestImpl" />

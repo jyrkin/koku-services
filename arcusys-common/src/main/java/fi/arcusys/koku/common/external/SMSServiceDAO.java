@@ -13,10 +13,10 @@ public interface SMSServiceDAO {
     /**
      * Sends the message using SMS
      *
-     * @param toUser     Receiver of the message
-     * @param subject    Message subject
-     * @param content    Message body
-     * @return           True if the sending succeeds
+     * @param receiverSSN    Receiver of the message (SSN)
+     * @param subject        Message subject
+     * @param content        Message body
+     * @return               True if the sending succeeds
      */
-    boolean sendMessage(User toUser, String subject, String content);
+    boolean sendMessage(String receiverSSN, String subject, String content);
 }

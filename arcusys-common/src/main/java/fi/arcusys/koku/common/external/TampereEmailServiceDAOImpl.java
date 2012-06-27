@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import fi.arcusys.koku.common.service.datamodel.User;
+import fi.arcusys.koku.common.soa.UserInfo;
 import fi.koku.services.entity.customercommunication.v1.CustomerCommunicationServiceFactory;
 import fi.koku.settings.KoKuPropertiesUtil;
 import fi.tampere.contract.municipalityportal.ccs.CustomerCommunicationServicePortType;
@@ -62,31 +63,32 @@ public class TampereEmailServiceDAOImpl implements EmailServiceDAO {
      * @param content
      */
     @Override
-    public boolean sendMessage(User toUser, String subject, String content) {
-        if (toUser == null) {
-            return false;
-        }
+    public boolean sendMessage(final String receiverSSN, final String subject, final String content) {
+        UserInfo info = customerDao.getKunpoUserInfoBySsn(receiverSSN);
 
-        if (toUser.getEmployeePortalName() != null && !toUser.getEmployeePortalName().isEmpty()) {
-            logger.info("Sending of the emails to employees is not implemented. Skip email sending to user " + toUser.getUid());
+        if (info == null)
+            info = customerDao.getKunpoUserInfoBySsn(receiverSSN);
+
+        if (info == null) {
+            logger.info("No citizen user data found by SSN '"+receiverSSN+"'");
             return false;
         }
 
         try {
             final SendEmailMessageType createSendEmailMessageType = objectFactory.createSendEmailMessageType();
-            createSendEmailMessageType.setSsn(customerDao.getSsnByKunpoName(toUser.getCitizenPortalName()));
+            createSendEmailMessageType.setSsn(receiverSSN);
             createSendEmailMessageType.setSubject(subject);
             createSendEmailMessageType.setContent(content);
             final SendEmailMessageResponseType sendingResult = communicationService.sendEmailMessage(createSendEmailMessageType);
             if (sendingResult == SendEmailMessageResponseType.EMAIL_SENT) {
-                logger.debug("EMail delivered successully to user " + toUser.getUid());
+                logger.debug("EMail delivered successully to user " + receiverSSN);
                 return true;
             } else {
-                logger.info("Failed to send email to user " + toUser.getUid() + ". Return code from service: " + sendingResult);
+                logger.info("Failed to send email to user " + receiverSSN + ". Return code from service: " + sendingResult);
                 return false;
             }
         } catch (Exception e) {
-            logger.info("Failed to send email to user " + toUser.getUid() + ": " + e.getMessage());
+            logger.info("Failed to send email to user " + receiverSSN + ": " + e.getMessage());
             return false;
         }
     }
