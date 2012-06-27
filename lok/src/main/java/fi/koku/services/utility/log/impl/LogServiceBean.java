@@ -48,26 +48,51 @@ public class LogServiceBean implements LogService {
   
   private static final Logger logger = LoggerFactory.getLogger(LogServiceBean.class);
   
+  /**
+   * Instantiates a new log service bean.
+   */
   public LogServiceBean() {
     logUtils = new LogUtils();
     df = new SimpleDateFormat(LogConstants.DATE_FORMAT);
   }
 
+  /**
+   * Query normal log
+   * 
+   * @param query criteria
+   * @return log(s) queried
+   */
   @Override
   public List<LogEntry> queryNormalLog(LogQueryCriteria criteria) {
     return (List<LogEntry>) logDAO.queryLog(criteria);
   }
 
+  /**
+   * Query admin log
+   * 
+   * @param query criteria
+   * @return log(s) queried
+   */
   @Override
   public List<AdminLogEntry> queryAdminLog(LogQueryCriteria criteria) {
    return (List<AdminLogEntry>) logDAO.queryAdminLog(criteria);
   }
   
+  /**
+   * Write admin log entry
+   * 
+   * @param admin log entry
+   */
   @Override
   public void writeAdminLogEntry(AdminLogEntry entry) {
     logDAO.writeAdminLog(entry);
   }
 
+  /**
+   * Write normal log entry
+   * 
+   * @param log entry
+   */
   @Override
   public void writeNormalLogEntry(LogEntry entry) {
     logDAO.writeLog(entry);
@@ -75,6 +100,9 @@ public class LogServiceBean implements LogService {
   
   /**
    * This is called when the normal log is viewed.
+   *
+   * @param criteriaType the criteria type
+   * @param auditInfoType the audit info type
    */
   @Override
   public void writeAdminLogQueryEvent(LogQueryCriteriaType criteriaType, AuditInfoType auditInfoType) {
@@ -95,6 +123,9 @@ public class LogServiceBean implements LogService {
 
   /**
    * This is called when the admin log is viewed.
+   *
+   * @param criteriaType the criteria type
+   * @param auditInfoType the audit info type
    */
   @Override
   public void writeNormalLogQueryEvent(LogQueryCriteriaType criteriaType, AuditInfoType auditInfoType) {
@@ -114,6 +145,13 @@ public class LogServiceBean implements LogService {
     logDAO.writeLog(logEntry);
   }
 
+  /**
+   * Archive log
+   * 
+   * @param archival parameters
+   * @param auditing info
+   * @return archival results type
+   */
   @Override
   public ArchivalResultsType archiveLog(LogArchivalParametersType archivalParameters, AuditInfoType auditInfoType) {
     int entryCount = 0;

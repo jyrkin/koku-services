@@ -41,10 +41,19 @@ public class LogDAOBean implements LogDAO {
   @PersistenceContext
   private EntityManager em;
 
+  /**
+   * Instantiates a new log dao bean.
+   */
   public LogDAOBean() {
     logUtils = new LogUtils();
   }
 
+  /**
+   * Archive log
+   * 
+   * @param date of archive
+   * @return amount of archives updated
+   */
   @Override
   public int archiveLog(Date date){
     // set the end time 1 day later so that everything added on the last day
@@ -95,7 +104,10 @@ public class LogDAOBean implements LogDAO {
   }
 
   /**
-   * Find out the earliest entry to be archived
+   * Find out the earliest entry to be archived.
+   *
+   * @param date the date
+   * @return the earliest
    */
   @Override
   public Date getEarliest(Date date){
@@ -112,7 +124,9 @@ public class LogDAOBean implements LogDAO {
   }
 
   /**
-   * Write log (note: archive log is not written with this method!)
+   * Write log (note: archive log is not written with this method!).
+   *
+   * @param entry the entry
    */
   @Override
   public void writeLog(LogEntry entry) {
@@ -121,6 +135,8 @@ public class LogDAOBean implements LogDAO {
 
   /**
    * Write admin log.
+   *
+   * @param entry the entry
    */
   @Override
   public void writeAdminLog(AdminLogEntry entry) {
@@ -130,6 +146,10 @@ public class LogDAOBean implements LogDAO {
   /**
    * Makes a query to the "normal" log and returns a list of LogEntries for
    * showing to the user in the portlet. (LOK-3)
+   *
+   * @param criteria the criteria
+   * @return the list
+   * @throws KoKuFaultException the ko ku fault exception
    */
   @Override
   public List<LogEntry> queryLog(LogQueryCriteria criteria) throws KoKuFaultException {
@@ -222,7 +242,10 @@ public class LogDAOBean implements LogDAO {
 
   /**
    * Makes a query to the admin log and returns a list of AdminLogEntries for
-   * showing to the super user in the portlet. (LOK-4) 
+   * showing to the super user in the portlet. (LOK-4)
+   *
+   * @param criteria the criteria
+   * @return the collection
    */
   @Override
   public Collection<AdminLogEntry> queryAdminLog(LogQueryCriteria criteria) {

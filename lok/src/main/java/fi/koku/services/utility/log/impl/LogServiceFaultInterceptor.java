@@ -34,6 +34,13 @@ public class LogServiceFaultInterceptor {
 
   private static Logger logger = LoggerFactory.getLogger(LogServiceFaultInterceptor.class);
   
+  /**
+   * Convert error code to ServiceFault.
+   *
+   * @param invocationContext the invocation context
+   * @return the object
+   * @throws Exception the exception
+   */
   @AroundInvoke
   public Object intercept(final InvocationContext invocationContext) throws Exception {
     try {

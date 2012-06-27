@@ -28,17 +28,58 @@ import fi.koku.services.utility.log.v1.LogQueryCriteriaType;
 @Local
 public interface LogService {
 
+  /**
+   * Write admin log entry.
+   *
+   * @param entry the entry
+   */
   void writeAdminLogEntry(AdminLogEntry entry);
 
+  /**
+   * Write normal log entry.
+   *
+   * @param entry the entry
+   */
   void writeNormalLogEntry(LogEntry entry);
 
+  /**
+   * Write admin log query event.
+   *
+   * @param criteriaType the criteria type
+   * @param auditInfoType the audit info type
+   */
   void writeAdminLogQueryEvent(LogQueryCriteriaType criteriaType, AuditInfoType auditInfoType);
 
+  /**
+   * Write normal log query event.
+   *
+   * @param criteriaType the criteria type
+   * @param auditInfoType the audit info type
+   */
   void writeNormalLogQueryEvent(LogQueryCriteriaType criteriaType, AuditInfoType auditInfoType);
 
+  /**
+   * Query normal log.
+   *
+   * @param criteria the criteria
+   * @return the list
+   */
   List<LogEntry> queryNormalLog(LogQueryCriteria criteria);
 
+  /**
+   * Query admin log.
+   *
+   * @param criteria the criteria
+   * @return the list
+   */
   List<AdminLogEntry> queryAdminLog(LogQueryCriteria criteria);
 
+  /**
+   * Archive log.
+   *
+   * @param archivalParameters the archival parameters
+   * @param auditInfoType the audit info type
+   * @return the archival results type
+   */
   ArchivalResultsType archiveLog(LogArchivalParametersType archivalParameters, AuditInfoType auditInfoType);
 }
