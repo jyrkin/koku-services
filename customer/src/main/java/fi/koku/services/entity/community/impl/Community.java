@@ -59,41 +59,89 @@ public class Community implements Serializable {
   @Version
   private int version;
 
+  /** 
+   * Class constructor.
+   */
   public Community() {
   }
 
+  
+  /**
+   *  Gets the community type
+   * 
+   * @return  community type
+   */
   public String getType() {
     return type;
   }
 
+  /**
+   * Sets the community type.
+   *
+   * @param type the community type
+   */
   public void setType(String type) {
     this.type = type;
   }
 
+  /**
+   *  Gets the community name
+   * 
+   * @return  community name
+   */
   public String getName() {
     return name;
   }
 
+  /**
+   * Sets the community name.
+   *
+   * @param name the community name
+   */
   public void setName(String name) {
     this.name = name;
   }
 
+  /**
+   *  Gets the community version
+   * 
+   * @return  community version
+   */
   public int getVersion() {
     return version;
   }
 
+  /**
+   *  Gets the community id
+   * 
+   * @return  community id
+   */
   public Long getId() {
     return id;
   }
 
+  /**
+   * Sets the community id.
+   *
+   * @param id the community id
+   */
   protected void setId(Long id) {
     this.id = id;
   }
 
+  /**
+   *  Gets the community members
+   * 
+   * @return  community members
+   */
   public Collection<CommunityMember> getMembers() {
     return members;
   }
 
+  /*
+   * (non-Javadoc)
+   * helper mehtod
+   */
   @Override
   public int hashCode() {
     final int prime = 31;
@@ -102,6 +150,10 @@ public class Community implements Serializable {
     return result;
   }
 
+  /*
+   * (non-Javadoc)
+   * helper method
+   */
   @Override
   public boolean equals(Object obj) {
     if (this == obj)

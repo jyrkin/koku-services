@@ -39,20 +39,40 @@ public class CustomerServiceBean implements CustomerService {
   @EJB
   private CustomerDAO customerDAO;
 
+  /** 
+   * Class constructor.
+   */
   public CustomerServiceBean() {
   }
 
+  /**
+   * Get customer
+   * 
+   * @param pic
+   * @return customer
+   */
   @Override
   public Customer get(String pic) {
     return customerDAO.findCustomer(pic);
   }
   
+  /**
+   * Add customer
+   * 
+   * @param customer
+   * @return customer id
+   */
   @Override
   public Long add(Customer c) {
     verifyUserRole();
     return customerDAO.insertCustomer(c);
   }
   
+  /**
+   * Update customer
+   * 
+   * @param customer
+   */
   @Override
   public void update(Customer customer) {
     
@@ -63,12 +83,24 @@ public class CustomerServiceBean implements CustomerService {
     }
   }
 
+  /**
+   * Delete customer
+   * 
+   * @param pic
+   */
   @Override
   public void delete(String pic) {
     verifyUserRole();    
     customerDAO.deleteCustomer(pic);
   }
 
+  /**
+   * Query customer(s)
+   * 
+   * @param query criteria
+   * @return queried customer(s)
+   * 
+   */
   @Override
   public Collection<Customer> query(CustomerQueryCriteria c) {
     return customerDAO.queryCustomers(c);

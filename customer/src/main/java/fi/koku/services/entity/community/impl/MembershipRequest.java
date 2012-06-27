@@ -78,61 +78,134 @@ public class MembershipRequest implements Serializable {
   @Temporal(TemporalType.DATE)
   private Date created;
   
+  /** 
+   * Class constructor.
+   */ 
   public MembershipRequest() {
   }
 
+  /**
+   * Get request id
+   * 
+   * @return request id
+   */
   public Long getId() {
     return id;
   }
 
+  /**
+   * Set request id
+   * 
+   * @param request id
+   */
   public void setId(Long id) {
     this.id = id;
   }
 
+  /**
+   * Get community id
+   * 
+   * @return community id
+   */
   public Long getCommunityId() {
     return communityId;
   }
 
+  /**
+   * Set community id
+   * 
+   * @param community id
+   */
   public void setCommunityId(Long communityId) {
     this.communityId = communityId;
   }
 
+  /**
+   * Get member role
+   * 
+   * @return member's role
+   */
   public String getMemberRole() {
     return memberRole;
   }
 
+  /**
+   * Set member role
+   * 
+   * @param member role
+   */
   public void setMemberRole(String memberRole) {
     this.memberRole = memberRole;
   }
 
+  /**
+   * Get member pic
+   * 
+   * @return member pic
+   */
   public String getMemberPic() {
     return memberPic;
   }
 
+  /**
+   * Set member pic
+   * 
+   * @param member pic
+   */
   public void setMemberPic(String memberPic) {
     this.memberPic = memberPic;
   }
 
+  /**
+   * Get requester's pic
+   * 
+   * @return requester's pic
+   */
   public String getRequesterPic() {
     return requesterPic;
   }
 
+  /**
+   * Set requester's pic
+   * 
+   * @param requester pic
+   */
   public void setRequesterPic(String requesterPic) {
     this.requesterPic = requesterPic;
   }
 
+  /**
+   * Get approvals
+   * 
+   * @return approvals
+   */
   public Collection<MembershipApproval> getApprovals() {
     return approvals;
   }
 
+  /**
+   * Set approvals
+   * 
+   * @param approvals to be added
+   */
   public void setApprovals(Collection<MembershipApproval> approvals) {
     this.approvals = approvals;
   }
 
+  /**
+   * Get creation date
+   * 
+   * @return date of creation
+   */
   public Date getCreated() {
     return created;
   }
 
+  /**
+   * Set creation date
+   * 
+   * @param creation date
+   */
   public void setCreated(Date created) {
     this.created = created;
   }

@@ -95,121 +95,269 @@ public class Customer {
   @Version
   private int version;
 
+  /** 
+   * Class constructor.
+   */
   public Customer() {
   }
   
+  /**
+   * Gets the id.
+   *
+   * @return the id
+   */
   public Long getId() {
     return id;
   }
   
+  /**
+   * Sets the id.
+   *
+   * @param id the new id
+   */
   public void setId(Long id) {
     this.id = id;
   }
   
+  /**
+   * Gets the status.
+   *
+   * @return the status
+   */
   public String getStatus() {
     return status;
   }
 
+  /**
+   * Sets the status.
+   *
+   * @param status the new status
+   */
   public void setStatus(String status) {
     this.status = status;
   }
 
+  /**
+   * Gets the status date.
+   *
+   * @return the status date
+   */
   public Date getStatusDate() {
     return statusDate;
   }
 
+  /**
+   * Sets the status date.
+   *
+   * @param statusDate the new status date
+   */
   public void setStatusDate(Date statusDate) {
     this.statusDate = statusDate;
   }
 
+  /**
+   * Gets the pic.
+   *
+   * @return the pic
+   */
   public String getPic() {
     return pic;
   }
 
+  /**
+   * Sets the pic.
+   *
+   * @param pic the new pic
+   */
   public void setPic(String pic) {
     this.pic = pic;
   }
 
+  /**
+   * Gets the birth date.
+   *
+   * @return the birth date
+   */
   public Date getBirthDate() {
     return birthDate;
   }
 
+  /**
+   * Sets the birth date.
+   *
+   * @param birthDate the new birth date
+   */
   public void setBirthDate(Date birthDate) {
     this.birthDate = birthDate;
   }
 
+  /**
+   * Gets the last name.
+   *
+   * @return the last name
+   */
   public String getLastName() {
     return lastName;
   }
 
+  /**
+   * Sets the last name.
+   *
+   * @param lastName the new last name
+   */
   public void setLastName(String lastName) {
     this.lastName = lastName;
   }
 
+  /**
+   * Gets the first name.
+   *
+   * @return the first name
+   */
   public String getFirstName() {
     return firstName;
   }
 
+  /**
+   * Sets the first name.
+   *
+   * @param firstName the new first name
+   */
   public void setFirstName(String firstName) {
     this.firstName = firstName;
   }
 
+  /**
+   * Gets the first names.
+   *
+   * @return the first names
+   */
   public String getFirstNames() {
     return firstNames;
   }
 
+  /**
+   * Sets the first names.
+   *
+   * @param firstNames the new first names
+   */
   public void setFirstNames(String firstNames) {
     this.firstNames = firstNames;
   }
 
+  /**
+   * Gets the nationality.
+   *
+   * @return the nationality
+   */
   public String getNationality() {
     return nationality;
   }
 
+  /**
+   * Sets the nationality.
+   *
+   * @param nationality the new nationality
+   */
   public void setNationality(String nationality) {
     this.nationality = nationality;
   }
 
+  /**
+   * Gets the municipality.
+   *
+   * @return the municipality
+   */
   public String getMunicipality() {
     return municipality;
   }
 
+  /**
+   * Sets the municipality.
+   *
+   * @param municipality the new municipality
+   */
   public void setMunicipality(String municipality) {
     this.municipality = municipality;
   }
 
+  /**
+   * Gets the language.
+   *
+   * @return the language
+   */
   public String getLanguage() {
     return language;
   }
 
+  /**
+   * Sets the language.
+   *
+   * @param language the new language
+   */
   public void setLanguage(String language) {
     this.language = language;
   }
 
+  /**
+   * Checks if is turvakielto.
+   *
+   * @return true, if is turvakielto
+   */
   public boolean isTurvakielto() {
     return turvakielto;
   }
 
+  /**
+   * Sets turvakielto.
+   *
+   * @param turvakielto status
+   */
   public void setTurvakielto(boolean turvakielto) {
     this.turvakielto = turvakielto;
   }
 
+  /**
+   * Gets addresses.
+   *
+   * @return the addresses
+   */
   public Collection<Address> getAddresses() {
     return addresses;
   }
 
+  /**
+   * Gets phone numbers.
+   *
+   * @return the phone numbers
+   */
   public Collection<PhoneNumber> getPhones() {
     return phones;
   }
 
+  /**
+   * Gets electronic contacts.
+   *
+   * @return the electronic contacts
+   */
   public Collection<ElectronicContactInfo> getElectronicContacts() {
     return electronicContacts;
   }
 
+  /**
+   * Gets the version.
+   *
+   * @return the version
+   */
   public int getVersion() {
     return version;
   }
 
+  /**
+   * Sets the customer.
+   *
+   * @param c the new customer
+   */
   public void setCustomer(Customer c) {
     setStatus(c.getStatus());
     setStatusDate(c.getStatusDate());

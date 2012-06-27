@@ -25,15 +25,31 @@ public class CustomerQueryCriteria {
   
   private String selection;
 
+  /**
+   * Class constructor.
+   *
+   * @param pics the pics
+   * @param selection the selection
+   */
   public CustomerQueryCriteria(Set<String> pics, String selection) {
     this.pics = pics;
     this.selection = selection;
   }
 
+  /**
+   * Gets the pics.
+   *
+   * @return the pics
+   */
   public Set<String> getPics() {
     return pics;
   }
 
+  /**
+   * Gets the selection.
+   *
+   * @return the selection
+   */
   public String getSelection() {
     return selection;
   }

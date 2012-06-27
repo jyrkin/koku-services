@@ -39,9 +39,18 @@ public class CustomerDAOBean implements CustomerDAO {
   @PersistenceContext
   private EntityManager em;
   
+  /** 
+   * Class constructor.
+   */
   public CustomerDAOBean() {
   }
 
+  /**
+   * Find customer
+   * 
+   * @param customer's pic
+   * @return found customer   * 
+   */
   @Override
   public Customer findCustomer(String pic) {
     Query q = em.createNamedQuery(Customer.QUERY_GET_CUSTOMER_BY_PIC);
@@ -54,12 +63,22 @@ public class CustomerDAOBean implements CustomerDAO {
     }
   }
 
+  /**
+   * Insert new customer
+   * 
+   * @param new customer
+   */
   @Override
   public Long insertCustomer(Customer c) {
     em.persist(c);
     return c.getId();
   }
 
+  /**
+   * Update customer
+   * 
+   * @param customer to be updated
+   */
   @Override
   public void updateCustomer(Customer c2) {
     Customer c1 = findCustomer(c2.getPic());
@@ -71,6 +90,12 @@ public class CustomerDAOBean implements CustomerDAO {
     updateElectronicContactInfos(c1, c2);
   }
   
+  /**
+   * Update contact's info
+   * 
+   * @param customer to be updated
+   * 
+   */
   @Override
   public void updateCustomerElectronicContacts(Customer c2) {
     Customer c1 = findCustomer(c2.getPic());
@@ -191,12 +216,24 @@ public class CustomerDAOBean implements CustomerDAO {
     }    
   }
 
+  /**
+   * Delete customer
+   * 
+   * @param customer's pic
+   * 
+   */
   @Override
   public void deleteCustomer(String pic) {
     Customer c = findCustomer(pic);
     em.remove(c);
   }
 
+  /**
+   * Query customers
+   * 
+   * @param query criteria
+   * @return customer(s) queried 
+   */
   @Override
   public Collection<Customer> queryCustomers(CustomerQueryCriteria qc) {
     StringBuilder qs = new StringBuilder("SELECT DISTINCT c FROM Customer c ");
