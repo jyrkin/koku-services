@@ -21,16 +21,12 @@ import org.springframework.ldap.filter.OrFilter;
 import fi.koku.services.utility.user.v1.GroupIdsQueryParamType;
 import fi.koku.services.utility.user.v1.GroupType;
 import fi.koku.services.utility.user.v1.GroupsType;
-import fi.koku.services.utility.user.v1.PortalUserQueryParamType;
-import fi.koku.services.utility.user.v1.PortalUserType;
-import fi.koku.services.utility.user.v1.PortalUserUpdateType;
 import fi.koku.services.utility.user.v1.UserGroupsIdsQueryParamType;
 import fi.koku.services.utility.user.v1.UserGroupsPicsQueryParamType;
 import fi.koku.services.utility.user.v1.UserIdsQueryParamType;
 import fi.koku.services.utility.user.v1.UserPicsQueryParamType;
 import fi.koku.services.utility.user.v1.UserType;
 import fi.koku.services.utility.user.v1.UsersType;
-import fi.koku.services.utility.user.v1.VoidType;
 import fi.koku.services.utility.userinfo.impl.model.LDAPGroup;
 import fi.koku.services.utility.userinfo.impl.model.LDAPUser;
 
@@ -320,21 +316,4 @@ public class UserInfoServiceLDAPImpl implements UserInfoService {
     }
   }
 
-  @Override
-  public VoidType addPortalUser(PortalUserType portalUser) {
-    // TODO Auto-generated method stub
-    return null;
-  }
-
-  @Override
-  public boolean updatePortalUser(PortalUserUpdateType portalUser) {
-    // TODO Auto-generated method stub
-    return false;
-  }
-
-  @Override
-  public boolean authenticatePortalUser(PortalUserQueryParamType portalUser) {
-    // TODO Auto-generated method stub
-    return false;
-  }
 }

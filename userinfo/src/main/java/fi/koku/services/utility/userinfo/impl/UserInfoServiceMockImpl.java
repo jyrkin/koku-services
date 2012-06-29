@@ -11,16 +11,12 @@ import org.slf4j.LoggerFactory;
 import fi.koku.services.utility.user.v1.GroupIdsQueryParamType;
 import fi.koku.services.utility.user.v1.GroupType;
 import fi.koku.services.utility.user.v1.GroupsType;
-import fi.koku.services.utility.user.v1.PortalUserQueryParamType;
-import fi.koku.services.utility.user.v1.PortalUserType;
-import fi.koku.services.utility.user.v1.PortalUserUpdateType;
 import fi.koku.services.utility.user.v1.UserGroupsIdsQueryParamType;
 import fi.koku.services.utility.user.v1.UserGroupsPicsQueryParamType;
 import fi.koku.services.utility.user.v1.UserIdsQueryParamType;
 import fi.koku.services.utility.user.v1.UserPicsQueryParamType;
 import fi.koku.services.utility.user.v1.UserType;
 import fi.koku.services.utility.user.v1.UsersType;
-import fi.koku.services.utility.user.v1.VoidType;
 
 /**
  * KoKu userInfo service Mock implementation class. Uses the same data format as
@@ -263,21 +259,4 @@ public class UserInfoServiceMockImpl implements UserInfoService {
     return props;
   }
 
-  @Override
-  public VoidType addPortalUser(PortalUserType portalUser) {
-    // TODO Auto-generated method stub
-    return null;
-  }
-
-  @Override
-  public boolean authenticatePortalUser(PortalUserQueryParamType portalUser) {
-    // TODO Auto-generated method stub
-    return false;
-  }
-
-  @Override
-  public boolean updatePortalUser(PortalUserUpdateType portalUser) {
-    // TODO Auto-generated method stub
-    return false;
-  }
-}
+ }
