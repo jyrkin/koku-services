@@ -20,10 +20,7 @@ public enum UserInfoServiceErrorCode {
 
   PORTAL_USER_NOT_FOUND(1001, "User not found."),
   NO_QUERY_CRITERIA(1002, "Query criteria missing."),
-  UNAUTHORIZED(1003,"Unauthorized to use operation"),
-  PORTAL_USER_ALREADY_EXISTS(1004, "User already exists."),
-  PASSWORD_ENCRYPTION_ERROR(1005, "Error on password encryption");
-  
+  UNAUTHORIZED(1003,"Unauthorized to use operation");
   private final int value;
 
   private final String description;

@@ -23,9 +23,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import fi.koku.services.utility.user.v1.GroupIdsQueryParamType;
 import fi.koku.services.utility.user.v1.GroupsType;
-import fi.koku.services.utility.user.v1.PortalUserQueryParamType;
-import fi.koku.services.utility.user.v1.PortalUserType;
-import fi.koku.services.utility.user.v1.PortalUserUpdateType;
 import fi.koku.services.utility.user.v1.ServiceFault;
 import fi.koku.services.utility.user.v1.UserGroupsIdsQueryParamType;
 import fi.koku.services.utility.user.v1.UserGroupsPicsQueryParamType;
@@ -33,7 +30,6 @@ import fi.koku.services.utility.user.v1.UserIdsQueryParamType;
 import fi.koku.services.utility.user.v1.UserInfoServicePortType;
 import fi.koku.services.utility.user.v1.UserPicsQueryParamType;
 import fi.koku.services.utility.user.v1.UsersType;
-import fi.koku.services.utility.user.v1.VoidType;
 
 /**
  * KoKu userInfo service endpoint implementation class.
@@ -101,24 +97,5 @@ public class UserInfoServiceEndpointBean implements UserInfoServicePortType {
     logger.info("opGetUserGroupsByPics (impl: " + userInfoService + ")");
     return userInfoService.getUserGroupsByPics(userGroupPicsQueryParam);
   }
- 
-  @Override
-  public VoidType opAddPortalUser(PortalUserType addPortalUserParam) throws ServiceFault {
-    logger.info("opAddPortalUser (impl: " + userInfoService + ")");
-    return userInfoService.addPortalUser(addPortalUserParam);
-  }
-  
-  @Override
-  public boolean opUpdatePortalUser(PortalUserUpdateType updatePortalUserParam) throws ServiceFault {
-    logger.info("opUpdatePortalUser (impl: " + userInfoService + ")");
-    return userInfoService.updatePortalUser(updatePortalUserParam);
-  }
-
-  @Override
-  public boolean opAuthenticatePortalUser(PortalUserQueryParamType authenticatePortalUserParam)
-      throws ServiceFault {
-    logger.info("opAuthenticatePortalUser (impl: " + userInfoService + ")");
-    return userInfoService.authenticatePortalUser(authenticatePortalUserParam);
-  }
-  
+     
 }
