@@ -1,6 +1,7 @@
 package fi.koku.services.utility.portaluser.impl;
 
 import java.util.Date;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,8 +21,8 @@ import fi.koku.services.utility.portal.v1.PortalUserType;
 import fi.koku.services.utility.portal.v1.PortalUserUpdateType;
 
 /**
- * Convert between webservice type (PortalUserType) and the internal object
- * representation.
+ * Convert between webservice type (PortalUserType, CustomerType,
+ * PortalUserUpdateType) and the internal object representation.
  * 
  * @author hekkata
  */
@@ -228,39 +229,6 @@ public class PortalUserConverter {
       p.setPasswordChanged(new Date());
       logger.debug("updatePortalUser: password update");
     }
-/*    if (pu.getContactInfoUpdates() != null) {
-      List<PortalUserContactInfo> info = p.getPortalUserContactInfo();
-      int i = 0;
-      for (ContactInfoUpdateType ct : pu.getContactInfoUpdates()) {
-        PortalUserContactInfo pc = info.get(i);
-        i++;
-
-        if (ct.getEmail() != null) {
-          pc.setEmail(ct.getEmail());
-          logger.debug("updatePortalUser: e-mail update to: " + pc.getEmail());
-        }
-        if (ct.getPhoneNumber() != null) {
-          pc.setPhoneNumber(ct.getPhoneNumber());
-          logger.debug("updatePortalUser: phone number update to: " + pc.getPhoneNumber());
-        }
-        if (ct.getCity() != null) {
-          pc.setCity(ct.getCity());
-          logger.debug("updatePortalUser: city update to: " + pc.getCity());
-        }
-        if (ct.getCountry() != null) {
-          pc.setCountry(ct.getCountry());
-          logger.debug("updatePortalUser: country update to: " + pc.getCountry());
-        }
-        if (ct.getPostalCode() != null) {
-          pc.setPostalCode(ct.getPostalCode());
-          logger.debug("updatePortalUser: postal code update to: " + pc.getPostalCode());
-        }
-        if (ct.getStreetAddress() != null) {
-          pc.setStreetAddress(ct.getStreetAddress());
-          logger.debug("updatePortalUser: street address update to: " + pc.getStreetAddress());
-        }
-      }
-    }*/
 
     return p;
   }
@@ -292,4 +260,145 @@ public class PortalUserConverter {
     }
     return pt;    
   }
+  
+  /**
+   * Update type to customer type.
+   *
+   * @param up the up
+   * @return the customer type
+   */
+  public CustomerType UpdateTypeToCustomerType(PortalUserUpdateType up)
+  {
+    CustomerType c = new CustomerType();
+    c.setHenkiloTunnus(up.getPic());
+    if (up.getFirstNames() != null) {
+      c.setEtuNimi(up.getFirstNames());
+      logger.debug("updatePortalUser: first name update to: " + up.getFirstNames());
+    }
+    if (up.getSurName() != null) {
+      c.setSukuNimi(up.getSurName());
+      logger.debug("updatePortalUser: surname update to: " + up.getSurName());
+    }
+        
+    AddressesType at = new AddressesType();
+    PhoneNumbersType pt = new PhoneNumbersType();
+    ElectronicContactInfosType et = new ElectronicContactInfosType();
+    
+    if (up.getContactInfoUpdates() != null) {
+      for (ContactInfoUpdateType ct : up.getContactInfoUpdates()) {
+        
+        // osoitteet
+        AddressType a = new AddressType();
+        if (ct.getStreetAddress() !=null)
+        {
+        a.setKatuNimi(ct.getStreetAddress());
+        logger.debug("updatePortalUser: address update to: " + ct.getStreetAddress());
+        }
+        if (ct.getCity() !=null)
+        {
+        a.setPostitoimipaikkaNimi(ct.getCity());
+        logger.debug("updatePortalUser: city update to: " + ct.getCity());
+        }
+        if (ct.getPostalCode() !=null)
+        {
+          a.setPostinumeroKoodi(ct.getPostalCode());
+        logger.debug("updatePortalUser: postal code update to: " + ct.getPostalCode());
+        }
+        at.getAddress().add(a);
+        
+        // puhelinnumerot
+        PhoneNumberType p = new PhoneNumberType();
+        if (ct.getPhoneNumber() !=null)
+        {
+          p.setPuhelinnumeroTeksti(ct.getPhoneNumber());
+        logger.debug("updatePortalUser: phone number update to: " + ct.getPhoneNumber());
+        }        
+        pt.getPhone().add(p);
+        
+        // sähköpostit
+        ElectronicContactInfoType e = new ElectronicContactInfoType();
+        if (ct.getEmail() !=null)
+        {
+        e.setContactInfo(ct.getEmail());
+        logger.debug("updatePortalUser: email update to: " + ct.getEmail());
+        }        
+        et.getEContactInfo().add(e);
+        
+      }
+        c.setAddresses(at);
+        c.setPhoneNumbers(pt);
+        c.setElectronicContactInfos(et);        
+      }
+
+    return c;
+  }
+
+  /**
+   * Update customer from update request.
+   *
+   * @param c the customer being updated
+   * @param cu the customer from update is done 
+   * @return the customer type updated customer
+   */
+  public CustomerType updateCustomer(CustomerType c, CustomerType cu)
+  {
+    if(cu.getEtuNimi()!= null)
+    {
+      c.setEtuNimi(cu.getEtuNimi());
+    }
+    if(cu.getEtunimetNimi()!= null)
+    {
+      c.setEtunimetNimi(cu.getEtunimetNimi());
+    }
+    if(cu.getSukuNimi()!= null)
+    {
+      c.setSukuNimi(cu.getSukuNimi());
+    }
+    
+    if(cu.getAddresses()!=null | cu.getPhoneNumbers()!=null | cu.getElectronicContactInfos()!=null)
+    {    
+    if ( cu.getAddresses() != null){
+      List<AddressType> upList = cu.getAddresses().getAddress();
+      for(int i=0; i<upList.size(); i++)
+      {
+       if(upList.get(i).getKatuNimi()!=null)
+       {
+       c.getAddresses().getAddress().get(i).setKatuNimi(upList.get(i).getKatuNimi());
+       }
+       if(upList.get(i).getPostinumeroKoodi()!=null)
+       {
+         c.getAddresses().getAddress().get(i).setPostinumeroKoodi(upList.get(i).getPostinumeroKoodi());
+       }
+       if(upList.get(i).getPostitoimipaikkaNimi()!=null)
+       {
+         c.getAddresses().getAddress().get(i).setPostitoimipaikkaNimi(upList.get(i).getPostitoimipaikkaNimi());
+       }
+      }      
+    }                  
+    if ( cu.getPhoneNumbers() != null){
+      List<PhoneNumberType> upList = cu.getPhoneNumbers().getPhone();      
+      for(int i=0; i<upList.size(); i++)
+      {
+       if(upList.get(i).getPuhelinnumeroTeksti()!=null)
+       {
+       c.getPhoneNumbers().getPhone().get(i).setPuhelinnumeroTeksti(upList.get(i).getPuhelinnumeroTeksti());
+       }       
+      }
+    }      
+    if ( cu.getElectronicContactInfos() != null){
+        List<ElectronicContactInfoType> upList = cu.getElectronicContactInfos().getEContactInfo();
+        for(int i=0; i<upList.size(); i++)
+        {
+         if(upList.get(i).getContactInfo()!=null)
+         {
+         c.getElectronicContactInfos().getEContactInfo().get(i).setContactInfo(upList.get(i).getContactInfo());
+         }       
+        }
+     }
+    }
+    
+    return c;
+  }
+ 
+  
 }

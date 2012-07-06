@@ -66,10 +66,13 @@ public class PortalUserServiceBean implements PortalUserService {
   public VoidType updatePortalUser(PortalUserUpdateType portalUser) {
     logger.info("updatePortalUser (impl: " + portalUserServiceDAOBean + ")");
     
-    CustomerType cust = new CustomerType();
-    cust = portalConverter.ToCustomerWsType(portalConverter.UpdateTypeToUserType(portalUser));
+    //PortalUserType user = portalConverter.UpdateTypeToUserType(portalUser);
+    //get customer from customer service
+       
+    //CustomerType cust = portalConverter.UpdateTypeToCustomerType(portalUser);
     
-    portalUserServiceDAOBean.updatePortalUser(portalUser, cust);
+    //portalUserServiceDAOBean.updatePortalUser(portalUser, cust);
+    portalUserServiceDAOBean.updatePortalUser(portalUser);
     
     return new VoidType();
   }
@@ -77,8 +80,7 @@ public class PortalUserServiceBean implements PortalUserService {
   @Override
   public PortalUserAllType authenticatePortalUser(PortalUserPicQueryParamType portalUser) {
     logger.info("authenticatePortalUser (impl: " + portalUserServiceDAOBean + ")");
-    return portalUserServiceDAOBean.authenticatePortalUser(portalUser);
-
+    return portalUserServiceDAOBean.authenticatePortalUser(portalUser);    
   }
 
   @Override
