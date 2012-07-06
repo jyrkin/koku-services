@@ -17,8 +17,6 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
@@ -31,18 +29,19 @@ import javax.persistence.TemporalType;
  * @author hekkata
  */
 @Entity
-@NamedQueries({
-    @NamedQuery(name = PortalUser.NAMED_QUERY_GET_PORTAL_USER_BY_USERNAME, query = "FROM PortalUser p WHERE p.userName =:userName ") })
+//@NamedQueries({
+//    @NamedQuery(name = PortalUser.NAMED_QUERY_GET_PORTAL_USER_BY_USERNAME, query = "FROM PortalUser p WHERE p.userName =:userName ") })
+@NamedQuery(name = "getPortalUserByUserName", query = "FROM PortalUser p WHERE p.userName =:userName ") 
 @Table(name = "portal_user")
 public class PortalUser {
 
   public static final String NAMED_QUERY_GET_PORTAL_USER_BY_USERNAME = "getPortalUserByUserName";
-
+  
   @Id
   @GeneratedValue
   private int id;
 
-  @JoinColumn(name="customer_id", nullable=false)
+  @Column(name="customer_id", nullable=false)
   private String customerId;
     
   @Column(name = "username", nullable = false, unique = true)
@@ -82,6 +81,12 @@ public class PortalUser {
  
   @Column(name = "wrong_password_count", nullable = false)
   private int wrongPasswordCount;
+  
+  /** 
+   * Class constructor.
+   */
+  public PortalUser() {
+  }
   
   public int getId() {
     return id;

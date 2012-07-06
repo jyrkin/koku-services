@@ -35,7 +35,6 @@ import fi.koku.services.utility.portal.v1.PortalUserUpdateType;
  * 
  * @author hekkata
  */
-//@Stateless (name = "PortalUserServiceDBAccess", mappedName = "PortalUserServiceDBAccess")
 @Stateless
 public class PortalUserServiceDAOBean implements PortalUserServiceDAO {
 
@@ -58,8 +57,7 @@ public class PortalUserServiceDAOBean implements PortalUserServiceDAO {
   
   @Override
   public void insertPortalUser(PortalUser user, CustomerType cust, String pic) {
-    // check for existing user
-    
+    // check for existing user    
     if (findExistingUser(user.getUserName())) {
       PortalUserServiceErrorCode errorCode = PortalUserServiceErrorCode.PORTAL_USER_ALREADY_EXISTS;
       throw new KoKuFaultException(errorCode.getValue(), errorCode.getDescription());      
@@ -72,7 +70,7 @@ public class PortalUserServiceDAOBean implements PortalUserServiceDAO {
   }
 
   @Override
-  public void updatePortalUser(PortalUserUpdateType user, CustomerType cust) {
+  public void updatePortalUser(PortalUserUpdateType user) {
         
     PortalUserPasswordEncryption encrypt = new PortalUserPasswordEncryption();
     // find portal user
@@ -82,6 +80,12 @@ public class PortalUserServiceDAOBean implements PortalUserServiceDAO {
         .authenticateUser(user.getPassword(), portalUser.getPassword(), portalUser.getSalt());
         
     if (authenticated) {
+      
+      CustomerType cust = customerBean.getCustomer(user.getPic());
+      CustomerType updateCust = conv.UpdateTypeToCustomerType(user);
+      //update customer type
+      cust = conv.updateCustomer(cust, updateCust);      
+      
       portalUser = conv.updateFromWsType(user, portalUser);
       em.merge(portalUser);
       em.flush();
@@ -90,6 +94,11 @@ public class PortalUserServiceDAOBean implements PortalUserServiceDAO {
       
       logger.debug("updatePortalUser: data updated successfully for user" + user.getUserName());
     }
+    else {
+      PortalUserServiceErrorCode errorCode = PortalUserServiceErrorCode.UNAUTHORIZED;
+      throw new KoKuFaultException(errorCode.getValue(), errorCode.getDescription());
+      }
+    
     
     return;
   }
@@ -102,17 +111,25 @@ public class PortalUserServiceDAOBean implements PortalUserServiceDAO {
     PortalUserPasswordEncryption encrypt = new PortalUserPasswordEncryption();
     // find portal user
     PortalUser portalUser = findPortalUser(user.getUserName());
+    CustomerType cust = customerBean.getCustomer(user.getPic());
+    //set user exists
+    boolean userExists = true;
     // and verify user's password
     boolean authenticated = encrypt
         .authenticateUser(user.getPassword(), portalUser.getPassword(), portalUser.getSalt());
         
-    if (!authenticated) {
+    if (!authenticated && userExists ) {
       updateWrongPasswordCount(authenticated, portalUser);
       PortalUserServiceErrorCode errorCode = PortalUserServiceErrorCode.UNAUTHORIZED;
       throw new KoKuFaultException(errorCode.getValue(), errorCode.getDescription());
-    } else {
+    }
+    else if (!authenticated && !userExists ) {
+      PortalUserServiceErrorCode errorCode = PortalUserServiceErrorCode.PORTAL_USER_NOT_FOUND;
+      throw new KoKuFaultException(errorCode.getValue(), errorCode.getDescription());
+    }
+    else if (authenticated && userExists ){
       updateWrongPasswordCount(authenticated, portalUser);
-      pt = getUserByPic(user);
+      pt = conv.toWsType(portalUser, cust);
       logger.debug("authenticatePortalUser: authenticated user: " + user.getUserName());
     }
 
@@ -124,41 +141,53 @@ public class PortalUserServiceDAOBean implements PortalUserServiceDAO {
     
     PortalUserAllType picUser = new PortalUserAllType();
     
-    if (!authenticateUser(pic)) {
+    if (authenticateUser(pic)) {
        CustomerType cust = customerBean.getCustomer(pic.getPic());
        PortalUser portalUser = findPortalUser(pic.getUserName());
        picUser = conv.toWsType(portalUser, cust);
     }
+    else {
+      PortalUserServiceErrorCode errorCode = PortalUserServiceErrorCode.UNAUTHORIZED;
+      throw new KoKuFaultException(errorCode.getValue(), errorCode.getDescription());
+      }
+    
     return picUser;    
   }
 
   @Override
   public void disablePortalUser(PortalUserPicQueryParamType user) {
         
-    if (!authenticateUser(user)) {
+    if (authenticateUser(user)) {
       PortalUser userFromDb = findPortalUser(user.getUserName());
       userFromDb.setDisabled(1);
       em.merge(userFromDb);
       em.flush();      
     }
+    else {
+    PortalUserServiceErrorCode errorCode = PortalUserServiceErrorCode.UNAUTHORIZED;
+    throw new KoKuFaultException(errorCode.getValue(), errorCode.getDescription());
+    }
+    
     return;
   }
 
   @Override
   public void removePortalUser(PortalUserPicQueryParamType pic) {
         
-    if (!authenticateUser(pic)) {
+    if (authenticateUser(pic)) {
       //remove from portal_user-table
       PortalUser userFromDb = findPortalUser(pic.getUserName());
-      userFromDb.setDisabled(1);
       em.remove(userFromDb);
       em.flush();
       //remove from customer
       customerBean.deleteCustomer(pic.getPic());
     }
+    else {
+      PortalUserServiceErrorCode errorCode = PortalUserServiceErrorCode.UNAUTHORIZED;
+      throw new KoKuFaultException(errorCode.getValue(), errorCode.getDescription());
+      }
     return;
   }
-  
   
   private boolean authenticateUser(PortalUserPicQueryParamType user)
   {
@@ -173,8 +202,7 @@ public class PortalUserServiceDAOBean implements PortalUserServiceDAO {
   
   return authenticated;
   }
-  
-  
+    
   private PortalUser findPortalUser(String userName) {
     Query q = em.createNamedQuery(PortalUser.NAMED_QUERY_GET_PORTAL_USER_BY_USERNAME);
     q.setParameter("userName", userName);
@@ -191,7 +219,9 @@ public class PortalUserServiceDAOBean implements PortalUserServiceDAO {
   private boolean findExistingUser(String userName) {
     boolean existingUser = false;
     Query q = em.createNamedQuery(PortalUser.NAMED_QUERY_GET_PORTAL_USER_BY_USERNAME);
+    q.setParameter("userName", userName);
     logger.debug("findExistingUser: query: " + q.toString());
+        
     @SuppressWarnings("unchecked")
     List<PortalUser> results = (List<PortalUser>) q.getResultList();
     for (PortalUser user : results) {
@@ -202,6 +232,7 @@ public class PortalUserServiceDAOBean implements PortalUserServiceDAO {
         throw new KoKuFaultException(errorCode.getValue(), errorCode.getDescription());
       }
     }
+    
     return existingUser;
   }
   
@@ -209,14 +240,16 @@ public class PortalUserServiceDAOBean implements PortalUserServiceDAO {
     int count = user.getWrongPasswordCount();
     if (!succeeded) {
       count += 1;
+      user.setWrongPasswordCount(count);
+      em.merge(user);
+      em.flush();
       logger.debug("updateWrongPasswordCount: count update to: " + count);
     } else if (succeeded && count > 0) {
-      count -= 1;
+      count -= 1;user.setWrongPasswordCount(count);
+      em.merge(user);
+      em.flush();
       logger.debug("updateWrongPasswordCount: count update to: " + count);
-    }
-    user.setWrongPasswordCount(count);
-    em.merge(user);
-    em.flush();
+    }    
   }
-
+     
 }
