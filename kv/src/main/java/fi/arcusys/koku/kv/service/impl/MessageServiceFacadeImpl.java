@@ -772,15 +772,7 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
 			throw new IllegalArgumentException("Request with ID " + requestId + " not found.");
 		}
 
-		final User toUser = getUserByUid(toUserId);
-
-        Message msg = new Message();
-        fillMessage(msg, sentRequest.getFromUser(), null, sentRequest.getSubject(), Collections.singletonList(toUserId), content, content);
-        msg = messageDao.create(msg);
-
-        final MessageRef msgRef = doReceiveNewMessage(toUser, msg);
-
-        return msgRef.getId();
+        return receiveNewMessage(SYSTEM_USER_NAME_FOR_NOTIFICATIONS, sentRequest.getSubject(), toUserId, content, content);
 	}
 
 	/**
