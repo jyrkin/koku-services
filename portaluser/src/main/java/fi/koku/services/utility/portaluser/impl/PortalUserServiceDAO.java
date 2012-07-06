@@ -47,9 +47,8 @@ public interface PortalUserServiceDAO {
    * Update portal user.
    *
    * @param user portal user
-   * @param customer CustomerType
    */
-  void updatePortalUser(PortalUserUpdateType user, CustomerType cust);
+  void updatePortalUser(PortalUserUpdateType user);
 
   /**
    * Authenticate portal user.
