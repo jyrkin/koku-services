@@ -93,9 +93,11 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
 
     private static final String APPOINTMENT_APPROVED_SUBJECT = "appointment.approved.subject";
     private static final String APPOINTMENT_APPROVED_BODY = "appointment.approved.body";
+    private static final String APPOINTMENT_APPROVED_BODY_KUNPO = "appointment.approved.body.kunpo";
 
     private static final String APPOINTMENT_DECLINED_SUBJECT = "appointment.declined.subject";
     private static final String APPOINTMENT_DECLINED_BODY = "appointment.declined.body";
+    private static final String APPOINTMENT_DECLINED_BODY_KUNPO = "appointment.declined.body.kunpo";
 
     private static final String APPOINTMENT_RECEIVED_SUBJECT = "appointment.received.subject";
     private static final String APPOINTMENT_RECEIVED_BODY = "appointment.received.body";
@@ -159,11 +161,23 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
         response.setStatus(AppointmentResponseStatus.Accepted);
 
 		appointmentDAO.update(appointment);
+
+		// Send notification to appointment creator
         notificationService.sendNotification(getValueFromBundle(APPOINTMENT_APPROVED_SUBJECT),
                 Collections.singletonList(response.getAppointment().getSender().getUid()),
                 MessageFormat.format(getValueFromBundle(APPOINTMENT_APPROVED_BODY),
                         new Object[] {response.getAppointment().getSubject(),
                     getUserInfoDisplayName(response.getTarget().getTargetUser()), getUserInfoDisplayName(response.getReplier())}));
+
+		// Send notifications to other guardians
+		TargetPerson target = appointment.getTargetPersonByUid(targetPersonUid);
+		for (User guardian : target.getGuardians())
+		    if (guardian.getUid() != userUid)
+                notificationService.sendNotification(getValueFromBundle(APPOINTMENT_APPROVED_SUBJECT),
+                        Collections.singletonList(guardian.getUid()),
+                        MessageFormat.format(getValueFromBundle(APPOINTMENT_APPROVED_BODY_KUNPO),
+                                new Object[] {response.getAppointment().getSubject(),
+                            getUserInfoDisplayName(response.getTarget().getTargetUser()), getUserInfoDisplayName(response.getReplier())}));
 	}
 
 	/**
@@ -178,11 +192,23 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
         response.setStatus(AppointmentResponseStatus.Rejected);
 
 		appointmentDAO.update(appointment);
+
+		// Send notification to appointment creator
         notificationService.sendNotification(getValueFromBundle(APPOINTMENT_DECLINED_SUBJECT),
                 Collections.singletonList(response.getAppointment().getSender().getUid()),
                 MessageFormat.format(getValueFromBundle(APPOINTMENT_DECLINED_BODY),
                         new Object[] {response.getAppointment().getSubject(),
                     getUserInfoDisplayName(response.getTarget().getTargetUser()), getUserInfoDisplayName(response.getReplier())}));
+
+        // Send notifications to other guardians
+        TargetPerson target = appointment.getTargetPersonByUid(targetPersonUid);
+        for (User guardian : target.getGuardians())
+            if (guardian.getUid() != userUid)
+                notificationService.sendNotification(getValueFromBundle(APPOINTMENT_DECLINED_SUBJECT),
+                        Collections.singletonList(guardian.getUid()),
+                        MessageFormat.format(getValueFromBundle(APPOINTMENT_DECLINED_BODY_KUNPO),
+                                new Object[] {response.getAppointment().getSubject(),
+                            getUserInfoDisplayName(response.getTarget().getTargetUser()), getUserInfoDisplayName(response.getReplier())}));
 	}
 
     private AppointmentResponse processReply(final String targetPersonUid,
@@ -207,12 +233,14 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
 
 		if (response == null) {
 		    response = new AppointmentResponse();
-		    response.setReplier(replier);
-		    response.setComment(comment);
 		    response.setTarget(targetPerson);
 		    response.setAppointment(appointment);
 		    appointment.getResponses().add(response);
 		}
+
+		// Always set comment and replier
+		response.setReplier(replier);
+        response.setComment(comment);
 
         return response;
     }
