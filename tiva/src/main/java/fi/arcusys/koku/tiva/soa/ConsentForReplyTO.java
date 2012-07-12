@@ -7,15 +7,17 @@ import javax.xml.bind.annotation.XmlSchemaType;
 import javax.xml.bind.annotation.XmlType;
 import javax.xml.datatype.XMLGregorianCalendar;
 
+import fi.arcusys.koku.common.soa.Organization;
+
 /**
  * Data transfer object for communication with UI/Intalio process. Holds data about consent for replying.
- * 
+ *
  * @author Dmitry Kudinov (dmitry.kudinov@arcusys.fi)
  * Aug 9, 2011
  */
 @XmlType (name = "suostumusForReply", namespace = "http://soa.tiva.koku.arcusys.fi/",
-propOrder={"consentId", "alreadyReplied", "template", "actionReplies", "replierUid" , "targetPersonUid", "replyTillDate", 
-        "endDate", "endDateMandatory", "replyComment", "informationTarget", "givenToParties"})
+propOrder={"consentId", "alreadyReplied", "template", "actionReplies", "replierUid" , "targetPersonUid", "replyTillDate",
+        "endDate", "endDateMandatory", "replyComment", "informationTarget", "givenToParties", "kksFormInstance", "kksGivenTo"})
 public class ConsentForReplyTO {
     private Long consentId;
     private ConsentTemplateTO template;
@@ -27,10 +29,13 @@ public class ConsentForReplyTO {
     private Boolean endDateMandatory;
     private boolean alreadyReplied;
     private List<ActionPermittedTO> actionReplies;
-    
+
     private String informationTarget;
     private List<ConsentExternalGivenTo> givenToParties;
-    
+
+    private KksFormInstance kksFormInstance;
+    private List<Organization> kksGivenTo;
+
     /**
      * @return the targetPersonUid
      */
@@ -56,16 +61,44 @@ public class ConsentForReplyTO {
         this.informationTarget = informationTarget;
     }
     /**
+     * @deprecated Use getKksGivenTo instead
      * @return the givenToParties
      */
+    @Deprecated
     public List<ConsentExternalGivenTo> getGivenToParties() {
         return givenToParties;
     }
     /**
+     * @deprecated Use setKksGivenTo instead
      * @param givenToParties the givenToParties to set
      */
+    @Deprecated
     public void setGivenToParties(List<ConsentExternalGivenTo> givenToParties) {
         this.givenToParties = givenToParties;
+    }
+    /**
+     * @return the kksFormInstance
+     */
+    public KksFormInstance getKksFormInstance() {
+        return kksFormInstance;
+    }
+    /**
+     * @param kksFormInstance the kksFormInstance to set
+     */
+    public void setKksFormInstance(KksFormInstance kksFormInstance) {
+        this.kksFormInstance = kksFormInstance;
+    }
+    /**
+     * @return the kksGivenTo
+     */
+    public List<Organization> getKksGivenTo() {
+        return kksGivenTo;
+    }
+    /**
+     * @param kksGivenTo the kksGivenTo to set
+     */
+    public void setKksGivenTo(List<Organization> kksGivenTo) {
+        this.kksGivenTo = kksGivenTo;
     }
     /**
      * @return the replyTillDate
@@ -183,6 +216,4 @@ public class ConsentForReplyTO {
     public void setReplyComment(String replyComment) {
         this.replyComment = replyComment;
     }
-    
-    
 }

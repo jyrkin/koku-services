@@ -6,6 +6,7 @@ import java.util.List;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.jws.WebParam;
 import javax.jws.WebService;
 
 import fi.arcusys.koku.common.external.CustomerServiceDAO;
@@ -317,5 +318,24 @@ public class UsersAndGroupsServiceImpl implements UsersAndGroupsService {
     @Override
     public List<String> getUsernamesInRole(String roleUid) {
         return rolesDao.getUsernamesInRole(roleUid);
+    }
+
+    /**
+     * @param userUid
+     * @return
+     */
+    @Override
+    public List<Organization> getUserOrganizations(final String userUid) {
+        // TODO: Write actual getter implementation
+        List<Organization> organizations = new ArrayList<Organization>();
+
+        for (int i = 1; i < 4; i++) {
+            Organization organizationData = new Organization();
+            organizationData.setOrganizationId(Integer.toString(i));
+            organizationData.setOrganizationName("Organization "+Integer.toString(i));
+            organizations.add(organizationData);
+        }
+
+        return organizations;
     }
 }

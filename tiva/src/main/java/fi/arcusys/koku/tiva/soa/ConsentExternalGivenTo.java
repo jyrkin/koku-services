@@ -5,11 +5,12 @@ import javax.xml.bind.annotation.XmlType;
 
 /**
  * Data transfer object for communication with UI/Intalio process. Holds data about parties, to whom that consent has been given.
- * 
+ *
  * @author Dmitry Kudinov (dmitry.kudinov@arcusys.fi)
  * Oct 11, 2011
  */
-@XmlType(name = "givenTo", namespace = "http://services.koku.fi/entity/tiva/v1", 
+@Deprecated
+@XmlType(name = "givenTo", namespace = "http://services.koku.fi/entity/tiva/v1",
 propOrder = {"partyId", "partyName"})
 public class ConsentExternalGivenTo {
     private String partyId;

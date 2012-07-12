@@ -49,6 +49,7 @@ import fi.arcusys.koku.common.service.datamodel.ReceipientsType;
 import fi.arcusys.koku.common.service.datamodel.SourceInfo;
 import fi.arcusys.koku.common.service.datamodel.User;
 import fi.arcusys.koku.common.service.dto.ConsentDTOCriteria;
+import fi.arcusys.koku.common.soa.Organization;
 import fi.arcusys.koku.common.soa.UserInfo;
 import fi.arcusys.koku.tiva.service.ConsentServiceFacade;
 import fi.arcusys.koku.tiva.soa.ActionPermittedTO;
@@ -72,17 +73,19 @@ import fi.arcusys.koku.tiva.soa.ConsentSummary;
 import fi.arcusys.koku.tiva.soa.ConsentTO;
 import fi.arcusys.koku.tiva.soa.ConsentTemplateSummary;
 import fi.arcusys.koku.tiva.soa.ConsentTemplateTO;
+import fi.arcusys.koku.tiva.soa.KksFormField;
+import fi.arcusys.koku.tiva.soa.KksFormInstance;
 
 /**
  * Service facade implementation for business methods in TIVA-Suostumus functional area.
- * 
+ *
  * @author Dmitry Kudinov (dmitry.kudinov@arcusys.fi)
  * Aug 23, 2011
  */
 @Stateless
 @Local({ConsentServiceFacade.class, ScheduledTaskExecutor.class})
 public class ConsentServiceFacadeImpl implements ConsentServiceFacade, ScheduledTaskExecutor {
-    
+
     private static final String NEW_CONSENT_REQUEST_BODY = "new_consent.request.body";
     private static final String NEW_CONSENT_REQUEST_SUBJECT = "new_consent.request.subject";
 
@@ -99,11 +102,11 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
     private static final String CONSENT_UPDATED_BODY = "consent.updated.body";
     private static final String CONSENT_UPDATED_SUBJECT = "consent.updated.subject";
 
-    private static final Logger logger = LoggerFactory.getLogger(ConsentServiceFacadeImpl.class); 
+    private static final Logger logger = LoggerFactory.getLogger(ConsentServiceFacadeImpl.class);
 
     @EJB
     private ConsentTemplateDAO templateDao;
-    
+
     @EJB
     private AuthorizationTemplateDAO authorizationTemplateDao;
 
@@ -115,7 +118,7 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
 
     @EJB
     private UserDAO userDao;
-    
+
     @EJB
     private CustomerServiceDAO customerDao;
 
@@ -124,7 +127,7 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
 
     private String notificationsBundleName = "consent.msg";
     private Properties messageTemplates;
-    
+
     @PostConstruct
     public void init() {
         messageTemplates = new Properties();
@@ -138,7 +141,7 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
         } catch (IOException e) {
             throw new EJBException("Incorrect configuration, failed to load message templates:", e);
         }
-    } 
+    }
 
     private String getValueFromBundle(final String key) {
         return messageTemplates.getProperty(key);
@@ -151,7 +154,7 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
     @Override
     public Long createConsentTemplate(ConsentTemplateTO templateTO) {
         if (logger.isDebugEnabled()) {
-            logger.debug("Create new consent template by user " + templateTO.getCreatorUid() + " with title " + templateTO.getTitle() + 
+            logger.debug("Create new consent template by user " + templateTO.getCreatorUid() + " with title " + templateTO.getTitle() +
                     " and " + (templateTO.getActions() != null ? templateTO.getActions().size() : 0) + " number of action requests.");
         }
         return templateDao.create(convertDTOtoConsentTemplate(templateTO)).getId();
@@ -173,7 +176,7 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
     private ConsentTemplateTO convertConsentTemplateToDTO(final ConsentTemplate template) {
         if (template == null) {
             return null;
-        }        
+        }
         final ConsentTemplateTO templateTO = new ConsentTemplateTO();
         templateTO.setConsentTemplateId(template.getId());
         templateTO.setCreatorUid(template.getCreator().getUid());
@@ -199,7 +202,7 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
             actionRequestTO.setDescription(action.getDescription());
             actionTOs.add(actionRequestTO);
         }
-        
+
         templateTO.setActions(actionTOs);
         return templateTO;
     }
@@ -241,7 +244,7 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
             actionRequest.setDescription(actionTO.getDescription());
             actions.add(actionRequest);
         }
-        
+
         template.setActions(actions);
         return template;
     }
@@ -289,13 +292,13 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
      * @return
      */
     @Override
-    public Long requestForConsent(final Long templateId, final String senderUid, final String targetPersonUid, 
-            final List<String> receipientUids, ConsentReceipientsType type, XMLGregorianCalendar replyTillDate, 
+    public Long requestForConsent(final Long templateId, final String senderUid, final String targetPersonUid,
+            final List<String> receipientUids, ConsentReceipientsType type, XMLGregorianCalendar replyTillDate,
             XMLGregorianCalendar endDate, Boolean isMandatory, final ConsentKksExtraInfo extraInfo) {
 
         final Consent newConsent = doConsentCreation(templateId, ConsentType.Electronic,
                 senderUid, targetPersonUid, receipientUids, type, replyTillDate, endDate, isMandatory, null, extraInfo);
-        notificationService.sendNotification(getValueFromBundle(NEW_CONSENT_REQUEST_SUBJECT), receipientUids, 
+        notificationService.sendNotification(getValueFromBundle(NEW_CONSENT_REQUEST_SUBJECT), receipientUids,
                 MessageFormat.format(getValueFromBundle(NEW_CONSENT_REQUEST_BODY), new Object[] {newConsent.getTemplate().getTitle()}));
         return newConsent.getId();
     }
@@ -306,13 +309,13 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
             ConsentReceipientsType type, XMLGregorianCalendar replyTillDate, XMLGregorianCalendar endDate, Boolean isMandatory, ConsentSourceInfo sourceInfo, ConsentKksExtraInfo extraInfo) {
         if (receipientUids == null || receipientUids.isEmpty()) {
             throw new IllegalArgumentException("Consent is requested from empty list of receipients.");
-        } 
-        
+        }
+
         final ConsentTemplate template = templateDao.getById(templateId);
         if (template == null) {
             throw new IllegalArgumentException("Consent template with ID " + templateId + " is not found");
         }
-        
+
         final Consent consent = new Consent();
         consent.setCreationType(consentType);
         consent.setCreator(userDao.getOrCreateUser(senderUid));
@@ -322,7 +325,7 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
         consent.setReplyTill(getSafeDate(replyTillDate));
         consent.setEndDateMandatory(isMandatory);
         consent.setSourceInfo(convertSourceInfoToDm(sourceInfo));
-        
+
         if (extraInfo != null) {
             consent.setInformationTargetId(extraInfo.getInformationTargetId());
             consent.setMetaInfo(extraInfo.getMetaInfo());
@@ -336,7 +339,7 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
             }
             consent.setGivenTo(givenTo);
         }
-        
+
         final Set<User> receipients = new HashSet<User>();
         for (final String userUid : receipientUids) {
             receipients.add(userDao.getOrCreateUser(userUid));
@@ -368,14 +371,14 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
         if (!consent.getReceipients().contains(replier)) {
             throw new IllegalStateException("Replier " + replierUid + " is absent in receipients list for consent " + consentId);
         }
-        
+
         final ConsentForReplyTO consentTO = new ConsentForReplyTO();
         consentTO.setConsentId(consent.getId());
         consentTO.setReplierUid(replierUid);
         consentTO.setTargetPersonUid(consent.getTargetPerson().getUid());
         consentTO.setTemplate(convertConsentTemplateToDTO(consent.getTemplate()));
         consentTO.setEndDateMandatory(consent.getEndDateMandatory());
-        
+
         consentTO.setInformationTarget(consent.getInformationTargetId());
         consentTO.setGivenToParties(getGivenToParties(consent));
 
@@ -403,7 +406,36 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
             consentTO.setAlreadyReplied(false);
             consentTO.setReplyTillDate(CalendarUtil.getXmlDate(consent.getReplyTill()));
         }
-        
+
+        String kksCode = consent.getTemplate().getCode();
+
+        // TODO: Replace mock with data retrieval
+        if (kksCode != null && kksCode.trim().length() > 0) {
+            KksFormInstance formInstance = new KksFormInstance();
+            formInstance.setInstanceId("1");
+            formInstance.setInstanceName("Instance 1");
+
+            formInstance.setFields(new ArrayList<KksFormField>());
+            for (int j = 1; j < 8; j++) {
+                KksFormField fieldData = new KksFormField();
+                fieldData.setFieldId(Integer.toString(j));
+                fieldData.setFieldName("Field "+Integer.toString(j));
+            }
+
+            consentTO.setKksFormInstance(formInstance);
+
+            List<Organization> organizations = new ArrayList<Organization>();
+
+            for (int i = 1; i < 4; i++) {
+                Organization organizationData = new Organization();
+                organizationData.setOrganizationId(Integer.toString(i));
+                organizationData.setOrganizationName("Organization "+Integer.toString(i));
+                organizations.add(organizationData);
+            }
+
+            consentTO.setKksGivenTo(organizations);
+        }
+
         return consentTO;
     }
 
@@ -411,7 +443,7 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
         final List<ConsentExternalGivenTo> givenToParties = new ArrayList<ConsentExternalGivenTo>();
         for (final ConsentGivenTo givenTo : consent.getGivenTo()) {
             final ConsentExternalGivenTo consentExternalGivenTo = new ConsentExternalGivenTo();
-            consentExternalGivenTo.setPartyId(givenTo.getPartyId()); 
+            consentExternalGivenTo.setPartyId(givenTo.getPartyId());
             consentExternalGivenTo.setPartyName(givenTo.getPartyName());
             givenToParties.add(consentExternalGivenTo);
         }
@@ -455,12 +487,12 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
         consentTO.setAnotherPermitterUserInfo(getUserInfo(getAnotherUser(userUid, consent.getReceipients())));
         consentTO.setCreateType(ConsentCreateType.valueOf(consent.getCreationType()));
         consentTO.setReplyTill(CalendarUtil.getXmlDate(consent.getReplyTill()));
-        
+
         consentTO.setInformationTargetId(consent.getInformationTargetId());
         consentTO.setMetaInfo(consent.getMetaInfo());
         consentTO.setGivenToParties(getGivenToParties(consent));
     }
-    
+
     private UserInfo getUserInfo(final User user) {
         return customerDao.getUserInfo(user);
     }
@@ -493,11 +525,11 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
     @Override
     public void giveConsent( Long consentId, String userUid, List<ActionPermittedTO> actions, XMLGregorianCalendar validTill, String comment) {
         final Consent consent = loadConsent(consentId);
-        
+
         final User replier = userDao.getOrCreateUser(userUid);
-        
+
         doGiveConsent(actions, validTill, null, comment, consent, replier);
-        notificationService.sendNotification(getValueFromBundle(CONSENT_GIVEN_SUBJECT), Collections.singletonList(consent.getCreator().getUid()), 
+        notificationService.sendNotification(getValueFromBundle(CONSENT_GIVEN_SUBJECT), Collections.singletonList(consent.getCreator().getUid()),
                 MessageFormat.format(getValueFromBundle(CONSENT_GIVEN_BODY), new Object[] {consent.getTemplate().getTitle(),
                     getUserInfoDisplayName(consent.getTargetPerson()), getUserInfoDisplayName(replier)}));
     }
@@ -511,31 +543,31 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
             updateConsent(validTill, comment, oldReply);
             return;
         }
-        
+
         final ConsentReply reply = new ConsentReply();
         reply.setConsent(consent);
-        reply.setReplier(replier); 
+        reply.setReplier(replier);
         reply.setCreatedDate(CalendarUtil.getSafeDate(givenDate));
-                
+
         reply.setComment(comment);
         reply.setStatus(ConsentReplyStatus.Given);
         reply.setValidTill(getSafeDate(validTill));
-        
+
         final Map<Integer, ConsentActionRequest> actionRequests = consent.getTemplate().getNumberToActionMap();
-        
+
         final Set<ConsentActionReply> actionReplies = new HashSet<ConsentActionReply>();
         for (final ActionPermittedTO actionResponse : actions) {
             if (!actionRequests.containsKey(actionResponse.getActionRequestNumber())) {
                 throw new IllegalArgumentException("Incorrect action number " + actionResponse.getActionRequestNumber() + " in response for consent ID " + consent.getId());
             }
-            
+
             final ConsentActionReply actionReply = new ConsentActionReply();
             actionReply.setActionRequestNumber(actionResponse.getActionRequestNumber());
             actionReply.setPermitted(actionResponse.isPermitted());
             actionReplies.add(actionReply);
         }
         reply.setActions(actionReplies);
-        
+
         consentReplyDao.create(reply);
     }
 
@@ -547,16 +579,16 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
     @Override
     public void declineConsent(Long consentId, String userUid, String comment) {
         final Consent consent = loadConsent(consentId);
-        
+
         final User replier = userDao.getOrCreateUser(userUid);
-        
+
         final ConsentReply oldReply = consentReplyDao.getReplyByConsentAndUser(consent, replier);
         if (oldReply != null) {
             oldReply.setComment(comment);
             oldReply.setStatus(ConsentReplyStatus.Declined);
 
             consentReplyDao.update(oldReply);
-            notificationService.sendNotification(getValueFromBundle(CONSENT_DECLINED_SUBJECT), Collections.singletonList(consent.getCreator().getUid()), 
+            notificationService.sendNotification(getValueFromBundle(CONSENT_DECLINED_SUBJECT), Collections.singletonList(consent.getCreator().getUid()),
                     MessageFormat.format(getValueFromBundle(CONSENT_DECLINED_BODY), new Object[] {consent.getTemplate().getTitle(),
                         getUserInfoDisplayName(consent.getTargetPerson()), getUserInfoDisplayName(replier)}));
         } else {
@@ -567,7 +599,7 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
             reply.setStatus(ConsentReplyStatus.Declined);
 
             consentReplyDao.create(reply);
-            notificationService.sendNotification(getValueFromBundle(CONSENT_DECLINED_SUBJECT), Collections.singletonList(consent.getCreator().getUid()), 
+            notificationService.sendNotification(getValueFromBundle(CONSENT_DECLINED_SUBJECT), Collections.singletonList(consent.getCreator().getUid()),
                     MessageFormat.format(getValueFromBundle(CONSENT_DECLINED_BODY), new Object[] {consent.getTemplate().getTitle(),
                         getUserInfoDisplayName(consent.getTargetPerson()), getUserInfoDisplayName(replier)}));
         }
@@ -650,22 +682,22 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
     @Override
     public void updateConsent(Long consentId, String user, XMLGregorianCalendar newDate, String comment) {
         final Consent consent = loadConsent(consentId);
-        
+
         final ConsentReply reply = consentReplyDao.getReplyByConsentAndUser(consent, userDao.getOrCreateUser(user));
-        
+
         if (reply == null) {
             throw new IllegalStateException("Consent id " + consentId + " is not yet approved or declined by user " + user );
         }
-        
+
         updateConsent(newDate, comment, reply);
     }
 
     private void updateConsent(XMLGregorianCalendar newDate, String comment, final ConsentReply reply) {
         reply.setValidTill(newDate == null ? null : getSafeDate(newDate));
         reply.setComment(comment);
-        
+
         consentReplyDao.update(reply);
-        notificationService.sendNotification(getValueFromBundle(CONSENT_UPDATED_SUBJECT), Collections.singletonList(reply.getConsent().getCreator().getUid()), 
+        notificationService.sendNotification(getValueFromBundle(CONSENT_UPDATED_SUBJECT), Collections.singletonList(reply.getConsent().getCreator().getUid()),
                 MessageFormat.format(getValueFromBundle(CONSENT_UPDATED_BODY), new Object[] {reply.getConsent().getTemplate().getTitle(),
                     getUserInfoDisplayName(reply.getConsent().getTargetPerson()), getUserInfoDisplayName(reply.getReplier())}));
     }
@@ -678,12 +710,12 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
     @Override
     public ConsentTO getConsentById(Long consentId, String user) {
         final Consent consent = loadConsent(consentId);
-        
+
         final ConsentReply reply = consentReplyDao.getReplyByConsentAndUser(consent, userDao.getOrCreateUser(user));
-        
+
         final ConsentTO consentTO = new ConsentTO();
         fillSummaryByReply(user, reply, consentTO);
-        
+
         final Set<Integer> actionsApproved = new HashSet<Integer>();
 
         if (consentTO.getStatus() != ConsentStatus.Declined && consentTO.getStatus() != ConsentStatus.Revoked) {
@@ -693,7 +725,7 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
                 }
             }
         }
-        
+
         final List<ActionRequestSummary> actionRequests = new ArrayList<ActionRequestSummary>();
         for (final ConsentActionRequest actionRequest : consent.getTemplate().getActions()) {
             final ActionRequestSummary actionRequestSummary = new ActionRequestSummary();
@@ -708,7 +740,36 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
         }
         consentTO.setActionRequests(actionRequests);
         consentTO.setComment(reply.getComment());
-        
+
+        String kksCode = consent.getTemplate().getCode();
+
+        // TODO: Replace mock with data retrieval
+        if (kksCode != null && kksCode.trim().length() > 0) {
+            KksFormInstance formInstance = new KksFormInstance();
+            formInstance.setInstanceId("1");
+            formInstance.setInstanceName("Instance 1");
+
+            formInstance.setFields(new ArrayList<KksFormField>());
+            for (int j = 1; j < 8; j++) {
+                KksFormField fieldData = new KksFormField();
+                fieldData.setFieldId(Integer.toString(j));
+                fieldData.setFieldName("Field "+Integer.toString(j));
+            }
+
+            consentTO.setKksFormInstance(formInstance);
+
+            List<Organization> organizations = new ArrayList<Organization>();
+
+            for (int i = 1; i < 4; i++) {
+                Organization organizationData = new Organization();
+                organizationData.setOrganizationId(Integer.toString(i));
+                organizationData.setOrganizationName("Organization "+Integer.toString(i));
+                organizations.add(organizationData);
+            }
+
+            consentTO.setKksGivenTo(organizations);
+        }
+
         return consentTO;
     }
 
@@ -720,13 +781,13 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
     @Override
     public void revokeConsent(Long consentId, String user, String comment) {
         final Consent consent = loadConsent(consentId);
-        
+
         final ConsentReply reply = consentReplyDao.getReplyByConsentAndUser(consent, userDao.getOrCreateUser(user));
-        
+
         reply.setStatus(ConsentReplyStatus.Revoked);
-        
+
         consentReplyDao.update(reply);
-        notificationService.sendNotification(getValueFromBundle(CONSENT_REVOKED_SUBJECT), Collections.singletonList(consent.getCreator().getUid()), 
+        notificationService.sendNotification(getValueFromBundle(CONSENT_REVOKED_SUBJECT), Collections.singletonList(consent.getCreator().getUid()),
                 MessageFormat.format(getValueFromBundle(CONSENT_REVOKED_BODY), new Object[] {consent.getTemplate().getTitle(),
                     getUserInfoDisplayName(consent.getTargetPerson()), getUserInfoDisplayName(reply.getReplier())}));
     }
@@ -760,7 +821,7 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
     @Override
     public ConsentTO getCombinedConsentById(Long consentId) {
         final Consent consent = loadConsent(consentId);
-        
+
         return convertConsentToConsentTO(consent);
     }
 
@@ -768,10 +829,39 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
         final List<ConsentReply> replies = consentReplyDao.getReplies(consent);
         final ConsentTO consentTO = new ConsentTO();
         fillConsentSummaryCombined(consent, replies, consentTO);
-        
+
         consentTO.setActionRequests(getActionResponsesCombined(consent, replies, consentTO.getStatus()));
         consentTO.setComment(getCommentsCombined(replies));
-        
+
+        String kksCode = consent.getTemplate().getCode();
+
+        // TODO: Replace mock with data retrieval
+        if (kksCode != null && kksCode.trim().length() > 0) {
+            KksFormInstance formInstance = new KksFormInstance();
+            formInstance.setInstanceId("1");
+            formInstance.setInstanceName("Instance 1");
+
+            formInstance.setFields(new ArrayList<KksFormField>());
+            for (int j = 1; j < 8; j++) {
+                KksFormField fieldData = new KksFormField();
+                fieldData.setFieldId(Integer.toString(j));
+                fieldData.setFieldName("Field "+Integer.toString(j));
+            }
+
+            consentTO.setKksFormInstance(formInstance);
+
+            List<Organization> organizations = new ArrayList<Organization>();
+
+            for (int i = 1; i < 4; i++) {
+                Organization organizationData = new Organization();
+                organizationData.setOrganizationId(Integer.toString(i));
+                organizationData.setOrganizationName("Organization "+Integer.toString(i));
+                organizations.add(organizationData);
+            }
+
+            consentTO.setKksGivenTo(organizations);
+        }
+
         return consentTO;
     }
 
@@ -803,7 +893,7 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
         consentTO.setStatus(ConsentStatus.Open);
         consentTO.setValidTill(CalendarUtil.getXmlDate(consent.getValidTill()));
         consentTO.setReplyTill(CalendarUtil.getXmlDate(consent.getReplyTill()));
-        
+
         // calculated values
         for (final ConsentReply reply : replies) {
             updateStatusByReply(consentTO, reply);
@@ -820,23 +910,23 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
         if (consent.getReceipients().size() > replies.size() && consentTO.getStatus() == ConsentStatus.Valid && consent.getReceipientsType() == ReceipientsType.BothParents) {
             consentTO.setStatus(ConsentStatus.PartiallyGiven);
         }
-        
+
         if (consentTO.getStatus() == ConsentStatus.Declined) {
             consentTO.setApprovalStatus(ConsentApprovalStatus.Declined);
         }
-        
+
         // KOKULT-8: Only set consent status to approved if its status is Valid or PartiallyGiven after processing
         if (consentTO.getStatus() == ConsentStatus.Valid || consentTO.getStatus() == ConsentStatus.PartiallyGiven) {
         	consentTO.setApprovalStatus(ConsentApprovalStatus.Approved);
         }
-       
+
     }
-    
+
     private List<UserInfo> getUserInfos(final Collection<User> users) {
         if (users == null || users.isEmpty()) {
             return Collections.emptyList();
         }
-        
+
         final List<UserInfo> result = new ArrayList<UserInfo>(users.size());
         for (final User user : users) {
             result.add(getUserInfo(user));
@@ -846,10 +936,10 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
 
     private List<ActionRequestSummary> getActionResponsesCombined(
             final Consent consent, final List<ConsentReply> replies, ConsentStatus status) {
-        
+
         final Map<Integer, ConsentActionRequest> numberToActionMap = consent.getTemplate().getNumberToActionMap();
         final Map<Integer, ActionRequestSummary> actionResponses = new HashMap<Integer, ActionRequestSummary>();
-        
+
         if (status == ConsentStatus.Declined || status == ConsentStatus.Revoked) {
             for (final Integer actionRequestedNumber : numberToActionMap.keySet()) {
                 final ActionRequestSummary actionRequestSummary = new ActionRequestSummary();
@@ -859,10 +949,10 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
                 actionRequestSummary.setStatus(ActionRequestStatus.Declined);
                 actionResponses.put(actionRequestedNumber, actionRequestSummary);
             }
-            
+
             return new ArrayList<ActionRequestSummary>(actionResponses.values());
         }
-        
+
         for (final ConsentReply reply : replies) {
             for (final ConsentActionReply actionReply : reply.getActions()) {
                 if (!actionResponses.containsKey(actionReply.getActionRequestNumber())) {
@@ -873,15 +963,15 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
                     actionRequestSummary.setStatus(ActionRequestStatus.Given);
                     actionResponses.put(actionReply.getActionRequestNumber(), actionRequestSummary);
                 }
-                
+
                 final ActionRequestSummary actionResponse = actionResponses.get(actionReply.getActionRequestNumber());
                 if (!actionReply.isPermitted()) {
                     actionResponse.setStatus(ActionRequestStatus.Declined);
                 }
-                
+
             }
         }
-        
+
         for (final Integer actionRequestedNumber : numberToActionMap.keySet()) {
             if (!actionResponses.containsKey(actionRequestedNumber)) {
                 final ActionRequestSummary actionRequestSummary = new ActionRequestSummary();
@@ -892,7 +982,7 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
                 actionResponses.put(actionRequestedNumber, actionRequestSummary);
             }
         }
-        
+
         return new ArrayList<ActionRequestSummary>(actionResponses.values());
     }
 
@@ -900,11 +990,11 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
             final ConsentReply reply) {
         if (reply.getStatus() == ConsentReplyStatus.Declined) {
             consentTO.setStatus(ConsentStatus.Declined);
-        } else if (reply.getStatus() == ConsentReplyStatus.Revoked 
+        } else if (reply.getStatus() == ConsentReplyStatus.Revoked
                 && consentTO.getStatus() != ConsentStatus.Declined ) {
             consentTO.setStatus(ConsentStatus.Revoked);
         } else if (reply.getStatus() == ConsentReplyStatus.Given
-                && consentTO.getStatus() != ConsentStatus.Declined 
+                && consentTO.getStatus() != ConsentStatus.Declined
                 && consentTO.getStatus() != ConsentStatus.Revoked) {
             if (reply.getValidTill() != null && CalendarUtil.getXmlDate(reply.getValidTill()).compare(CalendarUtil.getXmlDate(new Date())) < 0) {
                 consentTO.setStatus(ConsentStatus.Expired);
@@ -924,7 +1014,7 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
 
         final List<ConsentSummary> consents = new ArrayList<ConsentSummary>();
         for (final Consent consent : consentDao.getProcessedConsents(replier,
-                query.getCriteria() != null ? query.getCriteria().toDtoCriteria() : new ConsentDTOCriteria(), 
+                query.getCriteria() != null ? query.getCriteria().toDtoCriteria() : new ConsentDTOCriteria(),
                 query.getStartNum(), query.getMaxNum() - query.getStartNum() + 1)) {
             final ConsentSummary consentSummary = new ConsentSummary();
             fillConsentSummaryCombined(consent, consentReplyDao.getReplies(consent), consentSummary);
@@ -957,9 +1047,9 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
             ConsentCreateType consentType, String targetPersonUid,
             List<String> receipientUids, XMLGregorianCalendar endDate, XMLGregorianCalendar givenDate,
             List<ActionPermittedTO> actions, ConsentSourceInfo sourceInfo, final String comment) {
-        final Consent consent = doConsentCreation(templateId, 
-                consentType != null ? consentType.getConsentType() : ConsentType.PaperBased, 
-                employeeUid, targetPersonUid, receipientUids, ConsentReceipientsType.BothParents, 
+        final Consent consent = doConsentCreation(templateId,
+                consentType != null ? consentType.getConsentType() : ConsentType.PaperBased,
+                employeeUid, targetPersonUid, receipientUids, ConsentReceipientsType.BothParents,
                 null, endDate, Boolean.TRUE, sourceInfo, null);
         for (final User receipient : consent.getReceipients() ) {
             doGiveConsent(actions, endDate, givenDate, comment, consent, receipient);
@@ -1001,11 +1091,11 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
         if (criteria.getTargetPerson() == null || criteria.getTargetPerson().equals("")) {
             throw new IllegalArgumentException("Can't search consents without target person specified.");
         }
-        
+
         // currently it was agreed to ignore statuses filter - only Valid consents are retreived
         final Set<ConsentStatus> statuses = new HashSet<ConsentStatus>();
         statuses.addAll(Arrays.asList(ConsentStatus.values()));
-                
+
         final List<ConsentTO> result = new ArrayList<ConsentTO>();
         for (final Consent consent : consentDao.searchConsents(criteria.toDtoCriteria())) {
             final ConsentTO consentTO = convertConsentToConsentTO(consent);
@@ -1025,15 +1115,15 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
     }
 
     /**
-     * 
+     *
      */
     @Override
     public void performTask() {
         logger.info("Perform scheduled task.");
-        
+
         logger.debug("Start cancellation of outdated consents.");
         final int consentsCancelled = cancellationOfOutdatedConsents();
-        logger.debug("Cancelled " + consentsCancelled + " consents."); 
+        logger.debug("Cancelled " + consentsCancelled + " consents.");
     }
 
     /**
@@ -1042,14 +1132,14 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
     @Override
     public int cancellationOfOutdatedConsents() {
         final List<Consent> consents = consentDao.getOpenConsentsByReplyTillDate(new Date());
-        
+
         int cancelledConsentsCount = 0;
         for (final Consent consent : consents) {
             final Set<User> repliers = new HashSet<User>();
             for (final ConsentReply reply : consentReplyDao.getReplies(consent)) {
                 repliers.add(reply.getReplier());
             }
-            
+
             for (final User user : consent.getReceipients()) {
                 if (!repliers.contains(user)) {
                     declineConsent(consent.getId(), user.getUid(), getValueFromBundle(CONSENT_AUTO_DECLINED_COMMENT));
@@ -1057,7 +1147,7 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
             }
             cancelledConsentsCount++;
         }
-        
+
         return cancelledConsentsCount;
     }
 }

@@ -8,9 +8,11 @@ import javax.jws.WebResult;
 import javax.jws.WebService;
 import javax.xml.datatype.XMLGregorianCalendar;
 
+import fi.arcusys.koku.common.soa.Organization;
+
 /**
  * Interface with TIVA-Suostumus-processing operations, called from the TIVA-Suostumus Intalio process.
- * 
+ *
  * @author Dmitry Kudinov (dmitry.kudinov@arcusys.fi) Aug 9, 2011
  */
 @WebService(targetNamespace = "http://soa.tiva.koku.arcusys.fi/")
@@ -37,7 +39,9 @@ public interface KokuSuostumusProcessingService {
             @WebParam(name = "antajatyyppi") final ConsentReceipientsType type,
             @WebParam(name = "replyTillDate") final XMLGregorianCalendar replyTillDate,
             @WebParam(name = "maaraaika") final XMLGregorianCalendar endDate,
-            @WebParam(name = "maaraaikaMandatory") final Boolean endDateMandatory);
+            @WebParam(name = "maaraaikaMandatory") final Boolean endDateMandatory,
+            @WebParam(name = "kksFormInstance") final KksFormInstance kksFormInstance,
+            @WebParam(name = "kksGivenTo") final List<Organization> kksGivenTo);
 
     @WebResult(name = "suostumusId")
     @WebMethod(operationName = "kirjaaSuostumus")
@@ -51,7 +55,9 @@ public interface KokuSuostumusProcessingService {
             @WebParam(name = "suostumusajankohta") final XMLGregorianCalendar givenDate,
             @WebParam(name = "vastaukset") final List<ActionPermittedTO> actions,
             @WebParam(name = "suostumuksenLisaTiedot") final ConsentSourceInfo sourceInfo,
-            @WebParam(name = "kommentti") final String comment);
+            @WebParam(name = "kommentti") final String comment,
+            @WebParam(name = "kksFormInstance") final KksFormInstance kksFormInstance,
+            @WebParam(name = "kksGivenTo") final List<Organization> kksGivenTo);
 
     @WebMethod(operationName = "annaSuostumus")
     void giveConsent(
@@ -88,4 +94,7 @@ public interface KokuSuostumusProcessingService {
 
     ConsentTemplateTO getConsentTemplateById(
             @WebParam(name = "pohjaId") final long consentTemplateId);
+
+    List<KksFormInstance> getKksFormInstances(@WebParam(name = "kksCode") final String kksCode,
+            @WebParam(name = "targetPersonUid") final String targetPersonUid);
 }
