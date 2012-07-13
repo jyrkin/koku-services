@@ -754,6 +754,7 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
                 KksFormField fieldData = new KksFormField();
                 fieldData.setFieldId(Integer.toString(j));
                 fieldData.setFieldName("Field "+Integer.toString(j));
+                formInstance.getFields().add(fieldData);
             }
 
             consentTO.setKksFormInstance(formInstance);
@@ -846,6 +847,7 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
                 KksFormField fieldData = new KksFormField();
                 fieldData.setFieldId(Integer.toString(j));
                 fieldData.setFieldName("Field "+Integer.toString(j));
+                formInstance.getFields().add(fieldData);
             }
 
             consentTO.setKksFormInstance(formInstance);
