@@ -4,7 +4,7 @@ import java.util.List;
 
 /**
  * Data transfer object for passing search criteria to consent search. Used by KKS-component related search.
- * 
+ *
  * @author Dmitry Kudinov (dmitry.kudinov@arcusys.fi)
  * Oct 11, 2011
  */
@@ -12,6 +12,7 @@ public class ConsentExtDtoCriteria {
     private String targetPerson;
     private String templateNamePrefix;
     private String informationTargetId;
+    private String formInstanceId;
     private List<String> givenTo;
     /**
      * @return the targetPerson
@@ -48,6 +49,18 @@ public class ConsentExtDtoCriteria {
      */
     public void setInformationTargetId(String informationTargetId) {
         this.informationTargetId = informationTargetId;
+    }
+    /**
+     * @return the formInstanceId
+     */
+    public String getFormInstanceId() {
+        return formInstanceId;
+    }
+    /**
+     * @param formInstanceId the formInstanceId to set
+     */
+    public void setFormInstanceId(String formInstanceId) {
+        this.formInstanceId = formInstanceId;
     }
     /**
      * @return the givenTo

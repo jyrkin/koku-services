@@ -8,7 +8,7 @@ import java.util.List;
 /**
  * Holds KKS specific data about consent
  *
- * @author Mikhail Kapotonov (mikhail.kapitonov@arcusys.fi)
+ * @author Mikhail Kapitonov (mikhail.kapitonov@arcusys.fi)
  * Jul 11, 2012
  */
 public class KksFormInstance {

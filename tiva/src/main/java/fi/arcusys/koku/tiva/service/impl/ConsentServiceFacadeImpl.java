@@ -40,6 +40,7 @@ import fi.arcusys.koku.common.service.datamodel.AuthorizationTemplate;
 import fi.arcusys.koku.common.service.datamodel.Consent;
 import fi.arcusys.koku.common.service.datamodel.ConsentActionReply;
 import fi.arcusys.koku.common.service.datamodel.ConsentActionRequest;
+import fi.arcusys.koku.common.service.datamodel.ConsentFieldPermission;
 import fi.arcusys.koku.common.service.datamodel.ConsentGivenTo;
 import fi.arcusys.koku.common.service.datamodel.ConsentReply;
 import fi.arcusys.koku.common.service.datamodel.ConsentReplyStatus;
@@ -294,10 +295,11 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
     @Override
     public Long requestForConsent(final Long templateId, final String senderUid, final String targetPersonUid,
             final List<String> receipientUids, ConsentReceipientsType type, XMLGregorianCalendar replyTillDate,
-            XMLGregorianCalendar endDate, Boolean isMandatory, final ConsentKksExtraInfo extraInfo) {
+            XMLGregorianCalendar endDate, Boolean isMandatory, final ConsentKksExtraInfo extraInfo,
+            final KksFormInstance kksFormInstance, final List<Organization> kksGivenTo) {
 
         final Consent newConsent = doConsentCreation(templateId, ConsentType.Electronic,
-                senderUid, targetPersonUid, receipientUids, type, replyTillDate, endDate, isMandatory, null, extraInfo);
+                senderUid, targetPersonUid, receipientUids, type, replyTillDate, endDate, isMandatory, null, extraInfo, kksFormInstance, kksGivenTo);
         notificationService.sendNotification(getValueFromBundle(NEW_CONSENT_REQUEST_SUBJECT), receipientUids,
                 MessageFormat.format(getValueFromBundle(NEW_CONSENT_REQUEST_BODY), new Object[] {newConsent.getTemplate().getTitle()}));
         return newConsent.getId();
@@ -306,7 +308,9 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
     private Consent doConsentCreation(final Long templateId,
             ConsentType consentType, final String senderUid,
             final String targetPersonUid, final List<String> receipientUids,
-            ConsentReceipientsType type, XMLGregorianCalendar replyTillDate, XMLGregorianCalendar endDate, Boolean isMandatory, ConsentSourceInfo sourceInfo, ConsentKksExtraInfo extraInfo) {
+            ConsentReceipientsType type, XMLGregorianCalendar replyTillDate, XMLGregorianCalendar endDate, Boolean isMandatory, ConsentSourceInfo sourceInfo,
+            final ConsentKksExtraInfo extraInfo, final KksFormInstance kksFormInstance, final List<Organization> kksGivenTo) {
+
         if (receipientUids == null || receipientUids.isEmpty()) {
             throw new IllegalArgumentException("Consent is requested from empty list of receipients.");
         }
@@ -326,7 +330,9 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
         consent.setEndDateMandatory(isMandatory);
         consent.setSourceInfo(convertSourceInfoToDm(sourceInfo));
 
+        // NB! This piece of code is deprecated and may be removed from future releases
         if (extraInfo != null) {
+            logger.warn("Using deprecated KKS binding functionality!");
             consent.setInformationTargetId(extraInfo.getInformationTargetId());
             consent.setMetaInfo(extraInfo.getMetaInfo());
             final Set<ConsentGivenTo> givenTo = new HashSet<ConsentGivenTo>();
@@ -337,6 +343,40 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
                 consentGivenTo.setPartyName(party.getPartyName());
                 givenTo.add(consentGivenTo);
             }
+            consent.setGivenTo(givenTo);
+        }
+
+        if (kksFormInstance != null) {
+            // Saving form permissions
+            consent.setFormInstanceId(kksFormInstance.getInstanceId());
+            consent.setFormName(kksFormInstance.getInstanceName());
+
+            final Set<ConsentFieldPermission> permissions = new HashSet<ConsentFieldPermission>();
+
+            final List<KksFormField> fields = (kksFormInstance.getFields() != null ? kksFormInstance.getFields() : new ArrayList<KksFormField>());
+
+            for (final KksFormField field : fields) {
+                ConsentFieldPermission permission = new ConsentFieldPermission();
+                permission.setConsent(consent);
+                permission.setFieldId(field.getFieldId());
+                permission.setFieldName(field.getFieldName());
+                permissions.add(permission);
+            }
+
+            consent.setFieldPermissions(permissions);
+
+            // Saving organization permissions
+            final Set<ConsentGivenTo> givenTo = new HashSet<ConsentGivenTo>();
+            final List<Organization> organizations = (kksGivenTo != null ? kksGivenTo : new ArrayList<Organization>());
+
+            for (final Organization organization : organizations) {
+                final ConsentGivenTo consentGivenTo = new ConsentGivenTo();
+                consentGivenTo.setConsent(consent);
+                consentGivenTo.setPartyId(organization.getOrganizationId());
+                consentGivenTo.setPartyName(organization.getOrganizationName());
+                givenTo.add(consentGivenTo);
+            }
+
             consent.setGivenTo(givenTo);
         }
 
@@ -407,30 +447,29 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
             consentTO.setReplyTillDate(CalendarUtil.getXmlDate(consent.getReplyTill()));
         }
 
-        String kksCode = consent.getTemplate().getCode();
+        if (consent.getFormInstanceId() != null) {
+            KksFormInstance form = new KksFormInstance();
+            form.setInstanceId(consent.getFormInstanceId());
+            form.setInstanceName(consent.getFormName() != null ? consent.getFormName() : "");
 
-        // TODO: Replace mock with data retrieval
-        if (kksCode != null && kksCode.trim().length() > 0) {
-            KksFormInstance formInstance = new KksFormInstance();
-            formInstance.setInstanceId("1");
-            formInstance.setInstanceName("Instance 1");
-
-            formInstance.setFields(new ArrayList<KksFormField>());
-            for (int j = 1; j < 8; j++) {
-                KksFormField fieldData = new KksFormField();
-                fieldData.setFieldId(Integer.toString(j));
-                fieldData.setFieldName("Field "+Integer.toString(j));
+            final Collection<ConsentFieldPermission> permissions = (consent.getFieldPermissions() != null ? consent.getFieldPermissions() : new ArrayList<ConsentFieldPermission>());
+            final List<KksFormField> fields = new ArrayList<KksFormField>();
+            for (ConsentFieldPermission permission : permissions) {
+                KksFormField field = new KksFormField();
+                field.setFieldId(permission.getFieldId());
+                field.setFieldName(permission.getFieldName());
+                fields.add(field);
             }
 
-            consentTO.setKksFormInstance(formInstance);
+            form.setFields(fields);
 
-            List<Organization> organizations = new ArrayList<Organization>();
-
-            for (int i = 1; i < 4; i++) {
-                Organization organizationData = new Organization();
-                organizationData.setOrganizationId(Integer.toString(i));
-                organizationData.setOrganizationName("Organization "+Integer.toString(i));
-                organizations.add(organizationData);
+            final Set<ConsentGivenTo> organizationPermissions = (consent.getGivenTo() != null ? consent.getGivenTo() : new HashSet<ConsentGivenTo>());
+            final List<Organization> organizations = new ArrayList<Organization>();
+            for (ConsentGivenTo permission : organizationPermissions) {
+                Organization organization = new Organization();
+                organization.setOrganizationId(permission.getPartyId());
+                organization.setOrganizationName(permission.getPartyName());
+                organizations.add(organization);
             }
 
             consentTO.setKksGivenTo(organizations);
@@ -741,31 +780,29 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
         consentTO.setActionRequests(actionRequests);
         consentTO.setComment(reply.getComment());
 
-        String kksCode = consent.getTemplate().getCode();
+        if (consent.getFormInstanceId() != null) {
+            KksFormInstance form = new KksFormInstance();
+            form.setInstanceId(consent.getFormInstanceId());
+            form.setInstanceName(consent.getFormName() != null ? consent.getFormName() : "");
 
-        // TODO: Replace mock with data retrieval
-        if (kksCode != null && kksCode.trim().length() > 0) {
-            KksFormInstance formInstance = new KksFormInstance();
-            formInstance.setInstanceId("1");
-            formInstance.setInstanceName("Instance 1");
-
-            formInstance.setFields(new ArrayList<KksFormField>());
-            for (int j = 1; j < 8; j++) {
-                KksFormField fieldData = new KksFormField();
-                fieldData.setFieldId(Integer.toString(j));
-                fieldData.setFieldName("Field "+Integer.toString(j));
-                formInstance.getFields().add(fieldData);
+            final Collection<ConsentFieldPermission> permissions = (consent.getFieldPermissions() != null ? consent.getFieldPermissions() : new ArrayList<ConsentFieldPermission>());
+            final List<KksFormField> fields = new ArrayList<KksFormField>();
+            for (ConsentFieldPermission permission : permissions) {
+                KksFormField field = new KksFormField();
+                field.setFieldId(permission.getFieldId());
+                field.setFieldName(permission.getFieldName());
+                fields.add(field);
             }
 
-            consentTO.setKksFormInstance(formInstance);
+            form.setFields(fields);
 
-            List<Organization> organizations = new ArrayList<Organization>();
-
-            for (int i = 1; i < 4; i++) {
-                Organization organizationData = new Organization();
-                organizationData.setOrganizationId(Integer.toString(i));
-                organizationData.setOrganizationName("Organization "+Integer.toString(i));
-                organizations.add(organizationData);
+            final Set<ConsentGivenTo> organizationPermissions = (consent.getGivenTo() != null ? consent.getGivenTo() : new HashSet<ConsentGivenTo>());
+            final List<Organization> organizations = new ArrayList<Organization>();
+            for (ConsentGivenTo permission : organizationPermissions) {
+                Organization organization = new Organization();
+                organization.setOrganizationId(permission.getPartyId());
+                organization.setOrganizationName(permission.getPartyName());
+                organizations.add(organization);
             }
 
             consentTO.setKksGivenTo(organizations);
@@ -834,31 +871,29 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
         consentTO.setActionRequests(getActionResponsesCombined(consent, replies, consentTO.getStatus()));
         consentTO.setComment(getCommentsCombined(replies));
 
-        String kksCode = consent.getTemplate().getCode();
+        if (consent.getFormInstanceId() != null) {
+            KksFormInstance form = new KksFormInstance();
+            form.setInstanceId(consent.getFormInstanceId());
+            form.setInstanceName(consent.getFormName() != null ? consent.getFormName() : "");
 
-        // TODO: Replace mock with data retrieval
-        if (kksCode != null && kksCode.trim().length() > 0) {
-            KksFormInstance formInstance = new KksFormInstance();
-            formInstance.setInstanceId("1");
-            formInstance.setInstanceName("Instance 1");
-
-            formInstance.setFields(new ArrayList<KksFormField>());
-            for (int j = 1; j < 8; j++) {
-                KksFormField fieldData = new KksFormField();
-                fieldData.setFieldId(Integer.toString(j));
-                fieldData.setFieldName("Field "+Integer.toString(j));
-                formInstance.getFields().add(fieldData);
+            final Collection<ConsentFieldPermission> permissions = (consent.getFieldPermissions() != null ? consent.getFieldPermissions() : new ArrayList<ConsentFieldPermission>());
+            final List<KksFormField> fields = new ArrayList<KksFormField>();
+            for (ConsentFieldPermission permission : permissions) {
+                KksFormField field = new KksFormField();
+                field.setFieldId(permission.getFieldId());
+                field.setFieldName(permission.getFieldName());
+                fields.add(field);
             }
 
-            consentTO.setKksFormInstance(formInstance);
+            form.setFields(fields);
 
-            List<Organization> organizations = new ArrayList<Organization>();
-
-            for (int i = 1; i < 4; i++) {
-                Organization organizationData = new Organization();
-                organizationData.setOrganizationId(Integer.toString(i));
-                organizationData.setOrganizationName("Organization "+Integer.toString(i));
-                organizations.add(organizationData);
+            final Set<ConsentGivenTo> organizationPermissions = (consent.getGivenTo() != null ? consent.getGivenTo() : new HashSet<ConsentGivenTo>());
+            final List<Organization> organizations = new ArrayList<Organization>();
+            for (ConsentGivenTo permission : organizationPermissions) {
+                Organization organization = new Organization();
+                organization.setOrganizationId(permission.getPartyId());
+                organization.setOrganizationName(permission.getPartyName());
+                organizations.add(organization);
             }
 
             consentTO.setKksGivenTo(organizations);
@@ -1048,11 +1083,12 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
     public Long writeConsentOnBehalf(Long templateId, String employeeUid,
             ConsentCreateType consentType, String targetPersonUid,
             List<String> receipientUids, XMLGregorianCalendar endDate, XMLGregorianCalendar givenDate,
-            List<ActionPermittedTO> actions, ConsentSourceInfo sourceInfo, final String comment) {
+            List<ActionPermittedTO> actions, ConsentSourceInfo sourceInfo, final String comment,
+            final KksFormInstance kksFormInstance, final List<Organization> kksGivenTo) {
         final Consent consent = doConsentCreation(templateId,
                 consentType != null ? consentType.getConsentType() : ConsentType.PaperBased,
                 employeeUid, targetPersonUid, receipientUids, ConsentReceipientsType.BothParents,
-                null, endDate, Boolean.TRUE, sourceInfo, null);
+                null, endDate, Boolean.TRUE, sourceInfo, null, kksFormInstance, kksGivenTo);
         for (final User receipient : consent.getReceipients() ) {
             doGiveConsent(actions, endDate, givenDate, comment, consent, receipient);
         }

@@ -4,10 +4,12 @@ import java.util.List;
 
 /**
  * Data transfer object for communication with UI/Intalio process. Holds KKS-specific data about consent.
- * 
+ *
+ * @deprecated Use KksFormInstance and Organization classes instead
  * @author Dmitry Kudinov (dmitry.kudinov@arcusys.fi)
  * Oct 11, 2011
  */
+@Deprecated
 public class ConsentKksExtraInfo {
     private String informationTargetId;
     private List<ConsentExternalGivenTo> givenTo;
@@ -48,6 +50,6 @@ public class ConsentKksExtraInfo {
     public void setMetaInfo(String metaInfo) {
         this.metaInfo = metaInfo;
     }
-    
-    
+
+
 }

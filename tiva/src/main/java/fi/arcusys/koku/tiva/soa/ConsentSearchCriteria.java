@@ -9,27 +9,29 @@ import fi.arcusys.koku.common.service.dto.ConsentExtDtoCriteria;
 
 /**
  * Data transfer object for communication with UI/Intalio process. Holds search criteria for searching consents.
- * 
+ *
  * @author Dmitry Kudinov (dmitry.kudinov@arcusys.fi)
  * Oct 3, 2011
  */
-@XmlType(name = "ConsentSearchCriteria", namespace = "http://services.koku.fi/entity/tiva/v1", 
-propOrder = {"targetPerson", "templateNamePrefix", "informationTargetId", "givenTo"})
+@XmlType(name = "ConsentSearchCriteria", namespace = "http://services.koku.fi/entity/tiva/v1",
+propOrder = {"targetPerson", "templateNamePrefix", "informationTargetId", "formInstanceId", "givenTo"})
 public class ConsentSearchCriteria {
     private String targetPerson;
     private String templateNamePrefix;
     private String informationTargetId;
+    private String formInstanceId;
     private List<String> givenTo;
-    
+
     public ConsentExtDtoCriteria toDtoCriteria() {
         final ConsentExtDtoCriteria dtoCriteria = new ConsentExtDtoCriteria();
         dtoCriteria.setGivenTo(givenTo);
         dtoCriteria.setInformationTargetId(informationTargetId);
+        dtoCriteria.setFormInstanceId(formInstanceId);
         dtoCriteria.setTargetPerson(targetPerson);
         dtoCriteria.setTemplateNamePrefix(templateNamePrefix);
         return dtoCriteria;
     }
-    
+
     /**
      * @return the targetPerson
      */
@@ -69,6 +71,18 @@ public class ConsentSearchCriteria {
         this.informationTargetId = informationTargetId;
     }
     /**
+     * @return the formInstanceId
+     */
+    public String getFormInstanceId() {
+        return formInstanceId;
+    }
+    /**
+     * @param formInstanceId the formInstanceId to set
+     */
+    public void setFormInstanceId(String formInstanceId) {
+        this.formInstanceId = formInstanceId;
+    }
+    /**
      * @return the givenTo
      */
     @XmlElement(required = true)
@@ -81,6 +95,6 @@ public class ConsentSearchCriteria {
     public void setGivenTo(List<String> givenTo) {
         this.givenTo = givenTo;
     }
-    
-    
+
+
 }

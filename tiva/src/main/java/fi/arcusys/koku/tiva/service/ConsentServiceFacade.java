@@ -4,6 +4,7 @@ import java.util.List;
 
 import javax.xml.datatype.XMLGregorianCalendar;
 
+import fi.arcusys.koku.common.soa.Organization;
 import fi.arcusys.koku.tiva.soa.ActionPermittedTO;
 import fi.arcusys.koku.tiva.soa.ConsentCreateType;
 import fi.arcusys.koku.tiva.soa.ConsentCriteria;
@@ -18,10 +19,11 @@ import fi.arcusys.koku.tiva.soa.ConsentSummary;
 import fi.arcusys.koku.tiva.soa.ConsentTO;
 import fi.arcusys.koku.tiva.soa.ConsentTemplateSummary;
 import fi.arcusys.koku.tiva.soa.ConsentTemplateTO;
+import fi.arcusys.koku.tiva.soa.KksFormInstance;
 
 /**
  * Service facade interface for business methods in TIVA-Suostumus functional area.
- * 
+ *
  * @author Dmitry Kudinov (dmitry.kudinov@arcusys.fi)
  * Aug 23, 2011
  */
@@ -48,18 +50,21 @@ public interface ConsentServiceFacade {
 
     /**
      * @param templateId
-     * @param type 
-     * @param isMandatory 
-     * @param endDate 
-     * @param extraInfo 
+     * @param type
+     * @param isMandatory
+     * @param endDate
+     * @param extraInfo
      * @param string
      * @param string2
      * @param asList
      * @return
      */
-    Long requestForConsent(final Long templateId, String senderUid, String targetPersonUid, List<String> receipients, ConsentReceipientsType type, XMLGregorianCalendar replyTillDate, XMLGregorianCalendar endDate, Boolean isMandatory, ConsentKksExtraInfo extraInfo);
+    Long requestForConsent(final Long templateId, String senderUid, String targetPersonUid,
+            List<String> receipients, ConsentReceipientsType type, XMLGregorianCalendar replyTillDate,
+            XMLGregorianCalendar endDate, Boolean isMandatory, ConsentKksExtraInfo extraInfo,
+            KksFormInstance kksFormInstance, List<Organization> kksGivenTo);
 
-    
+
     /**
      * @param consentId
      * @return
@@ -148,7 +153,7 @@ public interface ConsentServiceFacade {
     List<ConsentSummary> getProcessedConsents(final String employeeUid, final ConsentQuery query);
 
     /**
-     * @param query 
+     * @param query
      * @param employee
      * @return
      */
@@ -164,17 +169,18 @@ public interface ConsentServiceFacade {
     /**
      * @param templateId
      * @param employeeUid
-     * @param givenDate 
-     * @param sourceInfo 
+     * @param givenDate
+     * @param sourceInfo
      * @param string
      * @param string2
      * @param asList
      * @param object
      * @return
      */
-    Long writeConsentOnBehalf(final Long templateId, final String employeeUid, final ConsentCreateType consentType, 
+    Long writeConsentOnBehalf(final Long templateId, final String employeeUid, final ConsentCreateType consentType,
             final String targetPersonUid, final List<String> receipientUids, final XMLGregorianCalendar endDate,
-            XMLGregorianCalendar givenDate, List<ActionPermittedTO> actions, ConsentSourceInfo sourceInfo, final String comment);
+            XMLGregorianCalendar givenDate, List<ActionPermittedTO> actions, ConsentSourceInfo sourceInfo, final String comment,
+            final KksFormInstance kksFormInstance, final List<Organization> kksGivenTo);
 
     /**
      * @param user
@@ -191,7 +197,7 @@ public interface ConsentServiceFacade {
     List<ConsentTO> searchConsents(ConsentSearchCriteria query);
 
     /**
-     * 
+     *
      */
     int cancellationOfOutdatedConsents();
 }

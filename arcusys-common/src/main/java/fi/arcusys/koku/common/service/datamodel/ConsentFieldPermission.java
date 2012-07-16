@@ -1,17 +1,38 @@
 /**
  *
  */
-package fi.arcusys.koku.tiva.soa;
+package fi.arcusys.koku.common.service.datamodel;
+
+import javax.persistence.Entity;
+import javax.persistence.ManyToOne;
 
 /**
- * Contains KKS field data
+ * Entity for representing form field which is getting consent (for KKS integration)
  *
  * @author Mikhail Kapitonov (mikhail.kapitonov@arcusys.fi)
- * Jul 11, 2012
+ * Jul 12, 2012
  */
-public class KksFormField {
+@Entity
+public class ConsentFieldPermission extends AbstractEntity {
     private String fieldId;
     private String fieldName;
+
+    @ManyToOne
+    private Consent consent;
+
+    /**
+     * @return the consent
+     */
+    public Consent getConsent() {
+        return consent;
+    }
+
+    /**
+     * @param consent the consent to set
+     */
+    public void setConsent(Consent consent) {
+        this.consent = consent;
+    }
 
     /**
      * @return the fieldId

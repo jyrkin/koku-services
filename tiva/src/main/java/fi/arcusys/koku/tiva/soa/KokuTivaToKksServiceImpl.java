@@ -12,22 +12,22 @@ import fi.arcusys.koku.tiva.service.ConsentServiceFacade;
 
 /**
  * Implementation of TIVA-to-KKS interface for accessing Consents from KKS component.
- * 
+ *
  * @author Dmitry Kudinov (dmitry.kudinov@arcusys.fi)
  * Oct 3, 2011
  */
 @Stateless
-@WebService(serviceName = "KokuTivaToKksService", portName = "KokuTivaToKksServicePort", 
+@WebService(serviceName = "KokuTivaToKksService", portName = "KokuTivaToKksServicePort",
         endpointInterface = "fi.arcusys.koku.tiva.soa.KokuTivaToKksService",
         targetNamespace = "http://services.koku.fi/entity/tiva/v1")
 public class KokuTivaToKksServiceImpl implements KokuTivaToKksService {
 
     @EJB
     private ConsentServiceFacade consentServiceFacade;
-    
+
     @EJB
     private UsersAndGroupsService usersService;
-    
+
     /**
      * @param prefix
      * @param limit
@@ -54,18 +54,18 @@ public class KokuTivaToKksServiceImpl implements KokuTivaToKksService {
         for (final String hetu : consent.getConsentProviders()) {
             receipients.add(usersService.getUserUidByKunpoSsn(hetu));
         }
-        
+
         final ConsentKksExtraInfo extraInfo = new ConsentKksExtraInfo();
         extraInfo.setInformationTargetId(consent.getInformationTargetId());
         extraInfo.setGivenTo(consent.getGivenTo());
         extraInfo.setMetaInfo(consent.getMetaInfo());
-        
+
         consentServiceFacade.requestForConsent(
-                consent.getTemplate().getConsentTemplateId(), 
-                usersService.getUserUidByEmployeeSsn(consent.getConsentRequestor()), 
+                consent.getTemplate().getConsentTemplateId(),
+                usersService.getUserUidByEmployeeSsn(consent.getConsentRequestor()),
                 usersService.getUserUidByKunpoSsn(consent.getTargetPerson()),
-                receipients, ConsentReceipientsType.BothParents, 
-                null, consent.getValidTill(), Boolean.TRUE, extraInfo);
+                receipients, ConsentReceipientsType.BothParents,
+                null, consent.getValidTill(), Boolean.TRUE, extraInfo, null, null);
     }
 
     /**

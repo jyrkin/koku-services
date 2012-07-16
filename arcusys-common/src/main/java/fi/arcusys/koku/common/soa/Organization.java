@@ -6,7 +6,7 @@ package fi.arcusys.koku.common.soa;
 /**
  * Contains organization data
  *
- * @author Mikhail Kapotonov (mikhail.kapitonov@arcusys.fi)
+ * @author Mikhail Kapitonov (mikhail.kapitonov@arcusys.fi)
  * Jul 11, 2012
  */
 public class Organization {

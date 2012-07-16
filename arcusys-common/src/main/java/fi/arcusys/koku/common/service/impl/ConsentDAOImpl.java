@@ -20,7 +20,7 @@ import fi.arcusys.koku.common.service.dto.ConsentExtDtoCriteria;
 
 /**
  * DAO implementation for CRUD operations with 'Consent' Entity
- * 
+ *
  * @author Dmitry Kudinov (dmitry.kudinov@arcusys.fi)
  * Aug 23, 2011
  */
@@ -28,7 +28,7 @@ import fi.arcusys.koku.common.service.dto.ConsentExtDtoCriteria;
 public class ConsentDAOImpl extends AbstractEntityDAOImpl<Consent> implements ConsentDAO {
 
     /**
-     * 
+     *
      */
     private static final int MAX_CONSENTS_RETREIVED = 50;
 
@@ -124,7 +124,7 @@ public class ConsentDAOImpl extends AbstractEntityDAOImpl<Consent> implements Co
         query.append("SELECT DISTINCT cn FROM Consent cn LEFT JOIN cn.givenTo givenTo_ ");
         final Map<String, Object> params = new HashMap<String, Object>();
         // where
-        
+
         query.append(" WHERE 1 = 1 ");
         // criteria applied
         final String templatePrefix = criteria.getTemplateNamePrefix();
@@ -136,7 +136,7 @@ public class ConsentDAOImpl extends AbstractEntityDAOImpl<Consent> implements Co
         if (targetPersonUid != null && !"".equals(targetPersonUid.trim())) {
             query.append(" AND cn.targetPerson.uid = :targetPersonUid ");
             params.put("targetPersonUid", targetPersonUid);
-        } 
+        }
         // getGivenTo
         final List<String> givenTo = criteria.getGivenTo();
         if (givenTo != null && !givenTo.isEmpty()) {
@@ -151,7 +151,15 @@ public class ConsentDAOImpl extends AbstractEntityDAOImpl<Consent> implements Co
         } else {
             query.append(" AND cn.informationTargetId IS NULL ");
         }
-        
+        // getFormInstanceId
+        final String formInstanceId = criteria.getFormInstanceId();
+        if (formInstanceId != null && !"".equals(formInstanceId.trim())) {
+            query.append(" AND (cn.formInstanceId = :formInstanceId OR cn.formInstanceId IS NULL) ");
+            params.put("formInstanceId", formInstanceId);
+        } else {
+            query.append(" AND cn.formInstanceId IS NULL ");
+        }
+
         // order by
         query.append(" ORDER BY cn.id DESC");
         return executeQuery(query.toString(), params, 1, ConsentDAOImpl.MAX_CONSENTS_RETREIVED);

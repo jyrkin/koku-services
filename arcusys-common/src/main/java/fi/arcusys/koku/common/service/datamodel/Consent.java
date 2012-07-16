@@ -17,7 +17,7 @@ import javax.persistence.OneToMany;
 
 /**
  * Entity for representing request for consent in TIVA-Suostumus functionality.
- * 
+ *
  * @author Dmitry Kudinov (dmitry.kudinov@arcusys.fi)
  * Aug 23, 2011
  */
@@ -33,7 +33,7 @@ import javax.persistence.OneToMany;
             "cn.creator = :sender ORDER BY cn.id DESC"),
     @NamedQuery(name = "countProcessedConsentsBySender", query = "SELECT COUNT(DISTINCT cn) FROM Consent cn WHERE " +
             "cn.creator = :sender"),
-            
+
     @NamedQuery(name = "findOpenConsentsByReplyTillDate", query = "SELECT cn FROM Consent cn WHERE " +
 
             " (" +
@@ -46,45 +46,59 @@ import javax.persistence.OneToMany;
             "   (cn.receipientsType <> :receipientsTypeBoth AND " +
             "    NOT EXISTS (SELECT replyAny.id FROM ConsentReply replyAny WHERE replyAny.consent = cn) ) " +
             " )" +
-            
+
             " AND cn.replyTill BETWEEN :replyTillDateFrom AND :replyTillDateTo ")
-                        
+
 })
 public class Consent extends AbstractEntity {
     private Date replyTill;
     private Date validTill;
     private Boolean endDateMandatory;
-    
+
     @ManyToOne
     private ConsentTemplate template;
-    
+
     @Enumerated(EnumType.STRING)
     private ConsentType creationType;
-    
+
     @Enumerated(EnumType.STRING)
     private ReceipientsType receipientsType;
 
     @ManyToOne
     private User creator;
-    
+
     @ManyToOne
     private User targetPerson;
-    
+
     @ManyToMany(fetch = FetchType.EAGER)
     private Set<User> receipients;
-    
+
     @Embedded
     private SourceInfo sourceInfo;
-    
+
+    @Deprecated
     private String informationTargetId;
+
+    @Deprecated
     private String metaInfo;
-    
+
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "consent", fetch = FetchType.EAGER)
     private Set<ConsentGivenTo> givenTo;
-    
+
+    // KKS form instance
+    private String formInstanceId;
+
+    // KKS form name
+    private String formName;
+
+    // KKS form fields
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "consent", fetch = FetchType.EAGER)
+    private Set<ConsentFieldPermission> fieldPermissions;
+
     /**
      * @return the informationTargetId
      */
+    @Deprecated
     public String getInformationTargetId() {
         return informationTargetId;
     }
@@ -92,6 +106,7 @@ public class Consent extends AbstractEntity {
     /**
      * @param informationTargetId the informationTargetId to set
      */
+    @Deprecated
     public void setInformationTargetId(String informationTargetId) {
         this.informationTargetId = informationTargetId;
     }
@@ -99,6 +114,7 @@ public class Consent extends AbstractEntity {
     /**
      * @return the metaInfo
      */
+    @Deprecated
     public String getMetaInfo() {
         return metaInfo;
     }
@@ -106,6 +122,7 @@ public class Consent extends AbstractEntity {
     /**
      * @param metaInfo the metaInfo to set
      */
+    @Deprecated
     public void setMetaInfo(String metaInfo) {
         this.metaInfo = metaInfo;
     }
@@ -262,5 +279,47 @@ public class Consent extends AbstractEntity {
      */
     public void setReceipients(Set<User> receipients) {
         this.receipients = receipients;
+    }
+
+    /**
+     * @return the formInstanceId
+     */
+    public String getFormInstanceId() {
+        return formInstanceId;
+    }
+
+    /**
+     * @param formInstanceId the formInstanceId to set
+     */
+    public void setFormInstanceId(String formInstanceId) {
+        this.formInstanceId = formInstanceId;
+    }
+
+    /**
+     * @return the formName
+     */
+    public String getFormName() {
+        return formName;
+    }
+
+    /**
+     * @param formName the formName to set
+     */
+    public void setFormName(String formName) {
+        this.formName = formName;
+    }
+
+    /**
+     * @return the fieldPermissions
+     */
+    public Set<ConsentFieldPermission> getFieldPermissions() {
+        return fieldPermissions;
+    }
+
+    /**
+     * @param fieldPermissions the fieldPermissions to set
+     */
+    public void setFieldPermissions(Set<ConsentFieldPermission> fieldPermissions) {
+        this.fieldPermissions = fieldPermissions;
     }
 }

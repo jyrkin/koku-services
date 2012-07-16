@@ -63,7 +63,7 @@ public class KokuSuostumusProcessingServiceImpl implements KokuSuostumusProcessi
     public Long requestForConsent(long consentTemplateId, String senderUid, final String targetPersonUid,
             List<String> receivers, final ConsentReceipientsType type, final XMLGregorianCalendar replyTillDate, final XMLGregorianCalendar endDate, final Boolean isMandatory,
             final KksFormInstance kksFormInstance, final List<Organization> kksGivenTo) {
-        return serviceFacade.requestForConsent(consentTemplateId, senderUid, targetPersonUid, receivers, type, replyTillDate, endDate, isMandatory, null);
+        return serviceFacade.requestForConsent(consentTemplateId, senderUid, targetPersonUid, receivers, type, replyTillDate, endDate, isMandatory, null, kksFormInstance, kksGivenTo);
     }
 
     /**
@@ -136,7 +136,7 @@ public class KokuSuostumusProcessingServiceImpl implements KokuSuostumusProcessi
             final XMLGregorianCalendar givenDate,
             final List<ActionPermittedTO> actions, final ConsentSourceInfo sourceInfo, final String comment,
             final KksFormInstance kksFormInstance, final List<Organization> kksGivenTo) {
-        return serviceFacade.writeConsentOnBehalf(consentTemplateId, senderUid, consentType, targetPersonUid, receivers, endDate, givenDate, actions, sourceInfo, comment);
+        return serviceFacade.writeConsentOnBehalf(consentTemplateId, senderUid, consentType, targetPersonUid, receivers, endDate, givenDate, actions, sourceInfo, comment, kksFormInstance, kksGivenTo);
     }
 
     /**
@@ -166,6 +166,7 @@ public class KokuSuostumusProcessingServiceImpl implements KokuSuostumusProcessi
                 KksFormField fieldData = new KksFormField();
                 fieldData.setFieldId(Integer.toString(j));
                 fieldData.setFieldName("Field "+Integer.toString(j));
+                formInstance.getFields().add(fieldData);
             }
 
             instances.add(formInstance);
