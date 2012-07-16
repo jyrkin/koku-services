@@ -11,6 +11,7 @@ import javax.jws.WebService;
 
 import fi.arcusys.koku.common.external.CustomerServiceDAO;
 import fi.arcusys.koku.common.external.GroupsDAO;
+import fi.arcusys.koku.common.external.OrganizationsDAO;
 import fi.arcusys.koku.common.external.PyhServiceDAO;
 import fi.arcusys.koku.common.external.RolesDAO;
 import fi.arcusys.koku.common.service.UserDAO;
@@ -41,6 +42,9 @@ public class UsersAndGroupsServiceImpl implements UsersAndGroupsService {
 
     @EJB
     private RolesDAO rolesDao;
+
+    @EJB
+    private OrganizationsDAO organizaionsDao;
 
     /**
      * @param username
@@ -326,16 +330,22 @@ public class UsersAndGroupsServiceImpl implements UsersAndGroupsService {
      */
     @Override
     public List<Organization> getUserOrganizations(final String userUid) {
-        // TODO: Write actual getter implementation
-        List<Organization> organizations = new ArrayList<Organization>();
-
-        for (int i = 1; i < 4; i++) {
-            Organization organizationData = new Organization();
-            organizationData.setOrganizationId(Integer.toString(i));
-            organizationData.setOrganizationName("Organization "+Integer.toString(i));
-            organizations.add(organizationData);
+        final String looraName = getLooraNameByUserUid(userUid);
+        if (looraName == null || looraName.isEmpty()) {
+            return Collections.emptyList();
         }
 
-        return organizations;
+        return organizaionsDao.getEmployeeOrganizations(looraName);
     }
+
+    /**
+     * @param username
+     * @return
+     */
+    @Override
+    public List<Organization> getUserOrganizationsByLooraName(String username) {
+        return organizaionsDao.getEmployeeOrganizations(username);
+    }
+
+
 }

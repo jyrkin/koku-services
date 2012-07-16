@@ -97,4 +97,8 @@ public interface UsersAndGroupsService {
     @WebResult(name = "organization")
     List<Organization> getUserOrganizations(
             @WebParam(name = "userUid") final String userUid);
+
+    @WebResult(name = "organization")
+    List<Organization> getUserOrganizationsByLooraName(
+            @WebParam(name = "looraUsername") final String username);
 }

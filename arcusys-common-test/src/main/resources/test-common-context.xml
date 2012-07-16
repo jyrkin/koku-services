@@ -108,6 +108,7 @@
     <bean id="logServiceDao" class="fi.arcusys.koku.common.external.LogServiceDAOImpl" />
     <bean id="groupsDao" class="fi.arcusys.koku.common.external.GroupsDAOImpl" />
     <bean id="rolesDao" class="fi.arcusys.koku.common.external.RolesDAOImpl" />
+    <bean id="organizationsDao" class="fi.arcusys.koku.common.external.OrganizationsDAOImpl" />
     <bean id="pyhServiceDao" class="fi.arcusys.koku.common.external.PyhServiceDAOImpl" />
     <bean id="ldapDao" class="fi.arcusys.koku.common.external.LdapDAOTestImpl" />
     <bean id="emailDao" class="fi.arcusys.koku.common.external.DummyEmailServiceDAOImpl" />

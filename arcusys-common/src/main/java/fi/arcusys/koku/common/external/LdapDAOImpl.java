@@ -26,6 +26,7 @@ import javax.naming.directory.SearchResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import fi.arcusys.koku.common.soa.Organization;
 import fi.arcusys.koku.common.soa.Role;
 import fi.koku.services.entity.customer.v1.CustomerServiceFactory;
 
@@ -391,6 +392,10 @@ public class LdapDAOImpl implements LdapDAO {
         return getCommunitiesSubcontext("Roles");
     }
 
+    private DirContext getOrganizationsContext() throws NamingException {
+        return getCommunitiesSubcontext("OrgUnits");
+    }
+
     private DirContext getSystemGroupsContext() throws NamingException {
         InitialContext iniCtx = new InitialContext();
         DirContext dirContext = (DirContext) iniCtx.lookup("external/ldap/myldap");
@@ -510,6 +515,8 @@ public class LdapDAOImpl implements LdapDAO {
             dirContext = getSystemGroupsContext();
         } else if (groupType == GroupType.CommunityGroup) {
             dirContext = getCommunityGroupsContext();
+        } else if (groupType == GroupType.Organizations) {
+            dirContext = getOrganizationsContext();
         } else { // Roles
             dirContext = getRolesContext();
         }
@@ -583,6 +590,30 @@ public class LdapDAOImpl implements LdapDAO {
     }
 
     /**
+     * @param employeeName
+     * @return
+     */
+    @Override
+    public List<Organization> getEmployeeOrganizations(String employeeName) {
+        return createOrganizationsFromSearchResult(doSearchGroups("member", getUserDnWithBase(getUserDn(employeeName)), "description", GroupType.Organizations));
+    }
+
+    private List<Organization> createOrganizationsFromSearchResult(final Map<String, String> organizations) {
+        final List<Organization> result = new ArrayList<Organization>();
+        for (final Map.Entry<String, String> entry : organizations.entrySet()) {
+            final Organization organization = new Organization();
+            organization.setOrganizationId(entry.getKey());
+            if (entry.getValue() != null && !entry.getValue().isEmpty()) {
+                organization.setOrganizationName(entry.getValue());
+            } else {
+                organization.setOrganizationName(entry.getKey());
+            }
+            result.add(organization);
+        }
+        return result;
+    }
+
+    /**
      * @param searchString
      * @return
      */
@@ -593,7 +624,7 @@ public class LdapDAOImpl implements LdapDAO {
     }
 
     private enum GroupType {
-        SystemGroup, CommunityGroup, Roles;
+        SystemGroup, CommunityGroup, Roles, Organizations;
     }
 
     /**

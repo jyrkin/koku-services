@@ -3,6 +3,7 @@ package fi.arcusys.koku.common.external;
 import java.util.List;
 import java.util.Map;
 
+import fi.arcusys.koku.common.soa.Organization;
 import fi.arcusys.koku.common.soa.Role;
 
 /**
@@ -71,6 +72,12 @@ public interface LdapDAO {
      * @return
      */
     List<Role> getEmployeeRoles(String employeeName);
+
+    /**
+     * @param employeeName
+     * @return
+     */
+    List<Organization> getEmployeeOrganizations(String employeeName);
 
     /**
      * @param searchString
