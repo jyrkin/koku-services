@@ -796,6 +796,8 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
 
             form.setFields(fields);
 
+            consentTO.setKksFormInstance(form);
+
             final Set<ConsentGivenTo> organizationPermissions = (consent.getGivenTo() != null ? consent.getGivenTo() : new HashSet<ConsentGivenTo>());
             final List<Organization> organizations = new ArrayList<Organization>();
             for (ConsentGivenTo permission : organizationPermissions) {
@@ -886,6 +888,8 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
             }
 
             form.setFields(fields);
+
+            consentTO.setKksFormInstance(form);
 
             final Set<ConsentGivenTo> organizationPermissions = (consent.getGivenTo() != null ? consent.getGivenTo() : new HashSet<ConsentGivenTo>());
             final List<Organization> organizations = new ArrayList<Organization>();
