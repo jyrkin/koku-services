@@ -131,6 +131,7 @@ public class PortalUserConverter {
     c.setHenkiloTunnus(pu.getPic());
     c.setSyntymaPvm(pu.getBirthDate());
     c.setEtuNimi(pu.getFirstNames());
+    c.setEtunimetNimi("");
     c.setSukuNimi(pu.getSurName());
     c.setEtunimetNimi("");
     c.setKansalaisuusKoodi(KANSALAISUUSKOODI_FI);
@@ -184,15 +185,22 @@ public class PortalUserConverter {
   public PortalUser fromWsType(PortalUserType pu) {
 
     String salt = encrypt.getSalt();
-
+    
     PortalUser p = new PortalUser();
     // portal user table
     p.setUserName(pu.getUserName());
-    p.setNotificationMethod(pu.getNotificationMethod());
+    
+    if(pu.getNotificationMethod()==null){
+      p.setNotificationMethod(0);
+    }
     p.setCreationTime(new Date());
     p.setModificationTime(new Date());
     p.setLastLoginTime(new Date());
-    p.setDisabled(pu.getDisabled());
+    
+    if(pu.getDisabled()==null){
+      p.setDisabled(0);
+    }
+    
     p.setLockedTime(new Date());
     p.setSalt(salt); // salt setting before password
     p.setPassword(encrypt.getEncryptedPassword(pu.getPassword(), salt));
@@ -223,7 +231,7 @@ public class PortalUserConverter {
       p.setNotificationMethod(pu.getNotificationMethod());
       logger.debug("updatePortalUser: notification mehtod update to: " + p.getNotificationMethod());
     }
-    if (pu.getNewPassword() != null) {
+    if (pu.getNewPassword() != null && !"".equals(pu.getNewPassword())) {
       p.setSalt(salt);
       p.setPassword(encrypt.getEncryptedPassword(pu.getNewPassword(), salt));
       p.setPasswordChanged(new Date());
