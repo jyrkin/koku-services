@@ -17,6 +17,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
@@ -29,18 +30,20 @@ import javax.persistence.TemporalType;
  * @author hekkata
  */
 @Entity
-//@NamedQueries({
-//    @NamedQuery(name = PortalUser.NAMED_QUERY_GET_PORTAL_USER_BY_USERNAME, query = "FROM PortalUser p WHERE p.userName =:userName ") })
-@NamedQuery(name = "getPortalUserByUserName", query = "FROM PortalUser p WHERE p.userName =:userName ") 
+@NamedQueries({
+  @NamedQuery(name = "getPortalUserByUserName", query = "FROM PortalUser p WHERE p.userName =:userName "), 
+  @NamedQuery(name = "getPortalUserByCustomerPic", query = "FROM PortalUser p WHERE p.customerId =:customerId ")
+})
 @Table(name = "portal_user")
 public class PortalUser {
 
   public static final String NAMED_QUERY_GET_PORTAL_USER_BY_USERNAME = "getPortalUserByUserName";
+  public static final String NAMED_QUERY_GET_PORTAL_USER_BY_CUSTOMER_PIC = "getPortalUserByCustomerPic";
   
   @Id
   @GeneratedValue
   private int id;
-
+  
   @Column(name="customer_id", nullable=false)
   private String customerId;
     

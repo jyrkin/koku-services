@@ -57,14 +57,27 @@ public class PortalUserServiceDAOBean implements PortalUserServiceDAO {
   
   @Override
   public void insertPortalUser(PortalUser user, CustomerType cust, String pic) {
+    CustomerType c = null;
+    
     // check for existing user    
     if (findExistingUser(user.getUserName())) {
       PortalUserServiceErrorCode errorCode = PortalUserServiceErrorCode.PORTAL_USER_ALREADY_EXISTS;
       throw new KoKuFaultException(errorCode.getValue(), errorCode.getDescription());      
     } else {
       //get customer id for PortalUser
-      String custId = customerBean.addCustomer(cust, pic);
-      user.setCustomerId(custId);
+      try {
+        //Check if customer already exists
+        c = customerBean.getCustomer(pic);
+      } catch (Exception e) {
+        logger.error("Failed to find existing customer with given pic.", e);
+      }
+      if(c==null){
+        //Customer not found with given pic, let's try to add new customer
+        String custId = customerBean.addCustomer(cust, pic);
+        logger.debug("added new customer to customerservice. Id="+custId);
+      }
+      
+      user.setCustomerId(pic);
       em.persist(user);
     }
   }
@@ -103,15 +116,31 @@ public class PortalUserServiceDAOBean implements PortalUserServiceDAO {
     return;
   }
 
+  /** 
+   * Authenticates portal user
+   * 
+   * Compares given portal username and password parameters in PortalUserPicQueryParamType
+   * to database data. If they match authentication is success else failure.
+   * 
+   * If PortalUserPicQueryParamType has also nonEmpty pic (hetu) service tries to get
+   * customer data from customer service. Only PortalUser-information is returned if pic is null or Empty.
+   * NOTE: This is because PortalCustomLoginModule can not necessarily access pic information, but 
+   * username/password is enough validation at that point. Strong authentication is anyway done in 
+   * portlet-filter-level.
+   * 
+   * 
+   */
   @Override
   public PortalUserAllType authenticatePortalUser(PortalUserPicQueryParamType user) {
 
     PortalUserAllType pt = new PortalUserAllType();
-
     PortalUserPasswordEncryption encrypt = new PortalUserPasswordEncryption();
+
     // find portal user
     PortalUser portalUser = findPortalUser(user.getUserName());
-    CustomerType cust = customerBean.getCustomer(user.getPic());
+    
+    
+    
     //set user exists
     boolean userExists = true;
     // and verify user's password
@@ -129,6 +158,8 @@ public class PortalUserServiceDAOBean implements PortalUserServiceDAO {
     }
     else if (authenticated && userExists ){
       updateWrongPasswordCount(authenticated, portalUser);
+      
+      CustomerType cust = customerBean.getCustomer(portalUser.getCustomerId());
       pt = conv.toWsType(portalUser, cust);
       logger.debug("authenticatePortalUser: authenticated user: " + user.getUserName());
     }
@@ -136,24 +167,95 @@ public class PortalUserServiceDAOBean implements PortalUserServiceDAO {
     return pt;
   }
 
+  private boolean isNotEmpty(String str){
+    if(str!=null && !"".equals(str)) {
+      return true;
+    }else{
+      return false;
+    }
+  }
+  
+//  @Override
+//  public PortalUserAllType authenticatePortalUser(PortalUserPicQueryParamType user) {
+//
+//    PortalUserAllType pt = new PortalUserAllType();
+//
+//    PortalUserPasswordEncryption encrypt = new PortalUserPasswordEncryption();
+//    // find portal user
+//    PortalUser portalUser = findPortalUser(user.getUserName());
+//    CustomerType cust = customerBean.getCustomer(user.getPic());
+//    //set user exists
+//    boolean userExists = true;
+//    // and verify user's password
+//    boolean authenticated = encrypt
+//        .authenticateUser(user.getPassword(), portalUser.getPassword(), portalUser.getSalt());
+//        
+//    if (!authenticated && userExists ) {
+//      updateWrongPasswordCount(authenticated, portalUser);
+//      PortalUserServiceErrorCode errorCode = PortalUserServiceErrorCode.UNAUTHORIZED;
+//      throw new KoKuFaultException(errorCode.getValue(), errorCode.getDescription());
+//    }
+//    else if (!authenticated && !userExists ) {
+//      PortalUserServiceErrorCode errorCode = PortalUserServiceErrorCode.PORTAL_USER_NOT_FOUND;
+//      throw new KoKuFaultException(errorCode.getValue(), errorCode.getDescription());
+//    }
+//    else if (authenticated && userExists ){
+//      updateWrongPasswordCount(authenticated, portalUser);
+//      pt = conv.toWsType(portalUser, cust);
+//      logger.debug("authenticatePortalUser: authenticated user: " + user.getUserName());
+//    }
+//
+//    return pt;
+//  }
+
+  
+  
+  /** 
+   * Returns Portal user that has given username or pic (combines two services).
+   * Password is currently ignored, because we don't want to store in session. This service-level
+   * trusts that calling clients have already authenticated user and gives a simple access to data.
+   *  
+   * 
+   */
   @Override
   public PortalUserAllType getUserByPic(PortalUserPicQueryParamType pic) {
     
+    String username = pic.getUserName();
+    String userpic = pic.getPic();
     PortalUserAllType picUser = new PortalUserAllType();
+    PortalUser portalUser = null;
     
-    if (authenticateUser(pic)) {
-       CustomerType cust = customerBean.getCustomer(pic.getPic());
-       PortalUser portalUser = findPortalUser(pic.getUserName());
-       picUser = conv.toWsType(portalUser, cust);
+    if( isNotEmpty(username) ){
+      portalUser = findPortalUser(username);
+    }else{
+        portalUser = findPortalUserByCustomerPic(userpic);
     }
-    else {
-      PortalUserServiceErrorCode errorCode = PortalUserServiceErrorCode.UNAUTHORIZED;
-      throw new KoKuFaultException(errorCode.getValue(), errorCode.getDescription());
-      }
+    CustomerType cust = customerBean.getCustomer(portalUser.getCustomerId());
+    picUser = conv.toWsType(portalUser, cust);
     
     return picUser;    
   }
 
+  
+//  @Override
+//  public PortalUserAllType getUserByPic(PortalUserPicQueryParamType pic) {
+//    
+//    PortalUserAllType picUser = new PortalUserAllType();
+//    
+//    if (authenticateUser(pic)) {
+//       CustomerType cust = customerBean.getCustomer(pic.getPic());
+//       PortalUser portalUser = findPortalUser(pic.getUserName());
+//       picUser = conv.toWsType(portalUser, cust);
+//    }
+//    else {
+//      PortalUserServiceErrorCode errorCode = PortalUserServiceErrorCode.UNAUTHORIZED;
+//      throw new KoKuFaultException(errorCode.getValue(), errorCode.getDescription());
+//      }
+//    
+//    return picUser;    
+//  }
+
+  
   @Override
   public void disablePortalUser(PortalUserPicQueryParamType user) {
         
@@ -215,7 +317,19 @@ public class PortalUserServiceDAOBean implements PortalUserServiceDAO {
     }
 
   }
-    
+  
+  private PortalUser findPortalUserByCustomerPic(String customerPic) {
+    Query q = em.createNamedQuery(PortalUser.NAMED_QUERY_GET_PORTAL_USER_BY_CUSTOMER_PIC);
+    q.setParameter("customerId", customerPic);
+    logger.debug("findPortalUserByCustomerPic: query: " + q.toString());
+    try {
+      return (PortalUser) q.getSingleResult();
+    } catch (NoResultException e) {
+      PortalUserServiceErrorCode errorCode = PortalUserServiceErrorCode.PORTAL_USER_NOT_FOUND;
+      throw new KoKuFaultException(errorCode.getValue(), errorCode.getDescription(), e);
+    }
+  }
+  
   private boolean findExistingUser(String userName) {
     boolean existingUser = false;
     Query q = em.createNamedQuery(PortalUser.NAMED_QUERY_GET_PORTAL_USER_BY_USERNAME);
