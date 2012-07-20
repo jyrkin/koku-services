@@ -842,9 +842,13 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
         appointmentTO.setReplier(getDisplayName(response.getReplier()));
         appointmentTO.setReplierUserInfo(getUserInfo(response.getReplier()));
         appointmentTO.setReplierComment(response.getComment());
+        appointmentTO.setModifiable(true);
+
         if (appointment.getStatus() == AppointmentStatus.Cancelled) {
             appointmentTO.setEmployeesCancelComent(appointment.getCancelComment());
+            appointmentTO.setModifiable(false);
         }
+
         if (appointmentTO.getStatus() == AppointmentSummaryStatus.Approved) {
             appointmentTO.setApprovedSlot(getSlotTOBySlot(appointment.getSlotByNumber(response.getSlotNumber())));
         }

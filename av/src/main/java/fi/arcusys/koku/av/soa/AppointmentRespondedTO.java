@@ -4,7 +4,7 @@ import fi.arcusys.koku.common.soa.UserInfo;
 
 /**
  * Data transfer object for communication with UI/Intalio process. Holds data about already responded appointment.
- * 
+ *
  * @author Dmitry Kudinov (dmitry.kudinov@arcusys.fi)
  * Aug 19, 2011
  */
@@ -16,7 +16,8 @@ public class AppointmentRespondedTO extends AppointmentSummary {
     private String replierComment;
     private AppointmentSlotTO approvedSlot;
     private String employeesCancelComent;
-    
+    private boolean modifiable;
+
     /**
      * @return the targetPersonUserInfo
      */
@@ -100,5 +101,17 @@ public class AppointmentRespondedTO extends AppointmentSummary {
      */
     public void setApprovedSlot(AppointmentSlotTO approvedSlot) {
         this.approvedSlot = approvedSlot;
+    }
+    /**
+     * @return the modifiable
+     */
+    public boolean isModifiable() {
+        return modifiable;
+    }
+    /**
+     * @param modifiable the modifiable to set
+     */
+    public void setModifiable(boolean modifiable) {
+        this.modifiable = modifiable;
     }
 }

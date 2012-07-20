@@ -27,6 +27,7 @@ import fi.arcusys.koku.av.soa.AppointmentCriteria;
 import fi.arcusys.koku.av.soa.AppointmentForEditTO;
 import fi.arcusys.koku.av.soa.AppointmentForReplyTO;
 import fi.arcusys.koku.av.soa.AppointmentReceipientTO;
+import fi.arcusys.koku.av.soa.AppointmentRespondedTO;
 import fi.arcusys.koku.av.soa.AppointmentSlotTO;
 import fi.arcusys.koku.av.soa.AppointmentSummary;
 import fi.arcusys.koku.av.soa.AppointmentSummaryStatus;
@@ -504,7 +505,12 @@ public class AppointmentServiceTest {
 	private void assertKunpoAppointmentDetails(final String message, final Long appointmentId, final String targetPerson, AppointmentSummaryStatus status) {
 	    final String msg = message + " appointment details (getAppointmentRespondedById) must have " + appointmentId + " in status ";
 
-        assertEquals(msg + status, status, serviceFacade.getAppointmentRespondedById(appointmentId, targetPerson).getStatus());
+	    AppointmentRespondedTO appointment = serviceFacade.getAppointmentRespondedById(appointmentId, targetPerson);
+
+        assertEquals(msg + status, status, appointment.getStatus());
+
+        if (appointment.getStatus() == AppointmentSummaryStatus.Cancelled)
+            assertFalse(message+" appoitment details (getAppointmentRespondedById) must have not have modifiable flag", appointment.isModifiable());
 	}
 
 	private void assertKunpoAppointment(final String message, final Long appointmentId, final String parentName, final List<String> allTargets,
