@@ -71,7 +71,7 @@ public class PortalUserServiceDAOBean implements PortalUserServiceDAO {
       } catch (Exception e) {
         logger.error("Failed to find existing customer with given pic.", e);
       }
-      if(c==null){
+      if(c==null || c.getId()==null){
         //Customer not found with given pic, let's try to add new customer
         String custId = customerBean.addCustomer(cust, pic);
         logger.debug("added new customer to customerservice. Id="+custId);
