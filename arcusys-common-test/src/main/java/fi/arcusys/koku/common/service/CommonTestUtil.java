@@ -33,10 +33,10 @@ import fi.arcusys.koku.common.soa.Role;
 public class CommonTestUtil {
 	@Autowired
 	private UserDAO userDao;
-	
+
 	@Autowired
 	private UsersAndGroupsTestImpl usersAndGroups;
-	
+
     @Autowired
     private TargetPersonDAO targetPersonDao;
 
@@ -51,7 +51,7 @@ public class CommonTestUtil {
 		assertNotNull("User found by uid: " + userUid, user);
 		return user;
 	}
-    
+
     public User getUserByUidWithRoles(final String userUid, final List<String> roleUids) {
         final List<Role> roles = new ArrayList<Role>();
         for (final String roleUid : roleUids) {
@@ -61,13 +61,22 @@ public class CommonTestUtil {
             roles.add(role);
         }
         usersAndGroups.setUserRoles(userUid, roles);
-        
+
         return getUserByUid(userUid);
+    }
+
+    public User updateUserLoginNames(final String userUid, final String kunpoLoginName, final String looraLoginName) {
+        User user = getUserByUid(userUid);
+
+        user.setCitizenPortalName(kunpoLoginName);
+        user.setEmployeePortalName(looraLoginName);
+
+        return userDao.update(user);
     }
 
 	private Set<AppointmentSlot> createTestSlots(int numberOfSlots) {
 		final HashSet<AppointmentSlot> slots = new HashSet<AppointmentSlot>();
-		
+
 		for (int i = 1; i <= numberOfSlots; i++) {
 			final AppointmentSlot slot = new AppointmentSlot();
 			slot.setAppointmentDate(new Date());
@@ -78,7 +87,7 @@ public class CommonTestUtil {
 			slot.setComment("comment" + i);
 			slots.add(slot);
 		}
-		
+
 		return slots;
 	}
 
@@ -89,14 +98,14 @@ public class CommonTestUtil {
 		appointment.setSender(getUserByUid("testAppSender"));
 		appointment.setRecipients(new HashSet<TargetPerson>(
 				Arrays.asList(
-				        targetPersonDao.getOrCreateTargetPerson("testAppReceiver1", 
+				        targetPersonDao.getOrCreateTargetPerson("testAppReceiver1",
 				                Arrays.asList("testGuardian1", "testGuardian2")),
-				        targetPersonDao.getOrCreateTargetPerson("testAppReceiver2", 
+				        targetPersonDao.getOrCreateTargetPerson("testAppReceiver2",
 				                Arrays.asList("testGuardian3", "testGuardian4")))));
 		appointment.setSlots(createTestSlots(numberOfSlots));
 		return appointment;
 	}
-	
+
     public ConsentTemplate createTestConsentTemplate() {
         final ConsentTemplate consentTemplate = new ConsentTemplate();
         final String title = "testConsent";

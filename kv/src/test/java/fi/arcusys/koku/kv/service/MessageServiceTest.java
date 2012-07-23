@@ -32,7 +32,6 @@ import fi.arcusys.koku.common.service.datamodel.Request;
 import fi.arcusys.koku.common.service.dto.Criteria;
 import fi.arcusys.koku.common.service.dto.MessageQuery;
 import fi.arcusys.koku.kv.soa.Answer;
-import fi.arcusys.koku.kv.soa.AnswerTO;
 import fi.arcusys.koku.kv.soa.MessageStatus;
 import fi.arcusys.koku.kv.soa.MessageSummary;
 import fi.arcusys.koku.kv.soa.MessageTO;
@@ -42,11 +41,9 @@ import fi.arcusys.koku.kv.soa.QuestionType;
 import fi.arcusys.koku.kv.soa.RequestProcessingTO;
 import fi.arcusys.koku.kv.soa.RequestSummary;
 import fi.arcusys.koku.kv.soa.RequestTO;
-import fi.arcusys.koku.kv.soa.RequestTemplateSummary;
 import fi.arcusys.koku.kv.soa.RequestTemplateTO;
 import fi.arcusys.koku.kv.soa.RequestTemplateVisibility;
 import fi.arcusys.koku.kv.soa.ResponseSummary;
-import fi.arcusys.koku.kv.soa.ResponseTO;
 
 /**
  *
@@ -374,24 +371,74 @@ public class MessageServiceTest {
         final String fromRole = "Role2";
 
         final String fromUserId = testUtil.getUserByUidWithRoles("testMessageSender1WithRole2", Collections.singletonList(fromRole)).getUid();
+        final String toUserId = testUtil.getUserByUid("testRecipient").getUid();
         final String employeeUserId = testUtil.getUserByUidWithRoles("testEmployee1WithRole2", Collections.singletonList(fromRole)).getUid();
         final String anotherEmployeeUserId = testUtil.getUserByUidWithRoles("testEmployee2WithoutRole2", Collections.singletonList("anotherRole"))
                 .getUid();
 
-        final String toUserId = "testRecipient";
+        testUtil.updateUserLoginNames(fromUserId, null, fromUserId);
+        testUtil.updateUserLoginNames(toUserId, toUserId, null);
+        testUtil.updateUserLoginNames(employeeUserId, null, employeeUserId);
+        testUtil.updateUserLoginNames(anotherEmployeeUserId, null, anotherEmployeeUserId);
+
         final List<String> toUsers = Collections.singletonList(toUserId);
 
         final long messageId = sendMessage(fromUserId, fromRole, "role testing", toUsers, "testing of reading by role", false, false);
         assertNotNull(messageId);
 
-        // read message by role
-        assertNotNull("Message should be visible to another user with the same role.",
-                getMessageById(serviceFacade.getMessages(employeeUserId, FolderType.Outbox, new MessageQuery(1, 10)), messageId));
-
-        assertNull("Message should not be visible to another user with different role.",
-                getMessageById(serviceFacade.getMessages(anotherEmployeeUserId, FolderType.Outbox, new MessageQuery(1, 10)), messageId));
+        final long receivedMessageId = serviceFacade.receiveMessage(toUserId, messageId);
 
         assertEquals(fromRole, serviceFacade.getMessageById(messageId).getFromRoleUid());
+
+        // sender
+        List<MessageSummary> messages = serviceFacade.getMessages(fromUserId, FolderType.Inbox, new MessageQuery(1, 10));
+
+        // BUG: KOKULT-689: Messages appearing in sender's Inbox when using role
+        assertNull("Message should not be visible in sender's Inbox",
+                getMessageById(messages, messageId));
+        assertNull("Received message should not be visible in sender's Inbox",
+                getMessageById(messages, receivedMessageId));
+
+        messages = serviceFacade.getMessages(fromUserId, FolderType.Outbox, new MessageQuery(1, 10));
+
+        assertNotNull("Message should be visible in sender's Outbox",
+                getMessageById(messages, messageId));
+        assertNull("Received message should not be visible in sender's Outbox",
+                getMessageById(messages, receivedMessageId));
+
+        // employee1
+        messages = serviceFacade.getMessages(employeeUserId, FolderType.Inbox, new MessageQuery(1, 10));
+
+        assertNull("Sent message should not be visible in Inbox to another user with the same role",
+                getMessageById(messages, messageId));
+
+        assertNull("Received message should not be visible in Inbox to another user with the same role",
+                getMessageById(messages, receivedMessageId));
+
+        messages = serviceFacade.getMessages(employeeUserId, FolderType.Outbox, new MessageQuery(1, 10));
+
+        assertNotNull("Sent message should be visible in Outbox to another user with the same role",
+                getMessageById(messages, messageId));
+
+        assertNull("Received message should not be visible in Outbox to another user with the same role",
+                getMessageById(messages, receivedMessageId));
+
+        // employee2
+        messages = serviceFacade.getMessages(anotherEmployeeUserId, FolderType.Inbox, new MessageQuery(1, 10));
+
+        assertNull("Sent message should not be visible in Inbox to another user without the same role",
+                getMessageById(messages, messageId));
+
+        assertNull("Received message should not be visible in Inbox to another user without the same role",
+                getMessageById(messages, receivedMessageId));
+
+        messages = serviceFacade.getMessages(anotherEmployeeUserId, FolderType.Outbox, new MessageQuery(1, 10));
+
+        assertNull("Sent message should not be visible in Outbox to another user without the same role",
+                getMessageById(messages, messageId));
+
+        assertNull("Received message should not be visible in Outbox to another user without the same role",
+                getMessageById(messages, receivedMessageId));
     }
 
     private long sendMessage(final String fromUserId, final String subject, final List<String> toUsers, final String content,

@@ -25,17 +25,17 @@ import fi.arcusys.koku.common.service.dto.OrderBy;
 
 /**
  * DAO implementation for CRUD operations with 'Folder' Entity
- * 
+ *
  * @author Dmitry Kudinov (dmitry.kudinov@arcusys.fi)
  * May 18, 2011
  */
 @Stateless
 public class MessageFolderDAOImpl extends AbstractEntityDAOImpl<Folder> implements MessageFolderDAO {
 	private static final Logger logger = LoggerFactory.getLogger(MessageFolderDAOImpl.class);
-	
+
 	@EJB
 	private MessageRefDAO messageRefDao;
-	
+
 	public MessageFolderDAOImpl() {
 		super(Folder.class);
 	}
@@ -57,11 +57,11 @@ public class MessageFolderDAOImpl extends AbstractEntityDAOImpl<Folder> implemen
 	 */
 	public MessageRef storeMessage(final User user, final FolderType folderType, final Message message) {
 		Folder folder = getFolderByUserAndType(user, folderType);
-		
+
 		if (folder == null) {
 			folder = createNewFolderByUserAndType(user, folderType);
 		}
-		
+
 		final MessageRef msgRef = new MessageRef();
 		msgRef.setFolder(folder);
 		msgRef.setMessage(message);
@@ -86,6 +86,7 @@ public class MessageFolderDAOImpl extends AbstractEntityDAOImpl<Folder> implemen
 	@Override
 	public List<MessageRef> getMessagesByUserWithRoleAndFolderType(final User user, final List<String> roleUids, final FolderType folderType, final MessageQuery query, final int startNum, final int maxNum) {
 		final Map<String, Object> params = getCommonQueryParams(user, roleUids, folderType);
+
 		if (query == null || query.getCriteria() == null && query.getOrderBy() == null) {
 		    if (isEmpty(roleUids)) {
                 return getResultList("findMessagesByUserAndFolderType", params, startNum, maxNum);
@@ -94,12 +95,12 @@ public class MessageFolderDAOImpl extends AbstractEntityDAOImpl<Folder> implemen
 		    }
 		} else {
 			/*
-			 * SELECT mr FROM MessageRef mr 
+			 * SELECT mr FROM MessageRef mr
 			 * WHERE mr.folder.folderType = :folderType AND mr.folder.user = :user
 			 *   AND ((mr.message.subject LIKE '%test%' AND mr.message.subject LIKE '%sending%') OR
 			 *        (mr.message.content LIKE '%test%' AND mr.message.content LIKE '%sending%')
 			 *       )
-			 * ORDER BY 
+			 * ORDER BY
 			 * */
 			final Criteria criteria = query.getCriteria();
 			final List<OrderBy> orderBys = query.getOrderBy();
@@ -116,27 +117,27 @@ public class MessageFolderDAOImpl extends AbstractEntityDAOImpl<Folder> implemen
 				}
 				orderByString.setLength(orderByString.length() - 2);
 			}
-			
+
 			queryString.append(whereString);
 			queryString.append(orderByString);
-			
+
 			if (logger.isDebugEnabled()) {
 				logger.debug("Execute search query: " + queryString);
 			}
-			
+
 			return executeQuery(queryString.toString(), params, startNum, maxNum);
 		}
 	}
 
 	private StringBuilder getWhereStringByCriteria(final Criteria criteria,
 			final FolderType folderType, final Map<String, Object> params, final boolean withRoles) {
-		final StringBuilder whereString = new StringBuilder("WHERE mr.folder.folderType = :folderType AND ").append(
-				" (mr.folder.user = :user");
-		if (withRoles) {
-	        whereString.append(" OR mr.message.fromRoleUid in (:userRoles)");
-		}
-		whereString.append(") ");
-		
+	    final StringBuilder whereString = new StringBuilder("WHERE (mr.folder.user = :user");
+        if (withRoles) {
+            whereString.append(" OR (mr.folder.user.employeePortalName IS NOT NULL AND mr.message.fromRoleUid IN (:userRoles))");
+        }
+        whereString.append(") AND mr.folder.folderType = :folderType ");
+
+
 		if (criteria != null && criteria.getFields() != null &&  criteria.getKeywords() != null &&
 		        !criteria.getFields().isEmpty() && !criteria.getKeywords().isEmpty()) {
 			// escape JPQL symbols
@@ -146,23 +147,23 @@ public class MessageFolderDAOImpl extends AbstractEntityDAOImpl<Folder> implemen
 			}
 
 			whereString.append(" AND (");
-			
+
 			for (final MessageQuery.Fields field : criteria.getFields()) {
 				whereString.append(" (");
 
 				for (int i = 0; i < keywords.size(); i++) {
 					whereString.append(getFieldNameForQuery(field, folderType)).append(" LIKE :").append("keyword").append(i).append(" AND ");
 				}
-				// remove last 'AND ' in keywords concatenation 
+				// remove last 'AND ' in keywords concatenation
 				whereString.setLength(whereString.length() - 4);
-				
+
 				whereString.append(") OR ");
 			}
-			// remove last 'OR ' in keywords concatenation 
+			// remove last 'OR ' in keywords concatenation
 			whereString.setLength(whereString.length() - 3);
-			
+
 			whereString.append(")");
-			
+
 			for (int i = 0; i < keywords.size(); i++) {
                 params.put("keyword" + i, getPrefixAndSuffixLike(keywords.get(i)));
 			}
@@ -248,7 +249,7 @@ public class MessageFolderDAOImpl extends AbstractEntityDAOImpl<Folder> implemen
 		params.put("folderType", folderType);
 		return params;
 	}
-	
+
     private Map<String, Object> getCommonQueryParams(final User user, final List<String> userRoles, final FolderType folderType) {
         final Map<String, Object> params = new HashMap<String,Object>();
         params.put("user", user);

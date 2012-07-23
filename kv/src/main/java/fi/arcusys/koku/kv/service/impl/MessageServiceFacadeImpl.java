@@ -511,6 +511,7 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
 		for (final MessageRef messageRef : messages) {
 			result.add(convertMessageToDTO(messageRef, new MessageSummary()));
 		}
+
 		return result;
 	}
 

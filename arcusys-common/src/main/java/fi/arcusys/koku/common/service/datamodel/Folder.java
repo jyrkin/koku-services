@@ -10,42 +10,43 @@ import javax.persistence.NamedQuery;
 
 /**
  * Entity for representing message folder in KV-Messages functionality.
- * 
+ *
  * @author Dmitry Kudinov (dmitry.kudinov@arcusys.fi)
  * May 18, 2011
  */
 @Entity
 @NamedQueries({
 	@NamedQuery(name = "findFolderByUserAndType", query = "SELECT f FROM Folder f WHERE f.user = :user AND f.folderType = :folderType"),
-	
+
 	@NamedQuery(name = "findMessagesByUserAndFolderType", query = "SELECT DISTINCT mr FROM MessageRef mr " +
 			" WHERE mr.folder.folderType = :folderType AND " +
 			" (mr.folder.user = :user) " +
 			" ORDER BY mr.createdDate DESC, mr.id DESC"),
+
     @NamedQuery(name = "findMessagesByUserWithRoleAndFolderType", query = "SELECT DISTINCT mr FROM MessageRef mr " +
-            " WHERE mr.folder.folderType = :folderType AND " +
-            " (mr.folder.user = :user OR mr.message.fromRoleUid in (:userRoles)) " +
+            " WHERE (mr.folder.user = :user OR (mr.folder.user.employeePortalName IS NOT NULL AND mr.message.fromRoleUid IN (:userRoles))) " +
+            " AND mr.folder.folderType = :folderType " +
             " ORDER BY mr.createdDate DESC, mr.id DESC"),
 
     @NamedQuery(name = "getTotalMessagesCount", query = "SELECT COUNT(mr) FROM MessageRef mr " +
-            " WHERE mr.folder.folderType = :folderType AND " +
-            " (mr.folder.user = :user) "),
+            " WHERE mr.folder.user = :user AND mr.folder.folderType = :folderType"),
+
 	@NamedQuery(name = "getTotalMessagesCountWithRole", query = "SELECT COUNT(mr) FROM MessageRef mr " +
-			" WHERE mr.folder.folderType = :folderType AND " +
-			" (mr.folder.user = :user OR mr.message.fromRoleUid in (:userRoles)) "),
-			
+	        " WHERE (mr.folder.user = :user OR (mr.folder.user.employeePortalName IS NOT NULL AND mr.message.fromRoleUid IN (:userRoles))) " +
+            " AND mr.folder.folderType = :folderType"),
+
 	@NamedQuery(name = "getMessagesCountByReadStatus", query = "SELECT COUNT(mr) FROM MessageRef mr " +
-			" WHERE mr.folder.folderType = :folderType AND " +
-			" (mr.folder.user = :user) AND mr.isRead = :isRead"),
+			" WHERE mr.folder.user = :user AND mr.isRead = :isRead AND mr.folder.folderType = :folderType"),
+
     @NamedQuery(name = "getMessagesCountByReadStatusWithRole", query = "SELECT COUNT(mr) FROM MessageRef mr " +
-            " WHERE mr.folder.folderType = :folderType AND " +
-            " (mr.folder.user = :user OR mr.message.fromRoleUid in (:userRoles)) AND mr.isRead = :isRead")
-}) 
+            " WHERE (mr.folder.user = :user OR (mr.folder.user.employeePortalName IS NOT NULL AND mr.message.fromRoleUid IN (:userRoles))) " +
+            " AND mr.isRead = :isRead AND mr.folder.folderType = :folderType ")
+})
 
 public class Folder extends AbstractEntity {
 	@Enumerated(EnumType.STRING)
 	private FolderType folderType;
-	
+
 	@ManyToOne
 	private User user;
 
@@ -69,7 +70,7 @@ public class Folder extends AbstractEntity {
 	public void setUser(final User user) {
 		this.user = user;
 	}
-	
+
 	public User getUser() {
 		return this.user;
 	}
