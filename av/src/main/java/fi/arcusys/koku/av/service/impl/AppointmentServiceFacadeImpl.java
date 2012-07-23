@@ -575,8 +575,12 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
             affectedResponse.setStatus(AppointmentResponseStatus.Invalidated);
             affectedResponse.setComment(MessageFormat.format(getValueFromBundle(SLOT_CANCELLED_COMMENT), new Object[] {getUserInfoDisplayName(appointment.getSender())}));
 
+            final List<String> notificationReceivers = new ArrayList<String>();
+            for (final User guardian : affectedResponse.getTarget().getGuardians())
+                notificationReceivers.add(guardian.getUid());
+
             notificationService.sendNotification(getValueFromBundle(SLOT_CANCELLED_SUBJECT),
-                    Collections.singletonList(affectedResponse.getReplier().getUid()),
+                    notificationReceivers,
                     MessageFormat.format(getValueFromBundle(SLOT_CANCELLED_BODY), new Object[] {
                         getUserInfoDisplayName(userDao.getOrCreateUser(appointment.getSender().getUid())),
                         formatDateSlot(slot.getAppointmentDate(), slot.getStartTime(), slot.getEndTime()),
@@ -923,16 +927,11 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
         appointmentDAO.update(appointment);
 
         final Set<String> notificationReceivers = new HashSet<String>();
-        for (final TargetPerson target : appointment.getRecipients()) {
-            final AppointmentResponse response = appointment.getResponseForTargetPerson(target.getTargetUser().getUid());
-            if (response != null) {
-                notificationReceivers.add(response.getReplier().getUid());
-            } else {
-                for (final User guardian : target.getGuardians()) {
-                    notificationReceivers.add(guardian.getUid());
-                }
-            }
-        }
+
+        for (final TargetPerson target : appointment.getRecipients())
+            for (final User guardian : target.getGuardians())
+                notificationReceivers.add(guardian.getUid());
+
         notificationService.sendNotification(getValueFromBundle(APPOINTMENT_CANCELLED_SUBJECT),
                 new ArrayList<String>(notificationReceivers),
                 MessageFormat.format(getValueFromBundle(APPOINTMENT_CANCELLED_WHOLE_BODY), new Object[] {appointment.getSubject()}));
