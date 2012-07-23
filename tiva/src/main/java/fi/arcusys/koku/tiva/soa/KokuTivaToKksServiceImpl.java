@@ -65,7 +65,7 @@ public class KokuTivaToKksServiceImpl implements KokuTivaToKksService {
                 usersService.getUserUidByEmployeeSsn(consent.getConsentRequestor()),
                 usersService.getUserUidByKunpoSsn(consent.getTargetPerson()),
                 receipients, ConsentReceipientsType.BothParents,
-                null, consent.getValidTill(), Boolean.TRUE, extraInfo, null, null);
+                null, consent.getValidTill(), Boolean.TRUE, extraInfo, consent.getKksFormInstance(), consent.getKksGivenTo());
     }
 
     /**
@@ -100,6 +100,8 @@ public class KokuTivaToKksServiceImpl implements KokuTivaToKksService {
             template.setTemplateName(consent.getTemplateName());
             consentExternal.setTemplate(template);
             consentExternal.setValidTill(consent.getValidTill());
+            consentExternal.setKksFormInstance(consent.getKksFormInstance());
+            consentExternal.setKksGivenTo(consent.getKksGivenTo());
             result.add(consentExternal);
         }
         return result;

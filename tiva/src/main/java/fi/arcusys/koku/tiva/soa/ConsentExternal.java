@@ -7,13 +7,15 @@ import javax.xml.bind.annotation.XmlSchemaType;
 import javax.xml.bind.annotation.XmlType;
 import javax.xml.datatype.XMLGregorianCalendar;
 
+import fi.arcusys.koku.common.soa.Organization;
+
 /**
  * Data transfer object for communication with UI/Intalio process. Holds data about consent for KKS component.
- * 
+ *
  * @author Dmitry Kudinov (dmitry.kudinov@arcusys.fi)
  * Oct 3, 2011
  */
-@XmlType(name = "consent", namespace = "http://services.koku.fi/entity/tiva/v1", 
+@XmlType(name = "consent", namespace = "http://services.koku.fi/entity/tiva/v1",
     propOrder = {"consentId", "template", "consentRequestor", "targetPerson", "consentProviders", "informationTargetId", "givenAt", "validTill", "givenTo", "description", "status", "metaInfo"})
 public class ConsentExternal {
     private Long consentId;
@@ -28,7 +30,9 @@ public class ConsentExternal {
     private String description;
     private ConsentStatus status;
     private String metaInfo;
-    
+    private KksFormInstance kksFormInstance;
+    private List<Organization> kksGivenTo;
+
     /**
      * @return the consentRequestor
      */
@@ -178,5 +182,29 @@ public class ConsentExternal {
      */
     public void setMetaInfo(String metaInfo) {
         this.metaInfo = metaInfo;
+    }
+    /**
+     * @return the kksFormInstance
+     */
+    public KksFormInstance getKksFormInstance() {
+        return kksFormInstance;
+    }
+    /**
+     * @param kksFormInstance the kksFormInstance to set
+     */
+    public void setKksFormInstance(KksFormInstance kksFormInstance) {
+        this.kksFormInstance = kksFormInstance;
+    }
+    /**
+     * @return the kksGivenTo
+     */
+    public List<Organization> getKksGivenTo() {
+        return kksGivenTo;
+    }
+    /**
+     * @param kksGivenTo the kksGivenTo to set
+     */
+    public void setKksGivenTo(List<Organization> kksGivenTo) {
+        this.kksGivenTo = kksGivenTo;
     }
 }
