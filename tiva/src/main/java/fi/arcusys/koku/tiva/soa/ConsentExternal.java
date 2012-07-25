@@ -16,7 +16,7 @@ import fi.arcusys.koku.common.soa.Organization;
  * Oct 3, 2011
  */
 @XmlType(name = "consent", namespace = "http://services.koku.fi/entity/tiva/v1",
-    propOrder = {"consentId", "template", "consentRequestor", "targetPerson", "consentProviders", "informationTargetId", "givenAt", "validTill", "givenTo", "description", "status", "metaInfo"})
+    propOrder = {"consentId", "template", "consentRequestor", "targetPerson", "consentProviders", "informationTargetId", "givenAt", "validTill", "givenTo", "description", "status", "metaInfo", "kksFormInstance", "kksGivenTo"})
 public class ConsentExternal {
     private Long consentId;
     private ConsentTemplateShort template;
