@@ -44,6 +44,7 @@ import javax.persistence.Version;
 @NamedQueries({
     @NamedQuery(name = KksCollection.NAMED_QUERY_GET_COLLECTIONS_BY_CUSTOMER_PIC, query = "FROM KksCollection k WHERE k.customer =:pic AND k.status NOT LIKE 'DELETED'"),
     @NamedQuery(name = KksCollection.NAMED_QUERY_GET_COLLECTIONS_BY_IDS, query = "FROM KksCollection k WHERE k.id IN (:ids) AND k.status NOT LIKE 'DELETED'"),
+    @NamedQuery(name = KksCollection.NAMED_QUERY_GET_COLLECTION_ID_AND_NAME_BY_CUSTOMER_AND_CLASS_TYPE, query = "SELECT new fi.koku.services.entity.kks.impl.KksCollectionInfo(k.id, k.name) FROM KksCollection k WHERE k.customer =:pic AND k.collectionClass =:collectionClass AND k.status NOT LIKE 'DELETED'"),
     @NamedQuery(name = KksCollection.NAMED_QUERY_GET_COLLECTIONS_BY_CUSTOMER_AND_CREATOR, query = "FROM KksCollection k WHERE k.creator =:creator AND k.customer =:customer AND k.status NOT LIKE 'DELETED'") })
 @Table(name = "kks_collection")
 public class KksCollection implements Serializable {
@@ -51,6 +52,7 @@ public class KksCollection implements Serializable {
   public static final String NAMED_QUERY_GET_COLLECTIONS_BY_CUSTOMER_PIC = "getAllCollectionsByPic";
   public static final String NAMED_QUERY_GET_COLLECTIONS_BY_IDS = "getAllCollectionsByIds";
   public static final String NAMED_QUERY_GET_COLLECTIONS_BY_CUSTOMER_AND_CREATOR = "getAllCollectionsByCustomerAndCreator";
+  public static final String NAMED_QUERY_GET_COLLECTION_ID_AND_NAME_BY_CUSTOMER_AND_CLASS_TYPE = "getAllCollectionsByCustomerAndClass";
 
   private static final long serialVersionUID = 8064946506296337381L;
 

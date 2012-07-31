@@ -21,6 +21,7 @@ import org.springframework.util.StringUtils;
 import fi.koku.calendar.CalendarUtil;
 import fi.koku.services.entity.kks.v1.EntryValuesType;
 import fi.koku.services.entity.kks.v1.KksCollectionClassType;
+import fi.koku.services.entity.kks.v1.KksCollectionInstanceType;
 import fi.koku.services.entity.kks.v1.KksCollectionType;
 import fi.koku.services.entity.kks.v1.KksEntriesType;
 import fi.koku.services.entity.kks.v1.KksEntryClassType;
@@ -225,6 +226,13 @@ public final class KksConverter {
     kksEntryType.setEntryValues(entryValuesType);
     return kksEntryType;
 
+  }
+  
+  public static KksCollectionInstanceType toWsType(KksCollectionInfo info) {
+    KksCollectionInstanceType t = new KksCollectionInstanceType();
+    t.setId(info.getId());
+    t.setName(info.getName());
+    return t;
   }
 
   public static KksCollection fromWsType(KksCollectionType collection) {

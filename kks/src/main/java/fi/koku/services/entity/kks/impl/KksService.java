@@ -154,5 +154,14 @@ public interface KksService {
    * @return KKS collections containing match entries
    */
   List<KksCollection> search(KksQueryCriteria criteria, AuditInfoType audit);
-
+  
+  
+  /**
+   * Gets collection instances info
+   * 
+   * @param collectionType
+   * @param pic
+   * @return collections
+   */
+  List<KksCollectionInfo> getCollectionsInfo(String collectionType, String pic);
 }

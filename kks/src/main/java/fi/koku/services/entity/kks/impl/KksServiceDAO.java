@@ -200,5 +200,14 @@ public interface KksServiceDAO {
    * @return entry class registers
    */
   Map<Integer, String> getEntryClassRegistriesForCollectionClass(int classId);
+  
+  /**
+   * Gets collection info
+   * 
+   * @param type of the collection
+   * @param pic target persons pic
+   * @return list of collection info
+   */
+  List<KksCollectionInfo> getCollectionInfo(String type, String pic);
 
 }

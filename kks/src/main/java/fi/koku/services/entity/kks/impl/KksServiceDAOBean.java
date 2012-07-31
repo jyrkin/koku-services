@@ -905,4 +905,19 @@ public class KksServiceDAOBean implements KksServiceDAO {
     return true;
   }
 
+  @Override
+  public List<KksCollectionInfo> getCollectionInfo(String type, String pic) {
+    Query q = em.createNamedQuery(KksCollectionClass.NAMED_QUERY_GET_COLLECTION_CLASS_BY_TYPE);
+    q.setParameter("type", type);
+    
+    KksCollectionClass meta = (KksCollectionClass) q.getSingleResult();
+        
+    Query q1 = em.createNamedQuery(KksCollection.NAMED_QUERY_GET_COLLECTION_ID_AND_NAME_BY_CUSTOMER_AND_CLASS_TYPE );
+    q1.setParameter("pic", pic).setParameter("collectionClass", meta.getId());
+    
+    @SuppressWarnings("unchecked")
+    List<KksCollectionInfo> info = (List<KksCollectionInfo>) q1.getResultList();
+    return info;
+  }
+
 }

@@ -193,4 +193,20 @@ public class KksGroup implements Serializable, Comparable<KksGroup> {
     }
     return 1;
   }
+  
+  /**
+   * Gets all entries from this group and its subgroups
+   * 
+   * @return entries
+   */
+  @Transient
+  public List<KksEntryClass> getAllEntries() {
+    List<KksEntryClass> tmp = new ArrayList<KksEntryClass>();
+    tmp.addAll(getEntryClasses());
+    
+    for ( KksGroup sg : getSubGroups()) {
+      tmp.addAll(sg.getAllEntries());
+    }
+    return tmp;
+  }
 }

@@ -30,6 +30,8 @@ import fi.koku.services.entity.kks.v1.AuditInfoType;
 import fi.koku.services.entity.kks.v1.IdType;
 import fi.koku.services.entity.kks.v1.KksCollectionClassesType;
 import fi.koku.services.entity.kks.v1.KksCollectionCreationCriteriaType;
+import fi.koku.services.entity.kks.v1.KksCollectionInstanceCriteriaType;
+import fi.koku.services.entity.kks.v1.KksCollectionInstancesType;
 import fi.koku.services.entity.kks.v1.KksCollectionStateCriteriaType;
 import fi.koku.services.entity.kks.v1.KksCollectionType;
 import fi.koku.services.entity.kks.v1.KksCollectionsCriteriaType;
@@ -238,5 +240,19 @@ public class KksServiceEndpointBean implements KksServicePortType {
       AuditInfoType auditHeader) throws ServiceFault {
     LOG.debug("opAddKksCollectionForGroup");    
     return kksService.addCollectionForGroup(kksGroupCollectionCreationCriteria, auditHeader);
+  }
+
+  @Override
+  public KksCollectionInstancesType opGetKksCollectionInstances(
+      KksCollectionInstanceCriteriaType kksCollectionInstanceCriteriaType,
+      AuditInfoType auditHeader) throws ServiceFault {
+    LOG.debug("opGetKksCollectionInstances"); 
+    List<KksCollectionInfo> infos = kksService.getCollectionsInfo(kksCollectionInstanceCriteriaType.getType(), kksCollectionInstanceCriteriaType.getPic());
+    KksCollectionInstancesType k = new KksCollectionInstancesType();
+    
+    for ( KksCollectionInfo info : infos ) {
+      k.getCollections().add(KksConverter.toWsType(info));
+    }
+    return k;
   }
 }

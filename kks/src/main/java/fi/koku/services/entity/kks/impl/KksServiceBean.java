@@ -314,4 +314,9 @@ public class KksServiceBean implements KksService {
     return false;
   }
 
+  @Override
+  public List<KksCollectionInfo> getCollectionsInfo(String collectionType, String pic) {    
+    return serviceDAO.getCollectionInfo(collectionType, pic);
+  }
+
 }

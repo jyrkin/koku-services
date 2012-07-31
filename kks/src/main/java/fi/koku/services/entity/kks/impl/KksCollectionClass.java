@@ -12,6 +12,7 @@
 package fi.koku.services.entity.kks.impl;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.persistence.Column;
@@ -29,13 +30,15 @@ import javax.persistence.Transient;
  * 
  */
 @Entity
-@NamedQueries({ @NamedQuery(name = KksCollectionClass.NAMED_QUERY_GET_ALL_COLLECTION_CLASSES, query = "FROM KksCollectionClass k") })
+@NamedQueries({ @NamedQuery(name = KksCollectionClass.NAMED_QUERY_GET_ALL_COLLECTION_CLASSES, query = "FROM KksCollectionClass k"),
+  @NamedQuery(name = KksCollectionClass.NAMED_QUERY_GET_COLLECTION_CLASS_BY_TYPE, query = "FROM KksCollectionClass k where k.typeCode =:type") })
 @Table(name = "kks_collection_class")
 public class KksCollectionClass implements Serializable {
 
   private static final long serialVersionUID = -465916799624311938L;
 
   public static final String NAMED_QUERY_GET_ALL_COLLECTION_CLASSES = "getAllCollectionClasses";
+  public static final String NAMED_QUERY_GET_COLLECTION_CLASS_BY_TYPE = "getCollectionClassByType";
 
   @Id
   private Integer id;
@@ -101,6 +104,21 @@ public class KksCollectionClass implements Serializable {
 
   public void setConsentType(String concentType) {
     this.consentType = concentType;
+  }
+  
+  /**
+   * Gets all entries in this collection type
+   * 
+   * @return entries
+   */
+  @Transient
+  public List<KksEntryClass> getEntries() {
+    List<KksEntryClass> tmp = new ArrayList<KksEntryClass>();
+    
+    for ( KksGroup g : getGroups() ) {
+      tmp.addAll(g.getAllEntries());
+    }
+    return tmp;
   }
 
 }
