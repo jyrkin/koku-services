@@ -31,7 +31,7 @@ public class ConsentExternal {
     private ConsentStatus status;
     private String metaInfo;
     private KksFormInstance kksFormInstance;
-    private List<Organization> kksGivenTo;
+    private List<KksOrganization> kksGivenTo;
 
     /**
      * @return the consentRequestor
@@ -198,13 +198,13 @@ public class ConsentExternal {
     /**
      * @return the kksGivenTo
      */
-    public List<Organization> getKksGivenTo() {
+    public List<KksOrganization> getKksGivenTo() {
         return kksGivenTo;
     }
     /**
      * @param kksGivenTo the kksGivenTo to set
      */
-    public void setKksGivenTo(List<Organization> kksGivenTo) {
+    public void setKksGivenTo(List<KksOrganization> kksGivenTo) {
         this.kksGivenTo = kksGivenTo;
     }
 }

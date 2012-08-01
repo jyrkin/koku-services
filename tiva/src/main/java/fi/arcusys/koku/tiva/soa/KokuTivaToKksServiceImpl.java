@@ -7,6 +7,7 @@ import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.jws.WebService;
 
+import fi.arcusys.koku.common.soa.Organization;
 import fi.arcusys.koku.common.soa.UsersAndGroupsService;
 import fi.arcusys.koku.tiva.service.ConsentServiceFacade;
 
@@ -60,12 +61,20 @@ public class KokuTivaToKksServiceImpl implements KokuTivaToKksService {
         extraInfo.setGivenTo(consent.getGivenTo());
         extraInfo.setMetaInfo(consent.getMetaInfo());
 
+        List<Organization> givenTo = new ArrayList<Organization>();
+        for (KksOrganization kksOrg : consent.getKksGivenTo()) {
+            final Organization org = new Organization();
+            org.setOrganizationId(kksOrg.getOrganizationId());
+            org.setOrganizationName(kksOrg.getOrganizationName());
+            givenTo.add(org);
+        }
+
         consentServiceFacade.requestForConsent(
                 consent.getTemplate().getConsentTemplateId(),
                 usersService.getUserUidByEmployeeSsn(consent.getConsentRequestor()),
                 usersService.getUserUidByKunpoSsn(consent.getTargetPerson()),
                 receipients, ConsentReceipientsType.BothParents,
-                null, consent.getValidTill(), Boolean.TRUE, extraInfo, consent.getKksFormInstance(), consent.getKksGivenTo());
+                null, consent.getValidTill(), Boolean.TRUE, extraInfo, consent.getKksFormInstance(), givenTo);
     }
 
     /**
@@ -101,7 +110,16 @@ public class KokuTivaToKksServiceImpl implements KokuTivaToKksService {
             consentExternal.setTemplate(template);
             consentExternal.setValidTill(consent.getValidTill());
             consentExternal.setKksFormInstance(consent.getKksFormInstance());
-            consentExternal.setKksGivenTo(consent.getKksGivenTo());
+
+            List<KksOrganization> givenTo = new ArrayList<KksOrganization>();
+            for (Organization org : consent.getKksGivenTo()) {
+                final KksOrganization kksOrg = new KksOrganization();
+                kksOrg.setOrganizationId(org.getOrganizationId());
+                kksOrg.setOrganizationName(org.getOrganizationName());
+                givenTo.add(kksOrg);
+            }
+
+            consentExternal.setKksGivenTo(givenTo);
             result.add(consentExternal);
         }
         return result;

@@ -1,15 +1,15 @@
 /**
  *
  */
-package fi.arcusys.koku.common.soa;
+package fi.arcusys.koku.tiva.soa;
 
 /**
- * Contains organization data
+ * Defines Organization for TIVA to KKS integration WS
  *
  * @author Mikhail Kapitonov (mikhail.kapitonov@arcusys.fi)
- * Jul 11, 2012
+ * Aug 1, 2012
  */
-public class Organization {
+public class KksOrganization {
     private String organizationId;
     private String organizationName;
 
@@ -40,5 +40,4 @@ public class Organization {
     public void setOrganizationName(String organizationName) {
         this.organizationName = organizationName;
     }
-
 }
