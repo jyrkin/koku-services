@@ -750,7 +750,7 @@ public class KksServiceDAOBean implements KksServiceDAO {
     Map<String, Registry> registers = authorization.getAuthorizedRegistries(user);
     boolean master = authorization.isParent(user, oldCollection.getCustomer())
         || authorization.hasConsent(oldCollection.getCustomer(), user,
-            getCollectionClass(oldCollection.getCollectionClass()).getConsentType());
+            getCollectionClass(oldCollection.getCollectionClass()).getTypeCode(), oldCollection.getId().toString());
 
     List<KksGroup> groups = getCollectionClassGroups(newCollection.getCollectionClass());
 
