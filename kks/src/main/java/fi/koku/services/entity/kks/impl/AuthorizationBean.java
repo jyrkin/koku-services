@@ -31,6 +31,8 @@ import fi.koku.services.entity.community.v1.ServiceFault;
 import fi.koku.services.entity.tiva.v1.Consent;
 import fi.koku.services.entity.tiva.v1.ConsentSearchCriteria;
 import fi.koku.services.entity.tiva.v1.ConsentStatus;
+import fi.koku.services.entity.tiva.v1.KksFormField;
+import fi.koku.services.entity.tiva.v1.KksFormInstance;
 import fi.koku.services.utility.authorizationinfo.v1.AuthorizationInfoService;
 import fi.koku.services.utility.authorizationinfo.v1.model.OrgUnit;
 import fi.koku.services.utility.authorizationinfo.v1.model.Registry;
@@ -97,8 +99,8 @@ public class AuthorizationBean implements Authorization {
   }
 
   @Override
-  public boolean hasConsent(String customer, String user, String consentType) {
-    return getValidConsent(customer, user, consentType) != null;
+  public boolean hasConsent(String customer, String user, String consentType, String instanceId) {
+    return getValidConsent(customer, user, consentType, instanceId) != null;
   }
 
   /**
@@ -107,23 +109,25 @@ public class AuthorizationBean implements Authorization {
    * @param customer
    * @param user
    *          which consents are checked
-   * @param consentType
-   *          of the collection that is requested to see
+   * @param collectionType
+   *          type of the collection that is requested to see
+   * @param instanceId of the collection
    * @return valid consent or NULL if no valid consent found
    */
-  private Consent getValidConsent(String customer, String user, String consentType) {
+  private Consent getValidConsent(String customer, String user, String collectionType, String instanceId) {
     try {
-      List<Consent> consents = getConsents(customer, user, consentType);
+      List<Consent> consents = getConsents(customer, user, collectionType);
       
       if (consents.size() > 0) {
         for (Consent c : consents) {
-          if (ConsentStatus.VALID.equals(c.getStatus())) {
+          c.getKksGivenTo();
+          if (ConsentStatus.VALID.equals(c.getStatus()) && c.getKksFormInstance() != null && c.getKksFormInstance().getInstanceId().equals(instanceId)) {
             return c;
           }
         }
       }
     } catch (Exception e) {
-      LOG.error("Failed to check consents", e);
+      LOG.error("Failed to check consents for " + collectionType + " instance " + instanceId, e);
     }
 
     return null;
@@ -146,7 +150,7 @@ public class AuthorizationBean implements Authorization {
     }
     ConsentSearchCriteria csc = new ConsentSearchCriteria(); 
     csc.setTargetPerson(customer); 
-    csc.setTemplateNamePrefix(consentType); 
+    csc.setTemplateNamePrefix(consentType);     
     csc.getGivenTo().addAll(getOrganizationIds(user));
     return KksServiceContainer.getService().tiva().queryConsents(csc);
   }
@@ -195,24 +199,18 @@ public class AuthorizationBean implements Authorization {
   public KksCollection removeUnauthorizedContent(KksCollection c, KksCollectionClass metadata,
     Map<Integer, String> entryRegisters, String user) {
 
-    boolean consent = hasConsent(c.getCustomer(), user, metadata.getConsentType());
+    Consent consent = getValidConsent(c.getCustomer(), user, metadata.getConsentType(), c.getId().toString());
 
-    if (isParent(user, c.getCustomer()) || consent ) {
-      if ( consent ) {
-        c.setConsentRequested(true);
-        c.setUserConsentStatus( "VALID" );
-      }
+    if (isParent(user, c.getCustomer())) {      
       return c;
-    }
+    } 
 
     List<KksEntry> allowed = new ArrayList<KksEntry>();
-    List<String> registries = getAuthorizedRegistryNames(user);
-    for (KksEntry ke : c.getEntries()) {
-
-      String register = entryRegisters.get(ke.getEntryClassId());
-      if (registries.contains(register)) {
-        allowed.add(ke);
-      }
+    
+    if ( consent != null ) {
+      handleValidConsent(c, consent, allowed);        
+    } else {    
+      handleRegistries(c, entryRegisters, user, allowed);
     }
 
     c.setEntries(allowed);
@@ -223,6 +221,50 @@ public class AuthorizationBean implements Authorization {
       return null;
     }
     return c;
+  }
+
+  /**
+   * Puts authorized entries from the collection into the allowed fields list. Checks authority against registries
+   * 
+   * @param c
+   * @param entryRegisters
+   * @param user
+   * @param allowed
+   */
+  private void handleRegistries(KksCollection c,
+      Map<Integer, String> entryRegisters, String user, List<KksEntry> allowed) {
+    List<String> registries = getAuthorizedRegistryNames(user);
+    for (KksEntry ke : c.getEntries()) {  
+      String register = entryRegisters.get(ke.getEntryClassId());
+      if (registries.contains(register)) {
+        allowed.add(ke);
+      }
+    }
+  }
+
+  /**
+   * Puts authorized entries from the collection into the allowed fields list. Checks authority against consent
+   * 
+   * @param c
+   * @param consent
+   * @param allowed
+   */
+  private void handleValidConsent(KksCollection c, Consent consent,
+      List<KksEntry> allowed) {
+    c.setConsentRequested(true);
+    c.setUserConsentStatus( "VALID" );
+    List<String> allowedFields = new ArrayList<String>();
+    
+    for ( KksFormField field : consent.getKksFormInstance().getFields() ) {
+      allowedFields.add(field.getFieldId());
+    }
+    
+    for (KksEntry ke : c.getEntries()) {  
+      String id = "" +  ke.getEntryClassId();
+      if (allowedFields.contains(id)) {
+        allowed.add(ke);
+      }
+    }
   }
 
   /**

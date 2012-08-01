@@ -61,9 +61,10 @@ public interface Authorization {
    *          which consents are checked
    * @param consentType
    *          of the collection that is requested to see
+   * @param instanceId of the collection
    * @return true if user has consent false if not
    */
-  boolean hasConsent(String customer, String user, String consentType);
+  boolean hasConsent(String customer, String user, String consentType, String instanceId);
 
   /**
    * Checks is user master user for given collection.
