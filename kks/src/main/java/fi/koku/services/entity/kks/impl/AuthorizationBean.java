@@ -199,7 +199,7 @@ public class AuthorizationBean implements Authorization {
   public KksCollection removeUnauthorizedContent(KksCollection c, KksCollectionClass metadata,
     Map<Integer, String> entryRegisters, String user) {
 
-    Consent consent = getValidConsent(c.getCustomer(), user, metadata.getConsentType(), c.getId().toString());
+    Consent consent = getValidConsent(c.getCustomer(), user, metadata.getTypeCode(), c.getId().toString());
 
     if (isParent(user, c.getCustomer())) {      
       return c;
