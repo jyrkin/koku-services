@@ -57,7 +57,7 @@ public class AuthorizationBean implements Authorization {
     try {
       for (KksCollectionClass cc : collectionTypes) {
         if (!tmp.containsKey(cc.getConsentType())) {
-          List<Consent> consents = getConsents(customer, user, cc.getConsentType());
+          List<Consent> consents = getConsents(customer, user, cc.getTypeCode());
 
           if (consents != null) {
             tmp.put(cc.getConsentType(), consents);
@@ -139,18 +139,18 @@ public class AuthorizationBean implements Authorization {
    * @param customer
    * @param user
    *          which consents are checked
-   * @param consentType
-   *          of the collection that is requested to see
+   * @param typeCode
+   *          type of the collection that is requested to see
    * @return valid consent or NULL if no valid consent found
    */
-  private List<Consent> getConsents(String customer, String user, String consentType) { 
+  private List<Consent> getConsents(String customer, String user, String typeCode) { 
     
-    if ( "".equals(consentType) ) {
+    if ( "".equals(typeCode) ) {
       return new ArrayList<Consent>();
     }
     ConsentSearchCriteria csc = new ConsentSearchCriteria(); 
     csc.setTargetPerson(customer); 
-    csc.setTemplateNamePrefix(consentType);     
+    csc.setTemplateNamePrefix(typeCode);     
     csc.getGivenTo().addAll(getOrganizationIds(user));
     return KksServiceContainer.getService().tiva().queryConsents(csc);
   }
@@ -206,11 +206,24 @@ public class AuthorizationBean implements Authorization {
     } 
 
     List<KksEntry> allowed = new ArrayList<KksEntry>();
+    List<String> consentAllowedFields = new ArrayList<String>();
+    List<String> registries = getAuthorizedRegistryNames(user);
     
     if ( consent != null ) {
-      handleValidConsent(c, consent, allowed);        
-    } else {    
-      handleRegistries(c, entryRegisters, user, allowed);
+      c.setConsentRequested(true);
+      c.setUserConsentStatus( "VALID" );
+            
+      for ( KksFormField field : consent.getKksFormInstance().getFields() ) {
+        consentAllowedFields.add(field.getFieldId());
+      }      
+    }    
+    
+    for (KksEntry ke : c.getEntries()) {  
+      String register = entryRegisters.get(ke.getEntryClassId());
+      String id = "" +  ke.getEntryClassId();
+      if (registries.contains(register) || consentAllowedFields.contains(id) ) {
+        allowed.add(ke);
+      } 
     }
 
     c.setEntries(allowed);

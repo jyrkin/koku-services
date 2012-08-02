@@ -49,7 +49,7 @@ public interface KksServiceDAO {
    *          that are valid for the user
    * @return collections that are authorized for the user
    */
-  List<KksCollection> getAuthorizedCollections(String pic, String user, List<String> registers, Set<String> consents);
+  List<KksCollection> getAuthorizedCollections(String pic, String user, List<String> registers, List<Long> consents);
 
   /**
    * Gets customer (pic) collections where user is the creator of the collection

@@ -155,7 +155,7 @@ public class KksServiceDAOBean implements KksServiceDAO {
 
   @Override
   public List<KksCollection> getAuthorizedCollections(String pic, String user, List<String> registers,
-      Set<String> consents) {
+      List<Long> consents) {
     Query q = null;
     if (registers.size() > 0 && consents.size() == 0) {
       q = em
@@ -163,12 +163,12 @@ public class KksServiceDAOBean implements KksServiceDAO {
       q.setParameter("customer", pic).setParameter("user", user).setParameter("registers", registers);
     } else if (registers.size() > 0 && consents.size() > 0) {
       q = em
-          .createQuery("SELECT c FROM KksCollection c WHERE c.status NOT LIKE 'DELETED' AND c.customer =:customer AND (c.creator =:user OR c.collectionClass IN (SELECT DISTINCT g.collectionClassId FROM KksGroup g WHERE g.register IN (:registers) OR c.collectionClass IN (SELECT DISTINCT kc.id FROM KksCollectionClass kc WHERE kc.consentType IN(:consents))))");
+          .createQuery("SELECT c FROM KksCollection c WHERE c.status NOT LIKE 'DELETED' AND c.customer =:customer AND (c.creator =:user OR c.collectionClass IN (SELECT DISTINCT g.collectionClassId FROM KksGroup g WHERE g.register IN (:registers) OR c.id IN (:consents))))");
       q.setParameter("customer", pic).setParameter("user", user).setParameter("registers", registers)
           .setParameter("consents", consents);
     } else if (registers.size() == 0 && consents.size() > 0) {
       q = em
-          .createQuery("SELECT c FROM KksCollection c WHERE c.status NOT LIKE 'DELETED' AND c.customer =:customer AND (c.creator =:user OR c.collectionClass IN (SELECT DISTINCT kc.id FROM KksCollectionClass kc WHERE kc.consentType IN(:consents))");
+          .createQuery("SELECT c FROM KksCollection c WHERE c.status NOT LIKE 'DELETED' AND c.customer =:customer AND (c.creator =:user OR c.id IN (:consents))");
       q.setParameter("customer", pic).setParameter("user", user).setParameter("consents", consents);
     } else {
       q = em.createNamedQuery(KksCollection.NAMED_QUERY_GET_COLLECTIONS_BY_CUSTOMER_AND_CREATOR);

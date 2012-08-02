@@ -85,7 +85,7 @@ public class KksServiceBean implements KksService {
     Map<Integer, KksCollectionClass> collectionClasses = getCollectionClassMap(classes);
     Map<String, List<Consent>> consentMap = authorization.getConsentMap(customer, audit.getUserId(), classes);
 
-    Set<String> consents = getConsentSet(consentMap);
+    List<Long> consents = getConsentSet(consentMap);
 
     List<String> registrys = authorization.getAuthorizedRegistryNames(audit.getUserId());
     List<KksCollection> tmp = serviceDAO.getAuthorizedCollections(customer, audit.getUserId(), registrys, consents);
@@ -123,19 +123,19 @@ public class KksServiceBean implements KksService {
     return collectionClasses;
   }
 
-  private Set<String> getConsentSet(Map<String, List<Consent>> consentMap) {
-    Set<String> set = new HashSet<String>();
+  private List<Long> getConsentSet(Map<String, List<Consent>> consentMap) {
+    List<Long> list = new ArrayList<Long>();
 
     if (consentMap.size() > 0) {
       for (String key : consentMap.keySet()) {
         for (Consent c : consentMap.get(key)) {
-          if (ConsentStatus.VALID.equals(c.getStatus())) {
-            set.add(key);
+          if (ConsentStatus.VALID.equals(c.getStatus()) && c.getKksFormInstance() != null && !c.getKksFormInstance().getInstanceId().trim().equals("")) {
+            list.add(Long.parseLong( c.getKksFormInstance().getInstanceId() ));
           }
         }
       }
     }
-    return set;
+    return list;
   }
 
   private void setConsentStatus(Map<Integer, KksCollectionClass> collectionClasses,
