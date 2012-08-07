@@ -482,28 +482,17 @@ public class KksServiceDAOBean implements KksServiceDAO {
     if (tagNames.size() == 0) {
       return new ArrayList<KksCollection>();
     }
-
-    boolean parent = authorization.isParent(user, criteria.getPic());
-
-    List<String> registrys = null;
-
-    if (!parent) {
-      registrys = authorization.getAuthorizedRegistryNames(user);
-    }
-    List<Long> entryIds = searchTaggedEntries(tagNames, registrys);
+    
+    List<Long> entryIds = searchTaggedEntries(tagNames, null);
 
     if (entryIds.isEmpty()) {
       return new ArrayList<KksCollection>();
     }
 
-    if (parent) {
-      return handleParentQuery(user, criteria, entryIds);
-    } else {
-      return handleAuthorizedQuery(user, criteria, entryIds);
-    }
+    return handleQuery(user, criteria, entryIds);
   }
 
-  private List<KksCollection> handleParentQuery(String user, KksQueryCriteria criteria, List<Long> entryIdsList) {
+  private List<KksCollection> handleQuery(String user, KksQueryCriteria criteria, List<Long> entryIdsList) {
     Query entryQ = em.createNamedQuery(KksEntry.NAMED_QUERY_GET_ENTRIES_BY_IDS);
     entryQ.setParameter("customer", criteria.getPic()).setParameter("ids", entryIdsList);
 
@@ -537,42 +526,6 @@ public class KksServiceDAOBean implements KksServiceDAO {
     @SuppressWarnings("unchecked")
     List<KksGroup> tmp = q.getResultList();
     return tmp;
-  }
-
-  private List<KksCollection> handleAuthorizedQuery(String user, KksQueryCriteria criteria, List<Long> entryIdsList) {
-    List<String> registrys = authorization.getAuthorizedRegistryNames(user);
-
-    if (registrys.size() > 0) {
-      Query q = em
-          .createQuery("SELECT DISTINCT c.id FROM KksCollection c WHERE c.status NOT LIKE 'DELETED' AND c.customer =:customer AND c.collectionClass IN (SELECT DISTINCT g.collectionClassId FROM KksGroup g WHERE g.register IN (:registers))");
-      q.setParameter("customer", criteria.getPic()).setParameter("registers", registrys);
-
-      @SuppressWarnings("unchecked")
-      List<Integer> tmp = q.getResultList();
-
-      if (tmp.size() > 0) {
-
-        Query q2 = em
-            .createNativeQuery("SELECT id FROM kks_entry WHERE id IN(:ids) AND entry_class_id IN( SELECT entry_class_id FROM kks_entry_class WHERE entry_group IN (select distinct  group_id from kks_group where register IN (:registers)))");
-        q2.setParameter("ids", entryIdsList).setParameter("registers", registrys);
-
-        Query entryQ = em.createNamedQuery(KksEntry.NAMED_QUERY_GET_ENTRIES_BY_IDS_WITH_COLLECTIONS);
-        entryQ.setParameter("customer", criteria.getPic()).setParameter("ids", entryIdsList).setParameter("cIds", tmp);
-
-        @SuppressWarnings("unchecked")
-        List<KksEntry> entries = (List<KksEntry>) entryQ.getResultList();
-
-        if (entries.isEmpty()) {
-          return new ArrayList<KksCollection>();
-        }
-
-        Set<KksCollection> tmpCollections = createCollectionSet(entries);
-
-        List<KksCollection> collections = new ArrayList<KksCollection>(tmpCollections);
-        return collections;
-      }
-    }
-    return new ArrayList<KksCollection>();
   }
 
   /**

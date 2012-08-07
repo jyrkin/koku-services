@@ -221,13 +221,33 @@ public class KksServiceBean implements KksService {
   }
 
   @Override
-  public List<KksCollection> search(KksQueryCriteria criteria, fi.koku.services.entity.kks.v1.AuditInfoType audit) {
+  public List<KksCollection> search(KksQueryCriteria criteria,
+      fi.koku.services.entity.kks.v1.AuditInfoType audit) {
 
     List<KksCollection> tmp = serviceDAO.query(audit.getUserId(), criteria);
+    List<KksCollection> authorizedList = new ArrayList<KksCollection>();
+    boolean parent = authorization.isParent(audit.getUserId(),
+        criteria.getPic());
     StringBuilder sb = new StringBuilder();
     if (tmp != null) {
       for (int i = 0; i < tmp.size(); i++) {
         KksCollection c = tmp.get(i);
+
+        if (parent) {
+          authorizedList.add(c);
+        } else {
+          KksCollectionClass cc = serviceDAO.getCollectionClass(c
+              .getCollectionClass());
+          KksCollection authorized = authorization.removeUnauthorizedContent(c,
+              cc,
+              serviceDAO.getEntryClassRegistriesForCollectionClass(cc.getId()),
+              audit.getUserId());
+
+          if (authorized != null && authorized.getEntries().size() > 0 ) {
+            authorizedList.add(authorized);
+          }
+        }
+
         sb.append(c.getName());
         if ((i + 1) < tmp.size()) {
           sb.append(",");
@@ -238,7 +258,7 @@ public class KksServiceBean implements KksService {
     log.logQuery(criteria.getPic(), "kks.collection.query", audit.getUserId(), "Quering collections " + sb.toString()
         + " with criteria" + criteria.getTagNames());
 
-    return tmp;
+    return authorizedList;
   }
 
   @Override

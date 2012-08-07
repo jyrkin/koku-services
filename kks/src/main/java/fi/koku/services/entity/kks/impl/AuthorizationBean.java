@@ -231,6 +231,7 @@ public class AuthorizationBean implements Authorization {
     if (allowed.size() == 0 && !c.getCreator().equals(user)) {
       // no auth content and user is not the collection creator => no rights for
       // the collection
+      
       return null;
     }
     return c;
