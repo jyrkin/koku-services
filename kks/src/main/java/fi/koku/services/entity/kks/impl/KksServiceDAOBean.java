@@ -72,6 +72,20 @@ public class KksServiceDAOBean implements KksServiceDAO {
     }
     return list;
   }
+  
+  public KksCollectionClass getCollectionClass(String type) {
+    Query q = em.createNamedQuery(KksCollectionClass.NAMED_QUERY_GET_COLLECTION_CLASS_BY_TYPE).setParameter("type", type);
+
+    @SuppressWarnings("unchecked")
+    KksCollectionClass c = (KksCollectionClass)q.getSingleResult();
+
+    // metadata loading is done manually
+    Map<Integer, List<KksGroup>> groups = getRootGroupsMap(c.getId());    
+    c.setGroups(groups.get(c.getId()));
+    Collections.sort(c.getGroups());    
+    return c;
+  }
+  
 
   @Override
   public List<KksCollectionClass> getCollectionClassesWithOutContent() {
@@ -113,6 +127,58 @@ public class KksServiceDAOBean implements KksServiceDAO {
 
     @SuppressWarnings("unchecked")
     List<KksGroup> list = (List<KksGroup>) groups.getResultList();
+
+    Map<Integer, KksGroup> map = new LinkedHashMap<Integer, KksGroup>();
+    Map<Integer, List<KksGroup>> collectionMap = new HashMap<Integer, List<KksGroup>>();
+
+    for (KksGroup g : list) {
+      map.put(g.getGroupId(), g);
+      g.setEntryClasses(entryMap.get(g.getGroupId()));
+      if (g.getParentId() == null) {
+        // map only root groups
+        mapGroupToCollectionClass(collectionMap, g);
+      }
+    }
+
+    for (KksGroup g : list) {
+      KksGroup parent = map.get(g.getParentId());
+
+      if (parent != null) {
+        parent.addSubGroup(g);
+        Collections.sort(parent.getSubGroups());
+      }
+    }
+
+    return collectionMap;
+  }
+  
+  private Map<Integer, List<KksGroup>> getRootGroupsMap(int collectinClassId) {
+    Query groups = em.createNamedQuery(KksGroup.NAMED_QUERY_GET_ALL_COLLECTION_CLASS_GROUPS ).setParameter("id", collectinClassId );
+    @SuppressWarnings("unchecked")
+    List<KksGroup> list = (List<KksGroup>) groups.getResultList();
+    List<Integer> groupIdList = new ArrayList<Integer>();
+    
+    for ( KksGroup g : list ) {
+      groupIdList.add(g.getGroupId());
+    }    
+
+    Query classes = em.createNamedQuery(KksEntryClass.NAMED_QUERY_GET_ENTRY_CLASSES_FOR_GROUPS).setParameter("ids", groupIdList);
+    @SuppressWarnings("unchecked")
+    List<KksEntryClass> entries = (List<KksEntryClass>) classes.getResultList();
+    
+    Map<Integer, List<KksEntryClass>> entryMap = new HashMap<Integer, List<KksEntryClass>>();
+
+    for (KksEntryClass e : entries) {
+      if (entryMap.containsKey(e.getGroupId())) {
+        List<KksEntryClass> tmp = entryMap.get(e.getGroupId());
+        tmp.add(e);
+      } else {
+        List<KksEntryClass> tmp = new ArrayList<KksEntryClass>();
+        tmp.add(e);
+        entryMap.put(e.getGroupId(), tmp);
+      }
+    }
+
 
     Map<Integer, KksGroup> map = new LinkedHashMap<Integer, KksGroup>();
     Map<Integer, List<KksGroup>> collectionMap = new HashMap<Integer, List<KksGroup>>();

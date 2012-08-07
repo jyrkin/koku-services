@@ -164,4 +164,12 @@ public interface KksService {
    * @return collections
    */
   List<KksCollectionInfo> getCollectionsInfo(String collectionType, String pic);
+  
+  /**
+   * Gets collection class
+   * 
+   * @param type
+   * @return collection class
+   */
+  KksCollectionClass getCollectionClass(String type);
 }

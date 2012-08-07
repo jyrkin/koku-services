@@ -249,7 +249,7 @@ public class KksServiceEndpointBean implements KksServicePortType {
     LOG.debug("opGetKksCollectionInstances"); 
     List<KksCollectionInfo> infos = kksService.getCollectionsInfo(kksCollectionInstanceCriteriaType.getType(), kksCollectionInstanceCriteriaType.getPic());
     KksCollectionInstancesType k = new KksCollectionInstancesType();
-    
+    k.setCollectionClass( KksConverter.toWsType(kksService.getCollectionClass(kksCollectionInstanceCriteriaType.getType())));
     for ( KksCollectionInfo info : infos ) {
       k.getCollections().add(KksConverter.toWsType(info));
     }

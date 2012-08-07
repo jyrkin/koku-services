@@ -130,12 +130,20 @@ public interface KksServiceDAO {
   List<KksCollectionClass> getCollectionClassesWithOutContent();
 
   /**
-   * Gets collection class
+   * Gets collection class by id
    * 
    * @param id
    * @return
    */
   KksCollectionClass getCollectionClass(int id);
+  
+  /**
+   * Gets collection class by type
+   * 
+   * @param type
+   * @return
+   */
+  KksCollectionClass getCollectionClass(String type);
 
   /**
    * Queries entries
