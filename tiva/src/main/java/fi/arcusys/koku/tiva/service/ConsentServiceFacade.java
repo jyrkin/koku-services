@@ -200,4 +200,6 @@ public interface ConsentServiceFacade {
      *
      */
     int cancellationOfOutdatedConsents();
+
+    List<KksFormInstance> getKksFormInstances(final String kksCode, final String targetPersonUid);
 }

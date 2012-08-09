@@ -2,8 +2,6 @@ package fi.arcusys.koku.tiva.service.impl;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -53,6 +51,7 @@ import fi.arcusys.koku.common.service.dto.ConsentDTOCriteria;
 import fi.arcusys.koku.common.soa.Organization;
 import fi.arcusys.koku.common.soa.UserInfo;
 import fi.arcusys.koku.tiva.service.ConsentServiceFacade;
+import fi.arcusys.koku.tiva.service.KksCollectionsDAO;
 import fi.arcusys.koku.tiva.soa.ActionPermittedTO;
 import fi.arcusys.koku.tiva.soa.ActionRequestStatus;
 import fi.arcusys.koku.tiva.soa.ActionRequestSummary;
@@ -76,6 +75,18 @@ import fi.arcusys.koku.tiva.soa.ConsentTemplateSummary;
 import fi.arcusys.koku.tiva.soa.ConsentTemplateTO;
 import fi.arcusys.koku.tiva.soa.KksFormField;
 import fi.arcusys.koku.tiva.soa.KksFormInstance;
+import fi.koku.services.entity.kks.v1.AuditInfoType;
+import fi.koku.services.entity.kks.v1.KksCollectionClassType;
+import fi.koku.services.entity.kks.v1.KksCollectionInstanceCriteriaType;
+import fi.koku.services.entity.kks.v1.KksCollectionInstanceType;
+import fi.koku.services.entity.kks.v1.KksCollectionInstancesType;
+import fi.koku.services.entity.kks.v1.KksEntryClassType;
+import fi.koku.services.entity.kks.v1.KksEntryClassesType;
+import fi.koku.services.entity.kks.v1.KksGroupType;
+import fi.koku.services.entity.kks.v1.KksGroupsType;
+import fi.koku.services.entity.kks.v1.KksServiceFactory;
+import fi.koku.services.entity.kks.v1.KksServicePortType;
+import fi.koku.services.entity.kks.v1.ServiceFault;
 
 /**
  * Service facade implementation for business methods in TIVA-Suostumus functional area.
@@ -125,6 +136,9 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
 
     @EJB
     private KokuSystemNotificationsService notificationService;
+
+    @EJB
+    private KksCollectionsDAO kksDao;
 
     private String notificationsBundleName = "consent.msg";
     private Properties messageTemplates;
@@ -1193,5 +1207,41 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
         }
 
         return cancelledConsentsCount;
+    }
+
+    private Map<String, KksEntryClassType> classesLookup(KksEntryClassesType classes) {
+        Map<String, KksEntryClassType> ret = new HashMap<String, KksEntryClassType>();
+
+        for (KksEntryClassType classType : classes.getKksEntryClass()) {
+            ret.put(classType.getId(), classType);
+
+        }
+
+        return ret;
+    }
+
+    private Map<String, KksEntryClassType> groupLookup(KksGroupsType groups) {
+        Map<String, KksEntryClassType> ret = new HashMap<String, KksEntryClassType>();
+
+        for (KksGroupType group : groups.getKksGroup()) {
+            ret.putAll(classesLookup(group.getKksEntryClasses()));
+            ret.putAll(groupLookup(group.getSubGroups()));
+
+        }
+
+        return ret;
+    }
+
+    private Map<String, KksEntryClassType> getEntryClassMap(KksCollectionClassType kksCollectionClass) {
+        Map<String, KksEntryClassType> ret = new HashMap<String, KksEntryClassType>();
+
+        ret.putAll(groupLookup(kksCollectionClass.getKksGroups()));
+
+        return ret;
+    }
+
+    @Override
+    public List<KksFormInstance> getKksFormInstances(final String kksCode, final String targetPersonUid) {
+        return kksDao.getKksFormInstances(kksCode, targetPersonUid);
     }
 }

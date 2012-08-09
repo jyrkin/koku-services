@@ -153,26 +153,7 @@ public class KokuSuostumusProcessingServiceImpl implements KokuSuostumusProcessi
      */
     @Override
     public List<KksFormInstance> getKksFormInstances(final String kksCode, final String targetPersonUid) {
-        // TODO: Write actual getter implementation
-        List<KksFormInstance> instances = new ArrayList<KksFormInstance>();
-
-        for (int i = 1; i < 4; i++) {
-            KksFormInstance formInstance = new KksFormInstance();
-            formInstance.setInstanceId(Integer.toString(i));
-            formInstance.setInstanceName("Instance "+Integer.toString(i));
-
-            formInstance.setFields(new ArrayList<KksFormField>());
-            for (int j = 1; j < 8; j++) {
-                KksFormField fieldData = new KksFormField();
-                fieldData.setFieldId(Integer.toString(j));
-                fieldData.setFieldName("Field "+Integer.toString(j));
-                formInstance.getFields().add(fieldData);
-            }
-
-            instances.add(formInstance);
-        }
-
-        return instances;
+        return serviceFacade.getKksFormInstances(kksCode, targetPersonUid);
     }
 
 }

@@ -23,6 +23,11 @@
 	</properties>
 
 	<dependencies>
+	    <dependency>
+            <groupId>kohti-kumppanuutta</groupId>
+            <artifactId>authorizationinfoservice-api</artifactId>
+            <version>0.0.7</version>
+        </dependency>
 		<dependency>
 			<groupId>kohti-kumppanuutta</groupId>
 			<artifactId>lokservice-api</artifactId>

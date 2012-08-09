@@ -112,11 +112,14 @@ public class KokuTivaToKksServiceImpl implements KokuTivaToKksService {
             consentExternal.setKksFormInstance(consent.getKksFormInstance());
 
             List<KksOrganization> givenTo = new ArrayList<KksOrganization>();
-            for (Organization org : consent.getKksGivenTo()) {
-                final KksOrganization kksOrg = new KksOrganization();
-                kksOrg.setOrganizationId(org.getOrganizationId());
-                kksOrg.setOrganizationName(org.getOrganizationName());
-                givenTo.add(kksOrg);
+
+            if (consent.getKksGivenTo() != null) {
+                for (Organization org : consent.getKksGivenTo()) {
+                    final KksOrganization kksOrg = new KksOrganization();
+                    kksOrg.setOrganizationId(org.getOrganizationId());
+                    kksOrg.setOrganizationName(org.getOrganizationName());
+                    givenTo.add(kksOrg);
+                }
             }
 
             consentExternal.setKksGivenTo(givenTo);

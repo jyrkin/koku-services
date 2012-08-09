@@ -76,7 +76,9 @@ public interface LdapDAO {
     /**
      * @param employeeName
      * @return
+     * @deprecated Use AuthorizationInfoService instead
      */
+    @Deprecated
     List<Organization> getEmployeeOrganizations(String employeeName);
 
     /**
