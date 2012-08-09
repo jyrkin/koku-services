@@ -52,8 +52,6 @@ public class PortalUserServiceDAOBean implements PortalUserServiceDAO {
    */
   public PortalUserServiceDAOBean() {
   }
-
-  
   
   @Override
   public void insertPortalUser(PortalUser user, CustomerType cust, String pic) {
@@ -139,8 +137,6 @@ public class PortalUserServiceDAOBean implements PortalUserServiceDAO {
     // find portal user
     PortalUser portalUser = findPortalUser(user.getUserName());
     
-    
-    
     //set user exists
     boolean userExists = true;
     // and verify user's password
@@ -175,41 +171,6 @@ public class PortalUserServiceDAOBean implements PortalUserServiceDAO {
     }
   }
   
-//  @Override
-//  public PortalUserAllType authenticatePortalUser(PortalUserPicQueryParamType user) {
-//
-//    PortalUserAllType pt = new PortalUserAllType();
-//
-//    PortalUserPasswordEncryption encrypt = new PortalUserPasswordEncryption();
-//    // find portal user
-//    PortalUser portalUser = findPortalUser(user.getUserName());
-//    CustomerType cust = customerBean.getCustomer(user.getPic());
-//    //set user exists
-//    boolean userExists = true;
-//    // and verify user's password
-//    boolean authenticated = encrypt
-//        .authenticateUser(user.getPassword(), portalUser.getPassword(), portalUser.getSalt());
-//        
-//    if (!authenticated && userExists ) {
-//      updateWrongPasswordCount(authenticated, portalUser);
-//      PortalUserServiceErrorCode errorCode = PortalUserServiceErrorCode.UNAUTHORIZED;
-//      throw new KoKuFaultException(errorCode.getValue(), errorCode.getDescription());
-//    }
-//    else if (!authenticated && !userExists ) {
-//      PortalUserServiceErrorCode errorCode = PortalUserServiceErrorCode.PORTAL_USER_NOT_FOUND;
-//      throw new KoKuFaultException(errorCode.getValue(), errorCode.getDescription());
-//    }
-//    else if (authenticated && userExists ){
-//      updateWrongPasswordCount(authenticated, portalUser);
-//      pt = conv.toWsType(portalUser, cust);
-//      logger.debug("authenticatePortalUser: authenticated user: " + user.getUserName());
-//    }
-//
-//    return pt;
-//  }
-
-  
-  
   /** 
    * Returns Portal user that has given username or pic (combines two services).
    * Password is currently ignored, because we don't want to store in session. This service-level
@@ -235,26 +196,6 @@ public class PortalUserServiceDAOBean implements PortalUserServiceDAO {
     
     return picUser;    
   }
-
-  
-//  @Override
-//  public PortalUserAllType getUserByPic(PortalUserPicQueryParamType pic) {
-//    
-//    PortalUserAllType picUser = new PortalUserAllType();
-//    
-//    if (authenticateUser(pic)) {
-//       CustomerType cust = customerBean.getCustomer(pic.getPic());
-//       PortalUser portalUser = findPortalUser(pic.getUserName());
-//       picUser = conv.toWsType(portalUser, cust);
-//    }
-//    else {
-//      PortalUserServiceErrorCode errorCode = PortalUserServiceErrorCode.UNAUTHORIZED;
-//      throw new KoKuFaultException(errorCode.getValue(), errorCode.getDescription());
-//      }
-//    
-//    return picUser;    
-//  }
-
   
   @Override
   public void disablePortalUser(PortalUserPicQueryParamType user) {

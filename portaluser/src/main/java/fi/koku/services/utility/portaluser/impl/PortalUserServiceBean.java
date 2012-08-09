@@ -66,12 +66,6 @@ public class PortalUserServiceBean implements PortalUserService {
   public VoidType updatePortalUser(PortalUserUpdateType portalUser) {
     logger.info("updatePortalUser (impl: " + portalUserServiceDAOBean + ")");
     
-    //PortalUserType user = portalConverter.UpdateTypeToUserType(portalUser);
-    //get customer from customer service
-       
-    //CustomerType cust = portalConverter.UpdateTypeToCustomerType(portalUser);
-    
-    //portalUserServiceDAOBean.updatePortalUser(portalUser, cust);
     portalUserServiceDAOBean.updatePortalUser(portalUser);
     
     return new VoidType();

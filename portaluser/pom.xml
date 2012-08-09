@@ -11,7 +11,7 @@
   <name>portaluser-service</name>
 
   <properties>
-    <portaluser-api.version>0.0.3</portaluser-api.version>
+    <portaluser-api.version>0.0.4</portaluser-api.version>
   </properties>
 
   <build>
