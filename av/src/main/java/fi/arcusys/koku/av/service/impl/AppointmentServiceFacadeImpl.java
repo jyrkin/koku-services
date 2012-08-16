@@ -903,11 +903,23 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
         response.setStatus(AppointmentResponseStatus.Rejected);
         response.setComment(comment);
         appointmentDAO.update(response.getAppointment());
+
+        // Send notification to appointment creator
         notificationService.sendNotification(getValueFromBundle(APPOINTMENT_CANCELLED_SUBJECT),
                 Collections.singletonList(response.getAppointment().getSender().getUid()),
                 MessageFormat.format(getValueFromBundle(APPOINTMENT_CANCELLED_FOR_TARGET_BODY), new Object[] {
                     response.getAppointment().getSubject(), getUserInfoDisplayName(response.getTarget().getTargetUser()),
                     getUserInfoDisplayName(userDao.getOrCreateUser(user))}));
+
+        // Send notifications to other guardians
+        TargetPerson target = response.getAppointment().getTargetPersonByUid(targetUser);
+        for (User guardian : target.getGuardians())
+            if (guardian.getUid() != user)
+                notificationService.sendNotification(getValueFromBundle(APPOINTMENT_DECLINED_SUBJECT),
+                        Collections.singletonList(guardian.getUid()),
+                        MessageFormat.format(getValueFromBundle(APPOINTMENT_DECLINED_BODY_KUNPO),
+                                new Object[] {response.getAppointment().getSubject(),
+                            getUserInfoDisplayName(response.getTarget().getTargetUser()), getUserInfoDisplayName(response.getReplier())}));
     }
 
     protected String getValueFromBundle(final String bundleKey) {
