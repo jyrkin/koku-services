@@ -13,20 +13,22 @@ import fi.arcusys.koku.common.service.AbstractEntityDAO;
 import fi.arcusys.koku.common.service.datamodel.AbstractEntity;
 
 /**
- * Abstract implementation for all data model related DAO implementations. 
- * 
+ * Abstract implementation for all data model related DAO implementations.
+ *
  * @author Dmitry Kudinov (dmitry.kudinov@arcusys.fi)
  * May 18, 2011
  */
 public abstract class AbstractEntityDAOImpl<T extends AbstractEntity> implements AbstractEntityDAO<T> {
     public static final String IDS_PARAMETER_NAME = "ids";
 
+	private static final int REQUEST_LIMIT = 100;
+
 	protected EntityManager em;
 
 	private Class<T> clazz;
-	
+
 	/**
-	 * 
+	 *
 	 */
 	protected AbstractEntityDAOImpl(final Class<T> clazz) {
 		this.clazz = clazz;
@@ -36,7 +38,7 @@ public abstract class AbstractEntityDAOImpl<T extends AbstractEntity> implements
 	public void setEntityManager(final EntityManager em) {
 		this.em = em;
 	}
-	
+
 	/**
 	 * @param entity
 	 * @return
@@ -68,7 +70,7 @@ public abstract class AbstractEntityDAOImpl<T extends AbstractEntity> implements
 	public T getById(final Long entityId) {
 		return em.find(this.clazz, entityId);
 	}
-	
+
 	/**
 	 * @param ids
 	 * @return
@@ -78,7 +80,7 @@ public abstract class AbstractEntityDAOImpl<T extends AbstractEntity> implements
 		if (ids == null || ids.isEmpty()) {
 			return Collections.emptyList();
 		}
-		
+
 		return getResultList(getListByIdsQueryName(), Collections.<String, Object>singletonMap(IDS_PARAMETER_NAME, ids));
 	}
 
@@ -92,14 +94,14 @@ public abstract class AbstractEntityDAOImpl<T extends AbstractEntity> implements
 	public void delete(final T entity) {
 		em.remove(em.merge(entity));
 	}
-	
+
 	@Override
 	public int deleteAll(List<Long> messageRefs) {
 		final Query query = em.createNamedQuery(getDeleteByIdsQueryName());
 		query.setParameter(IDS_PARAMETER_NAME, messageRefs);
 		return query.executeUpdate();
 	}
-	
+
 	protected String getDeleteByIdsQueryName() {
 		throw new UnsupportedOperationException("This method should be overrided in subclass.");
 	}
@@ -112,7 +114,14 @@ public abstract class AbstractEntityDAOImpl<T extends AbstractEntity> implements
 		return getResultList(queryName, params, FIRST_RESULT_NUMBER, MAX_RESULTS_COUNT);
 	}
 
+	private void validateResultLimit(int maxResults) {
+		if (maxResults > REQUEST_LIMIT) {
+			throw new IllegalArgumentException("Incorrect value for maxResults: " + maxResults + ", should be less than" + REQUEST_LIMIT + ".");
+		}
+	}
+
 	protected <E> List<E> getResultList(final String queryName, final Map<String, ?> params, final int firstResult, final int maxResults) {
+		validateResultLimit(maxResults);
 		final Query query = em.createNamedQuery(queryName);
 		for (final Map.Entry<String, ?> param : params.entrySet()) {
 			query.setParameter(param.getKey(), param.getValue());
@@ -123,6 +132,7 @@ public abstract class AbstractEntityDAOImpl<T extends AbstractEntity> implements
 	}
 
 	protected <E> List<E> executeQuery(final String queryString, final Map<String, ?> params, final int firstResult, final int maxResults) {
+		validateResultLimit(maxResults);
 		final Query query = em.createQuery(queryString);
 		for (final Map.Entry<String, ?> param : params.entrySet()) {
 			query.setParameter(param.getKey(), param.getValue());
@@ -147,7 +157,7 @@ public abstract class AbstractEntityDAOImpl<T extends AbstractEntity> implements
 		}
 		return (E)query.getSingleResult();
 	}
-	
+
     protected String getPrefixLike(String searchString) {
         if (searchString == null) {
             return "%";
