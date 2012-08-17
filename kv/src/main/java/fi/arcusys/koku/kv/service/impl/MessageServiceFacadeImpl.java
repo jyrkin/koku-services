@@ -140,6 +140,8 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
     private final static String EMAIL_LINKS_MESSAGE_INBOX_PATH = "navigationPortlet.portlet.absolute.path";
     private final static String EMAIL_LINKS_NEW_REQUEST_PATH = "navigationPortlet.link.requests.recievedRequests";
 
+    private final static int REQUEST_LIMIT = 20;
+
     private String notificationsBundleName = "kv_messages.msg";
     private Properties messageTemplates;
 
@@ -521,6 +523,9 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
 		}
 		if (maxNum < startNum) {
 			throw new IllegalArgumentException("Incorrect number for max number: " + maxNum + ", it should be greater or equal to start number.");
+		}
+		if (maxNum - startNum > REQUEST_LIMIT) {
+			throw new IllegalArgumentException("Incorrect number range: " + (maxNum - startNum) + ", it should be less than or equal to " + REQUEST_LIMIT + ".");
 		}
 	}
 
