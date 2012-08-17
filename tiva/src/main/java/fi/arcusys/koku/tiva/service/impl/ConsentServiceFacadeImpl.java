@@ -1,5 +1,7 @@
 package fi.arcusys.koku.tiva.service.impl;
 
+import static fi.arcusys.koku.common.service.AbstractEntityDAO.MAX_RESULTS_COUNT;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.MessageFormat;
@@ -75,18 +77,11 @@ import fi.arcusys.koku.tiva.soa.ConsentTemplateSummary;
 import fi.arcusys.koku.tiva.soa.ConsentTemplateTO;
 import fi.arcusys.koku.tiva.soa.KksFormField;
 import fi.arcusys.koku.tiva.soa.KksFormInstance;
-import fi.koku.services.entity.kks.v1.AuditInfoType;
 import fi.koku.services.entity.kks.v1.KksCollectionClassType;
-import fi.koku.services.entity.kks.v1.KksCollectionInstanceCriteriaType;
-import fi.koku.services.entity.kks.v1.KksCollectionInstanceType;
-import fi.koku.services.entity.kks.v1.KksCollectionInstancesType;
 import fi.koku.services.entity.kks.v1.KksEntryClassType;
 import fi.koku.services.entity.kks.v1.KksEntryClassesType;
 import fi.koku.services.entity.kks.v1.KksGroupType;
 import fi.koku.services.entity.kks.v1.KksGroupsType;
-import fi.koku.services.entity.kks.v1.KksServiceFactory;
-import fi.koku.services.entity.kks.v1.KksServicePortType;
-import fi.koku.services.entity.kks.v1.ServiceFault;
 
 /**
  * Service facade implementation for business methods in TIVA-Suostumus functional area.
@@ -1061,14 +1056,21 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
         } // otherwise no need for update
     }
 
+    private static void validateQueryLimits(ConsentQuery query) {
+        int requests = query.getMaxNum() - query.getStartNum();
+        if (requests > MAX_RESULTS_COUNT) {
+            throw new IllegalArgumentException("Incorrect number range: " + requests + ", it should be less than or equal to " + MAX_RESULTS_COUNT + ".");
+        }
+    }
+
     /**
      * @param employeeUid
      * @return
      */
     @Override
     public List<ConsentSummary> getProcessedConsents(String employeeUid, final ConsentQuery query) {
+        validateQueryLimits(query);
         final User replier = userDao.getOrCreateUser(employeeUid);
-
         final List<ConsentSummary> consents = new ArrayList<ConsentSummary>();
         for (final Consent consent : consentDao.getProcessedConsents(replier,
                 query.getCriteria() != null ? query.getCriteria().toDtoCriteria() : new ConsentDTOCriteria(),

@@ -140,8 +140,6 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
     private final static String EMAIL_LINKS_MESSAGE_INBOX_PATH = "navigationPortlet.portlet.absolute.path";
     private final static String EMAIL_LINKS_NEW_REQUEST_PATH = "navigationPortlet.link.requests.recievedRequests";
 
-    private final static int REQUEST_LIMIT = 20;
-
     private String notificationsBundleName = "kv_messages.msg";
     private Properties messageTemplates;
 
@@ -242,7 +240,7 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
 	 */
 	public List<MessageTO> getSentMessages(final String userUid) {
 		final List<MessageRef> messages = folderDAO.getMessagesByUserWithRoleAndFolderType(getUserByUid(userUid), getUserRoles(userUid), FolderType.Outbox,
-				null, FIRST_RESULT_NUMBER, FIRST_RESULT_NUMBER + MAX_RESULTS_COUNT - 1);
+				null, FIRST_RESULT_NUMBER, FIRST_RESULT_NUMBER + MAX_RESULTS_COUNT);
 
 		final List<MessageTO> result = new ArrayList<MessageTO>();
 		for (final MessageRef messageRef : messages) {
@@ -361,7 +359,7 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
 	public List<MessageSummary> getMessages(final String userUid, final FolderType folderType) {
 		final MessageQuery query = new MessageQuery();
 		query.setStartNum(FIRST_RESULT_NUMBER);
-		query.setMaxNum(FIRST_RESULT_NUMBER + MAX_RESULTS_COUNT - 1);
+		query.setMaxNum(FIRST_RESULT_NUMBER + MAX_RESULTS_COUNT);
 		return getMessages(userUid, folderType, query);
 	}
 
@@ -524,8 +522,8 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
 		if (maxNum < startNum) {
 			throw new IllegalArgumentException("Incorrect number for max number: " + maxNum + ", it should be greater or equal to start number.");
 		}
-		if (maxNum - startNum > REQUEST_LIMIT) {
-			throw new IllegalArgumentException("Incorrect number range: " + (maxNum - startNum) + ", it should be less than or equal to " + REQUEST_LIMIT + ".");
+		if (maxNum - startNum > MAX_RESULTS_COUNT) {
+			throw new IllegalArgumentException("Incorrect number range: " + (maxNum - startNum) + ", it should be less than or equal to " + MAX_RESULTS_COUNT + ".");
 		}
 	}
 

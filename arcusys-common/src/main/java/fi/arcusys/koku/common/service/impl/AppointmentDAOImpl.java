@@ -45,7 +45,7 @@ public class AppointmentDAOImpl extends AbstractEntityDAOImpl<Appointment> imple
 	}
 
 	public List<Appointment> getUserAppointments(final User user, final Set<AppointmentStatus> statuses) {
-		return getUserAppointments(user, statuses, FIRST_RESULT_NUMBER, FIRST_RESULT_NUMBER + MAX_RESULTS_COUNT - 1);
+		return getUserAppointments(user, statuses, FIRST_RESULT_NUMBER, FIRST_RESULT_NUMBER + MAX_RESULTS_COUNT);
 	}
 
 	public List<Appointment> getUserAppointments(final User user, final Set<AppointmentStatus> statuses, final int startNum, final int maxNum) {
@@ -53,7 +53,7 @@ public class AppointmentDAOImpl extends AbstractEntityDAOImpl<Appointment> imple
 	}
 
 	public List<Appointment> getAssignedAppointments(final User user) {
-		return getAssignedAppointments(user, FIRST_RESULT_NUMBER, FIRST_RESULT_NUMBER + MAX_RESULTS_COUNT - 1);
+		return getAssignedAppointments(user, FIRST_RESULT_NUMBER, FIRST_RESULT_NUMBER + MAX_RESULTS_COUNT);
 	}
 
 	public List<Appointment> getAssignedAppointments(final User user, final int startNum, final int maxNum) {

@@ -1,6 +1,8 @@
 package fi.arcusys.koku.tiva.service;
 
-import static junit.framework.Assert.*;
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.assertNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -9,7 +11,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-import javax.jws.WebParam;
 import javax.xml.datatype.XMLGregorianCalendar;
 
 import org.junit.Test;
@@ -19,12 +20,10 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import fi.arcusys.koku.common.service.CalendarUtil;
-import fi.arcusys.koku.common.service.CommonTestUtil;
 import fi.arcusys.koku.common.service.ConsentDAO;
 import fi.arcusys.koku.common.service.datamodel.Consent;
 import fi.arcusys.koku.common.soa.Organization;
 import fi.arcusys.koku.tiva.soa.ActionPermittedTO;
-import fi.arcusys.koku.tiva.soa.ActionRequestStatus;
 import fi.arcusys.koku.tiva.soa.ActionRequestSummary;
 import fi.arcusys.koku.tiva.soa.ActionRequestTO;
 import fi.arcusys.koku.tiva.soa.ConsentApprovalStatus;
@@ -259,7 +258,7 @@ public class ConsentServiceTest {
                 "Lassi Lapsi", Arrays.asList(parent1, parent2), null, null, null, Boolean.FALSE, null, null, null);
 
         // KOKU-1297: Sent Consents should be visible in Loora
-        final ConsentQuery query = new ConsentQuery(1, 100);
+        final ConsentQuery query = new ConsentQuery(1, 25);
         assertNotNull(getById(consentId, service.getProcessedConsents(employeeUid, query)));
 
         final ActionPermittedTO actionPermittedTO = new ActionPermittedTO();
@@ -297,7 +296,7 @@ public class ConsentServiceTest {
                 ConsentCreateType.PaperBased, "Lassi Lapsi", recipients, null, null, getTestActionsPermitted(),
                 sourceInfo, "given on behalf", null, null);
 
-        final ConsentQuery query = new ConsentQuery(1, 100);
+        final ConsentQuery query = new ConsentQuery(1, 25);
         final ConsentSummary autoApproved = getById(consentId, service.getProcessedConsents(employeeUid, query));
         assertNotNull("Already processed consent for employee: ", autoApproved);
         assertEquals(ConsentStatus.Valid, autoApproved.getStatus());

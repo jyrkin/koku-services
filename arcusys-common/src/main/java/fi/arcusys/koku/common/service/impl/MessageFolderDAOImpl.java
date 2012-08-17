@@ -75,7 +75,7 @@ public class MessageFolderDAOImpl extends AbstractEntityDAOImpl<Folder> implemen
 	 */
 	@Override
 	public List<MessageRef> getMessagesByUserAndFolderType(final User user, final FolderType folderType) {
-		return getMessagesByUserWithRoleAndFolderType(user, Collections.<String>emptyList(), folderType, null, FIRST_RESULT_NUMBER, FIRST_RESULT_NUMBER + MAX_RESULTS_COUNT - 1);
+		return getMessagesByUserWithRoleAndFolderType(user, Collections.<String>emptyList(), folderType, null, FIRST_RESULT_NUMBER, FIRST_RESULT_NUMBER + MAX_RESULTS_COUNT);
 	}
 
 	/**
