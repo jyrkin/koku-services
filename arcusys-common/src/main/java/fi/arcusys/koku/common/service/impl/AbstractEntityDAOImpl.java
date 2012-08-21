@@ -21,8 +21,6 @@ import fi.arcusys.koku.common.service.datamodel.AbstractEntity;
 public abstract class AbstractEntityDAOImpl<T extends AbstractEntity> implements AbstractEntityDAO<T> {
     public static final String IDS_PARAMETER_NAME = "ids";
 
-	private static final int REQUEST_LIMIT = 100;
-
 	protected EntityManager em;
 
 	private Class<T> clazz;
@@ -114,14 +112,7 @@ public abstract class AbstractEntityDAOImpl<T extends AbstractEntity> implements
 		return getResultList(queryName, params, FIRST_RESULT_NUMBER, MAX_RESULTS_COUNT);
 	}
 
-	private void validateResultLimit(int maxResults) {
-		if (maxResults > REQUEST_LIMIT) {
-			throw new IllegalArgumentException("Incorrect value for maxResults: " + maxResults + ", should be less than" + REQUEST_LIMIT + ".");
-		}
-	}
-
 	protected <E> List<E> getResultList(final String queryName, final Map<String, ?> params, final int firstResult, final int maxResults) {
-		validateResultLimit(maxResults);
 		final Query query = em.createNamedQuery(queryName);
 		for (final Map.Entry<String, ?> param : params.entrySet()) {
 			query.setParameter(param.getKey(), param.getValue());
@@ -132,7 +123,6 @@ public abstract class AbstractEntityDAOImpl<T extends AbstractEntity> implements
 	}
 
 	protected <E> List<E> executeQuery(final String queryString, final Map<String, ?> params, final int firstResult, final int maxResults) {
-		validateResultLimit(maxResults);
 		final Query query = em.createQuery(queryString);
 		for (final Map.Entry<String, ?> param : params.entrySet()) {
 			query.setParameter(param.getKey(), param.getValue());

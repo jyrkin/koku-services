@@ -16,14 +16,14 @@ import fi.arcusys.koku.common.service.dto.InformationRequestDTOCriteria;
 
 /**
  * DAO implementation for CRUD operations with 'InformationRequest' Entity
- * 
+ *
  * @author Dmitry Kudinov (dmitry.kudinov@arcusys.fi)
  * Sep 22, 2011
  */
 @Stateless
 public class InformationRequestDAOImpl extends AbstractEntityDAOImpl<InformationRequest> implements InformationRequestDAO {
 
-    /* 
+    /*
      * InformationRequest text fields:
         - title;
         - description;
@@ -41,16 +41,16 @@ public class InformationRequestDAOImpl extends AbstractEntityDAOImpl<Information
         "request.requestPurpose",
         "request.legislationInfo",
         "request.additionalInfo",
-        
+
         "request.reply.replyDescription",
         "request.reply.informationDetails",
         "request.reply.additionalReplyInfo"
     };
-    
+
     public InformationRequestDAOImpl() {
         super(InformationRequest.class);
     }
-    
+
     /**
      * @param entity
      */
@@ -59,7 +59,7 @@ public class InformationRequestDAOImpl extends AbstractEntityDAOImpl<Information
         if (entity.getId() == null) {
             return super.update(entity);
         }
-        
+
         final InformationRequest existingEntity = getById(entity.getId());
         final Set<InformationRequestCategory> forDelete = new HashSet<InformationRequestCategory>(existingEntity.getCategories());
         // still valid categories
@@ -68,7 +68,7 @@ public class InformationRequestDAOImpl extends AbstractEntityDAOImpl<Information
                 forDelete.remove(category);
             }
         }
-        
+
         for (final InformationRequestCategory category : forDelete) {
             em.remove(category);
         }
@@ -84,6 +84,7 @@ public class InformationRequestDAOImpl extends AbstractEntityDAOImpl<Information
      */
     @Override
     public List<InformationRequest> getRepliedRequests(InformationRequestDTOCriteria criteria, int startNum, int maxResults) {
+        Util.validateLimits(startNum, maxResults, MAX_RESULTS_COUNT);
         final StringBuilder query = new StringBuilder();
         // select
         query.append("SELECT DISTINCT request FROM InformationRequest request WHERE request.reply.replyStatus IS NOT NULL ");
@@ -96,24 +97,24 @@ public class InformationRequestDAOImpl extends AbstractEntityDAOImpl<Information
     private Map<String, Object> processCriteria(InformationRequestDTOCriteria criteria, final StringBuilder query) {
         final Map<String, Object> params = new HashMap<String, Object>();
 
-        final StringBuilder where = new StringBuilder(); 
+        final StringBuilder where = new StringBuilder();
         // user based criteria applied
         final String senderUid = criteria.getSenderUid();
         if (senderUid != null && !"".equals(senderUid.trim())) {
             appendAnd(where, " request.sender.uid = :senderUid ");
             params.put("senderUid", senderUid);
-        } 
+        }
         final String receiverUid = criteria.getReceiverUid();
         if (receiverUid != null && !"".equals(receiverUid.trim())) {
             appendAnd(where, " request.receiver.uid = :receiverUid ");
             params.put("receiverUid", receiverUid);
-        } 
+        }
         final String targetPersonUid = criteria.getTargetPersonUid();
         if (targetPersonUid != null && !"".equals(targetPersonUid.trim())) {
             appendAnd(where, " request.targetPerson.uid = :targetPersonUid ");
             params.put("targetPersonUid", targetPersonUid);
-        } 
-        
+        }
+
         // date based criteria applied
         final Date createdFromDate = criteria.getCreatedFromDate();
         if (createdFromDate != null) {
@@ -135,7 +136,7 @@ public class InformationRequestDAOImpl extends AbstractEntityDAOImpl<Information
             appendAnd(where, " request.reply.replyCreatedDate <= :repliedToDate ");
             params.put("repliedToDate", repliedToDate);
         }
-        
+
         // text search criteria applied
         final String informationContent = criteria.getInformationContent();
         if (informationContent != null && !informationContent.isEmpty()) {
@@ -163,7 +164,7 @@ public class InformationRequestDAOImpl extends AbstractEntityDAOImpl<Information
         if (append == null || "".equals(append)) {
             return;
         }
-        
+
         if (where.length() > 0) {
             where.append(" AND ");
         }
@@ -179,6 +180,7 @@ public class InformationRequestDAOImpl extends AbstractEntityDAOImpl<Information
     @Override
     public List<InformationRequest> getSentRequests(
             InformationRequestDTOCriteria criteria, int startNum, int maxResults) {
+        Util.validateLimits(startNum, maxResults, MAX_RESULTS_COUNT);
         final StringBuilder query = new StringBuilder();
         // select
         query.append("SELECT DISTINCT request FROM InformationRequest request ");

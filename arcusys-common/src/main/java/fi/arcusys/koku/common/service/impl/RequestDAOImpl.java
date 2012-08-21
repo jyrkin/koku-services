@@ -17,7 +17,7 @@ import fi.arcusys.koku.common.service.datamodel.User;
 
 /**
  * DAO implementation for CRUD operations with 'Request' Entity
- * 
+ *
  * @author Dmitry Kudinov (dmitry.kudinov@arcusys.fi)
  * Jun 23, 2011
  */
@@ -26,7 +26,7 @@ public class RequestDAOImpl extends AbstractEntityDAOImpl<Request> implements Re
 	public RequestDAOImpl() {
 		super(Request.class);
 	}
-	
+
 	/**
 	 * @param entityId
 	 * @return
@@ -35,7 +35,7 @@ public class RequestDAOImpl extends AbstractEntityDAOImpl<Request> implements Re
 	public Request getById(final Long requestId) {
 		return super.getById(requestId);
 	}
-	
+
 	/**
 	 * @return
 	 */
@@ -61,6 +61,7 @@ public class RequestDAOImpl extends AbstractEntityDAOImpl<Request> implements Re
      */
     @Override
     public List<Request> getRequestsByUserAndRoles(User user, List<String> userRoles, int startNum, int maxNum) {
+        Util.validateLimits(startNum, maxNum, MAX_RESULTS_COUNT);
         if (userRoles != null && !userRoles.isEmpty()) {
             return super.getResultList("findRequestsByUserUidOrRoles", getUserAndRolesParams(user, userRoles), startNum, maxNum);
         } else {
@@ -89,6 +90,7 @@ public class RequestDAOImpl extends AbstractEntityDAOImpl<Request> implements Re
      */
     @Override
     public List<Request> getOldRequestsByUserAndRoles(User user, List<String> userRoles, int startNum, int maxResults) {
+        Util.validateLimits(startNum, maxResults, MAX_RESULTS_COUNT);
         if (userRoles != null && !userRoles.isEmpty()) {
             return super.getResultList("findOldRequestsByUserUidOrRoles", getUserAndRolesParams(user, userRoles), startNum, maxResults);
         } else {

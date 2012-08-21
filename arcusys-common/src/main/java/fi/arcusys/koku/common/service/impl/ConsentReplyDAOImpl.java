@@ -15,7 +15,7 @@ import fi.arcusys.koku.common.service.datamodel.User;
 
 /**
  * DAO implementation for CRUD operations with 'ConsentReply' Entity
- * 
+ *
  * @author Dmitry Kudinov (dmitry.kudinov@arcusys.fi)
  * Aug 23, 2011
  */
@@ -47,11 +47,12 @@ public class ConsentReplyDAOImpl extends AbstractEntityDAOImpl<ConsentReply> imp
      */
     @Override
     public List<ConsentReply> getRepliedConsents(final User user, final int startNum, final int maxNum) {
+        Util.validateLimits(startNum, maxNum, MAX_RESULTS_COUNT);
         return getResultList("findRepliedConsentsByUser", getReplyParams(user), startNum, maxNum);
     }
 
     protected Map<String, Object> getReplyParams(final User user) {
-        final Map<String, Object> params = new HashMap<String, Object>(); 
+        final Map<String, Object> params = new HashMap<String, Object>();
         params.put("user", user);
         params.put("status_valid", ConsentReplyStatus.Given);
         return params;
@@ -83,6 +84,7 @@ public class ConsentReplyDAOImpl extends AbstractEntityDAOImpl<ConsentReply> imp
      */
     @Override
     public List<ConsentReply> getOldRepliedConsents(User user, int startNum, int maxNum) {
+        Util.validateLimits(startNum, maxNum, MAX_RESULTS_COUNT);
         return getResultList("findOldRepliedConsentsByUser", getReplyParams(user), startNum, maxNum);
     }
 

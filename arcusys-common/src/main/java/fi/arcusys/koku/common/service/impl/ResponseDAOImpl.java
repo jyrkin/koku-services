@@ -11,7 +11,7 @@ import fi.arcusys.koku.common.service.datamodel.User;
 
 /**
  * DAO implementation for CRUD operations with 'Response' Entity
- * 
+ *
  * @author Dmitry Kudinov (dmitry.kudinov@arcusys.fi)
  * Jun 23, 2011
  */
@@ -29,7 +29,8 @@ public class ResponseDAOImpl extends AbstractEntityDAOImpl<Response> implements 
      */
     @Override
     public List<Response> getResponsesByUser(User user, int startNum, int maxResults) {
-        return getResultList("findRequestResponsesByUser", Collections.singletonMap("user", user), startNum, maxResults); 
+        Util.validateLimits(startNum, maxResults, MAX_RESULTS_COUNT);
+        return getResultList("findRequestResponsesByUser", Collections.singletonMap("user", user), startNum, maxResults);
     }
 
     /**
@@ -40,7 +41,8 @@ public class ResponseDAOImpl extends AbstractEntityDAOImpl<Response> implements 
      */
     @Override
     public List<Response> getOldResponsesByUser(User user, int startNum, int maxResults) {
-        return getResultList("findOldRequestResponsesByUser", Collections.singletonMap("user", user), startNum, maxResults); 
+        Util.validateLimits(startNum, maxResults, MAX_RESULTS_COUNT);
+        return getResultList("findOldRequestResponsesByUser", Collections.singletonMap("user", user), startNum, maxResults);
     }
 
     /**

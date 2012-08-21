@@ -75,7 +75,7 @@ public class MessageFolderDAOImpl extends AbstractEntityDAOImpl<Folder> implemen
 	 */
 	@Override
 	public List<MessageRef> getMessagesByUserAndFolderType(final User user, final FolderType folderType) {
-		return getMessagesByUserWithRoleAndFolderType(user, Collections.<String>emptyList(), folderType, null, FIRST_RESULT_NUMBER, FIRST_RESULT_NUMBER + MAX_RESULTS_COUNT);
+		return getMessagesByUserWithRoleAndFolderType(user, Collections.<String>emptyList(), folderType, null, FIRST_RESULT_NUMBER, MAX_RESULTS_COUNT);
 	}
 
 	/**
@@ -85,7 +85,8 @@ public class MessageFolderDAOImpl extends AbstractEntityDAOImpl<Folder> implemen
 	 */
 	@Override
 	public List<MessageRef> getMessagesByUserWithRoleAndFolderType(final User user, final List<String> roleUids, final FolderType folderType, final MessageQuery query, final int startNum, final int maxNum) {
-		final Map<String, Object> params = getCommonQueryParams(user, roleUids, folderType);
+	    Util.validateLimits(startNum, maxNum, MAX_RESULTS_COUNT);
+	    final Map<String, Object> params = getCommonQueryParams(user, roleUids, folderType);
 
 		if (query == null || query.getCriteria() == null && query.getOrderBy() == null) {
 		    if (isEmpty(roleUids)) {

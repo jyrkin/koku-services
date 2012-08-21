@@ -240,7 +240,7 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
 	 */
 	public List<MessageTO> getSentMessages(final String userUid) {
 		final List<MessageRef> messages = folderDAO.getMessagesByUserWithRoleAndFolderType(getUserByUid(userUid), getUserRoles(userUid), FolderType.Outbox,
-				null, FIRST_RESULT_NUMBER, FIRST_RESULT_NUMBER + MAX_RESULTS_COUNT);
+				null, FIRST_RESULT_NUMBER, MAX_RESULTS_COUNT);
 
 		final List<MessageTO> result = new ArrayList<MessageTO>();
 		for (final MessageRef messageRef : messages) {
@@ -359,7 +359,7 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
 	public List<MessageSummary> getMessages(final String userUid, final FolderType folderType) {
 		final MessageQuery query = new MessageQuery();
 		query.setStartNum(FIRST_RESULT_NUMBER);
-		query.setMaxNum(FIRST_RESULT_NUMBER + MAX_RESULTS_COUNT);
+		query.setMaxNum(MAX_RESULTS_COUNT);
 		return getMessages(userUid, folderType, query);
 	}
 
@@ -502,10 +502,9 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
 	public List<MessageSummary> getMessages(final String userUid, final FolderType folderType, final MessageQuery query) {
 		final int startNum = query.getStartNum();
 		final int maxNum = query.getMaxNum();
-		validateStartAndMaxNum(startNum, maxNum);
 
 		final List<MessageRef> messages = folderDAO.getMessagesByUserWithRoleAndFolderType(getUserByUid(userUid),
-		        getUserRoles(userUid), folderType, query, startNum, maxNum - startNum + 1);
+		        getUserRoles(userUid), folderType, query, startNum, maxNum);
 
 		final List<MessageSummary> result = new ArrayList<MessageSummary>();
 		for (final MessageRef messageRef : messages) {
@@ -513,18 +512,6 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
 		}
 
 		return result;
-	}
-
-	private void validateStartAndMaxNum(final int startNum, final int maxNum) {
-		if (startNum < 1) {
-			throw new IllegalArgumentException("Incorrect number for start number: " + startNum + ", it should be greater or equal to 1.");
-		}
-		if (maxNum < startNum) {
-			throw new IllegalArgumentException("Incorrect number for max number: " + maxNum + ", it should be greater or equal to start number.");
-		}
-		if (maxNum - startNum > MAX_RESULTS_COUNT) {
-			throw new IllegalArgumentException("Incorrect number range: " + (maxNum - startNum) + ", it should be less than or equal to " + MAX_RESULTS_COUNT + ".");
-		}
 	}
 
 	/**
@@ -831,8 +818,6 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
 	 */
 	@Override
 	public List<RequestSummary> getRequests(String userId, int startNum, int maxNum) {
-        validateStartAndMaxNum(startNum, maxNum);
-
         return convertRequestsToSummaryTO(requestDAO.getRequestsByUserAndRoles(getUserByUid(userId), getUserRoles(userId), startNum, maxNum - startNum + 1));
 	}
 
@@ -1151,9 +1136,7 @@ public class MessageServiceFacadeImpl implements MessageServiceFacade, KokuSyste
      */
     @Override
     public List<RequestSummary> getOldRequests(String user, int startNum, int maxNum) {
-        validateStartAndMaxNum(startNum, maxNum);
-
-        return convertRequestsToSummaryTO(requestDAO.getOldRequestsByUserAndRoles(getUserByUid(user), getUserRoles(user), startNum, maxNum - startNum + 1));
+        return convertRequestsToSummaryTO(requestDAO.getOldRequestsByUserAndRoles(getUserByUid(user), getUserRoles(user), startNum, maxNum));
     }
 
     /**

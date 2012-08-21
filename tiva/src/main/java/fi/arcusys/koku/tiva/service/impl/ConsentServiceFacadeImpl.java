@@ -1,7 +1,5 @@
 package fi.arcusys.koku.tiva.service.impl;
 
-import static fi.arcusys.koku.common.service.AbstractEntityDAO.MAX_RESULTS_COUNT;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.MessageFormat;
@@ -1056,20 +1054,12 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
         } // otherwise no need for update
     }
 
-    private static void validateQueryLimits(ConsentQuery query) {
-        int requests = query.getMaxNum() - query.getStartNum();
-        if (requests > MAX_RESULTS_COUNT) {
-            throw new IllegalArgumentException("Incorrect number range: " + requests + ", it should be less than or equal to " + MAX_RESULTS_COUNT + ".");
-        }
-    }
-
     /**
      * @param employeeUid
      * @return
      */
     @Override
     public List<ConsentSummary> getProcessedConsents(String employeeUid, final ConsentQuery query) {
-        validateQueryLimits(query);
         final User replier = userDao.getOrCreateUser(employeeUid);
         final List<ConsentSummary> consents = new ArrayList<ConsentSummary>();
         for (final Consent consent : consentDao.getProcessedConsents(replier,

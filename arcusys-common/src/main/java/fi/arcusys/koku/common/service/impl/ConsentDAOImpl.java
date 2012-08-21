@@ -12,7 +12,6 @@ import javax.ejb.Stateless;
 import fi.arcusys.koku.common.service.CalendarUtil;
 import fi.arcusys.koku.common.service.ConsentDAO;
 import fi.arcusys.koku.common.service.datamodel.Consent;
-import fi.arcusys.koku.common.service.datamodel.ConsentReplyStatus;
 import fi.arcusys.koku.common.service.datamodel.ReceipientsType;
 import fi.arcusys.koku.common.service.datamodel.User;
 import fi.arcusys.koku.common.service.dto.ConsentDTOCriteria;
@@ -30,8 +29,6 @@ public class ConsentDAOImpl extends AbstractEntityDAOImpl<Consent> implements Co
     /**
      *
      */
-    private static final int MAX_CONSENTS_RETREIVED = 50;
-
     public ConsentDAOImpl() {
         super(Consent.class);
     }
@@ -44,6 +41,7 @@ public class ConsentDAOImpl extends AbstractEntityDAOImpl<Consent> implements Co
      */
     @Override
     public List<Consent> getAssignedConsents(User user, int startNum, int maxNum) {
+        Util.validateLimits(startNum, maxNum, MAX_RESULTS_COUNT);
         return getResultList("findAssignedConsentsByUser", Collections.singletonMap("userUid", user.getUid()), startNum, maxNum);
     }
 
@@ -64,6 +62,7 @@ public class ConsentDAOImpl extends AbstractEntityDAOImpl<Consent> implements Co
      */
     @Override
     public List<Consent> getProcessedConsents(User user, ConsentDTOCriteria criteria, int startNum, int maxNum) {
+        Util.validateLimits(startNum, maxNum, MAX_RESULTS_COUNT);
         if (criteria == null || criteria.isEmpty()) {
             return getResultList("findProcessedConsentsBySender", Collections.singletonMap("sender", user), startNum, maxNum);
         } else {
@@ -162,7 +161,7 @@ public class ConsentDAOImpl extends AbstractEntityDAOImpl<Consent> implements Co
 
         // order by
         query.append(" ORDER BY cn.id DESC");
-        return executeQuery(query.toString(), params, 1, ConsentDAOImpl.MAX_CONSENTS_RETREIVED);
+        return executeQuery(query.toString(), params, 1, MAX_RESULTS_COUNT);
     }
 
     /**

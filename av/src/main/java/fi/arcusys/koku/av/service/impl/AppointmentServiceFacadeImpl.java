@@ -334,7 +334,7 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
 	 */
 	@Override
 	public List<AppointmentSummary> getAppointments(final String userUid, final Set<AppointmentStatus> statuses) {
-		return getAppointments(userUid, statuses, FIRST_RESULT_NUMBER, FIRST_RESULT_NUMBER + MAX_RESULTS_COUNT);
+		return getAppointments(userUid, statuses, FIRST_RESULT_NUMBER, MAX_RESULTS_COUNT);
 	}
 
 	@Override
@@ -354,7 +354,7 @@ public class AppointmentServiceFacadeImpl implements AppointmentServiceFacade {
 	 */
 	@Override
 	public List<AppointmentWithTarget> getAssignedAppointments(final String userUid) {
-		return getAssignedAppointments(userUid, FIRST_RESULT_NUMBER, FIRST_RESULT_NUMBER + MAX_RESULTS_COUNT);
+		return getAssignedAppointments(userUid, FIRST_RESULT_NUMBER, MAX_RESULTS_COUNT);
 	}
 
 	@Override
