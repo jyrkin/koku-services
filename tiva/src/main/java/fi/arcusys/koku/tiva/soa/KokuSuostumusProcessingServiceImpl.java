@@ -150,8 +150,8 @@ public class KokuSuostumusProcessingServiceImpl implements KokuSuostumusProcessi
      * @return List of KKS form instances and fields
      */
     @Override
-    public List<KksFormInstance> getKksFormInstances(final String kksCode, final String employeeUid) {
-        return serviceFacade.getKksFormInstances(kksCode, employeeUid);
+    public List<KksFormInstance> getKksFormInstances(final String kksCode, final String targetPersonUid) {
+        return serviceFacade.getKksFormInstances(kksCode, targetPersonUid);
     }
 
     @Override

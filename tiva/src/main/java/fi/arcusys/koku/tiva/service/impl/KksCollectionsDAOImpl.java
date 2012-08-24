@@ -120,22 +120,22 @@ public class KksCollectionsDAOImpl implements KksCollectionsDAO {
 
     /**
      * @param kksCode
-     * @param employeeUid
+     * @param targetPersonUid
      * @return
      */
     @Override
-    public List<KksFormInstance> getKksFormInstances(final String kksCode, final String employeeUid) {
+    public List<KksFormInstance> getKksFormInstances(final String kksCode, final String targetPersonUid) {
         if (kksCode == null) {
             throw new IllegalArgumentException("Can't get KKS form instances without KKS code specified.");
         }
 
-        if (employeeUid == null) {
+        if (targetPersonUid == null) {
             throw new IllegalArgumentException("Can't get KKS form instances without user uid");
         }
 
-        String employeeSSN = customerDao.getSsnByUserUid(employeeUid);
+        String employeeSSN = customerDao.getSsnByUserUid(targetPersonUid);
         if (employeeSSN == null) {
-            throw new IllegalArgumentException("Could not find ssn for specified uid '"+ employeeUid +"'");
+            throw new IllegalArgumentException("Could not find ssn for specified uid '"+ targetPersonUid +"'");
         }
 
         List<KksFormInstance> instances = new ArrayList<KksFormInstance>();
@@ -193,7 +193,7 @@ public class KksCollectionsDAOImpl implements KksCollectionsDAO {
 
         for (KksCollectionClassType kksCollectionClass : kksCollectionClasses.getKksCollectionClass()) {
             KksFormType formType = new KksFormType();
-            formType.setTypeId(kksCollectionClass.getId());
+            formType.setTypeId(kksCollectionClass.getTypeCode());
             formType.setTypeName(kksCollectionClass.getName());
 
             types.add(formType);

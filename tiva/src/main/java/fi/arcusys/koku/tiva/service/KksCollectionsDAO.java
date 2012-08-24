@@ -16,7 +16,7 @@ public interface KksCollectionsDAO {
     
     List<InfoGroup> getInfoGroups(final String employeeUid); 
 
-    List<KksFormInstance> getKksFormInstances(final String kksCode, final String employeeUid);
+    List<KksFormInstance> getKksFormInstances(final String kksCode, final String targetPersonUid);
 
     List<KksFormType> getKksFormTypes(final String employeeUid);
 }

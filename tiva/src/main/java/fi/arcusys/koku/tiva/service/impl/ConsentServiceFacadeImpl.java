@@ -1211,8 +1211,8 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
     }
 
     @Override
-    public List<KksFormInstance> getKksFormInstances(final String kksCode, final String employeeUid) {
-        return kksDao.getKksFormInstances(kksCode, employeeUid);
+    public List<KksFormInstance> getKksFormInstances(final String kksCode, final String targetPersonUid) {
+        return kksDao.getKksFormInstances(kksCode, targetPersonUid);
     }
 
     @Override
