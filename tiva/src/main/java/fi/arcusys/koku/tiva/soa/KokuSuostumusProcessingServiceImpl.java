@@ -1,12 +1,10 @@
 package fi.arcusys.koku.tiva.soa;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
-import javax.jws.WebParam;
 import javax.jws.WebService;
 import javax.xml.datatype.XMLGregorianCalendar;
 
@@ -152,8 +150,12 @@ public class KokuSuostumusProcessingServiceImpl implements KokuSuostumusProcessi
      * @return List of KKS form instances and fields
      */
     @Override
-    public List<KksFormInstance> getKksFormInstances(final String kksCode, final String targetPersonUid) {
-        return serviceFacade.getKksFormInstances(kksCode, targetPersonUid);
+    public List<KksFormInstance> getKksFormInstances(final String kksCode, final String employeeUid) {
+        return serviceFacade.getKksFormInstances(kksCode, employeeUid);
     }
 
+    @Override
+    public List<KksFormType> getKksFormTypes(final String employeeUid) {
+        return serviceFacade.getKksFormTypes(employeeUid);
+    }
 }

@@ -11,6 +11,8 @@ import javax.ejb.Stateless;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 
+import fi.arcusys.koku.tiva.soa.KksFormType;
+import fi.koku.services.entity.kks.v1.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,18 +22,6 @@ import fi.arcusys.koku.common.soa.UsersAndGroupsService;
 import fi.arcusys.koku.tiva.service.KksCollectionsDAO;
 import fi.arcusys.koku.tiva.soa.KksFormField;
 import fi.arcusys.koku.tiva.soa.KksFormInstance;
-import fi.koku.services.entity.kks.v1.AuditInfoType;
-import fi.koku.services.entity.kks.v1.GroupsHelper;
-import fi.koku.services.entity.kks.v1.InfoGroup;
-import fi.koku.services.entity.kks.v1.KksCollectionClassType;
-import fi.koku.services.entity.kks.v1.KksCollectionInstanceCriteriaType;
-import fi.koku.services.entity.kks.v1.KksCollectionInstanceType;
-import fi.koku.services.entity.kks.v1.KksCollectionInstancesType;
-import fi.koku.services.entity.kks.v1.KksEntryClassType;
-import fi.koku.services.entity.kks.v1.KksEntryClassesType;
-import fi.koku.services.entity.kks.v1.KksGroupType;
-import fi.koku.services.entity.kks.v1.KksGroupsType;
-import fi.koku.services.entity.kks.v1.ServiceFault;
 import fi.koku.settings.KoKuPropertiesUtil;
 
 /**
@@ -130,35 +120,35 @@ public class KksCollectionsDAOImpl implements KksCollectionsDAO {
 
     /**
      * @param kksCode
-     * @param targetPersonUid
+     * @param employeeUid
      * @return
      */
     @Override
-    public List<KksFormInstance> getKksFormInstances(final String kksCode, final String targetPersonUid) {
+    public List<KksFormInstance> getKksFormInstances(final String kksCode, final String employeeUid) {
         if (kksCode == null) {
             throw new IllegalArgumentException("Can't get KKS form instances without KKS code specified.");
         }
 
-        if (targetPersonUid == null) {
+        if (employeeUid == null) {
             throw new IllegalArgumentException("Can't get KKS form instances without user uid");
         }
 
-        String targetPersonSSN = customerDao.getSsnByUserUid(targetPersonUid);
-        if (targetPersonSSN == null) {
-            throw new IllegalArgumentException("Could not find ssn for specified uid '"+targetPersonUid+"'");
+        String employeeSSN = customerDao.getSsnByUserUid(employeeUid);
+        if (employeeSSN == null) {
+            throw new IllegalArgumentException("Could not find ssn for specified uid '"+ employeeUid +"'");
         }
 
         List<KksFormInstance> instances = new ArrayList<KksFormInstance>();
 
         KksCollectionInstanceCriteriaType criteria = new KksCollectionInstanceCriteriaType();
-        criteria.setPic(targetPersonSSN);
+        criteria.setPic(employeeSSN);
         criteria.setType(kksCode);
 
         AuditInfoType auditHeader = new AuditInfoType();
         auditHeader.setComponent("TIVA");
-        auditHeader.setUserId(targetPersonSSN);
+        auditHeader.setUserId(employeeSSN);
 
-        final KksCollectionInstancesType kksCollectionInstances = helper.getCollectionInstances(targetPersonSSN, kksCode);
+        final KksCollectionInstancesType kksCollectionInstances = helper.getCollectionInstances(employeeSSN, kksCode);
 
         for (KksCollectionInstanceType kksCollectionInstance : kksCollectionInstances.getCollections()) {
             KksFormInstance formInstance = new KksFormInstance();
@@ -181,6 +171,35 @@ public class KksCollectionsDAOImpl implements KksCollectionsDAO {
         }
 
         return instances;
+    }
+
+    public List<KksFormType> getKksFormTypes(final String employeeUid) {
+        if (employeeUid == null) {
+            throw new IllegalArgumentException("Can't get KKS form instances without user uid");
+        }
+
+        String employeeSSN = customerDao.getSsnByUserUid(employeeUid);
+        if (employeeSSN == null) {
+            throw new IllegalArgumentException("Could not find ssn for specified uid '"+ employeeUid +"'");
+        }
+
+        List<KksFormType> types = new ArrayList<KksFormType>();
+
+        AuditInfoType auditHeader = new AuditInfoType();
+        auditHeader.setComponent("TIVA");
+        auditHeader.setUserId(employeeSSN);
+
+        final KksCollectionClassesType kksCollectionClasses = helper.getCollectionClasses(employeeSSN);
+
+        for (KksCollectionClassType kksCollectionClass : kksCollectionClasses.getKksCollectionClass()) {
+            KksFormType formType = new KksFormType();
+            formType.setTypeId(kksCollectionClass.getId());
+            formType.setTypeName(kksCollectionClass.getName());
+
+            types.add(formType);
+        }
+
+        return types;
     }
 
 }

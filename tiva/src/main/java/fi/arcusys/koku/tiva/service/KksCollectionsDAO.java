@@ -3,6 +3,7 @@ package fi.arcusys.koku.tiva.service;
 import java.util.List;
 
 import fi.arcusys.koku.tiva.soa.KksFormInstance;
+import fi.arcusys.koku.tiva.soa.KksFormType;
 import fi.koku.services.entity.kks.v1.InfoGroup;
 
 /**
@@ -15,5 +16,7 @@ public interface KksCollectionsDAO {
     
     List<InfoGroup> getInfoGroups(final String employeeUid); 
 
-    List<KksFormInstance> getKksFormInstances(final String kksCode, final String targetPersonUid);
+    List<KksFormInstance> getKksFormInstances(final String kksCode, final String employeeUid);
+
+    List<KksFormType> getKksFormTypes(final String employeeUid);
 }

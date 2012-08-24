@@ -96,5 +96,7 @@ public interface KokuSuostumusProcessingService {
             @WebParam(name = "pohjaId") final long consentTemplateId);
 
     List<KksFormInstance> getKksFormInstances(@WebParam(name = "kksCode") final String kksCode,
-            @WebParam(name = "targetPersonUid") final String targetPersonUid);
+            @WebParam(name = "employeeUid") final String employeeUid);
+
+    List<KksFormType> getKksFormTypes(@WebParam(name = "employeeUid") final String employeeUid);
 }

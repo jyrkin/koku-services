@@ -22,6 +22,7 @@ import javax.ejb.Local;
 import javax.ejb.Stateless;
 import javax.xml.datatype.XMLGregorianCalendar;
 
+import fi.arcusys.koku.tiva.soa.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,29 +53,6 @@ import fi.arcusys.koku.common.soa.Organization;
 import fi.arcusys.koku.common.soa.UserInfo;
 import fi.arcusys.koku.tiva.service.ConsentServiceFacade;
 import fi.arcusys.koku.tiva.service.KksCollectionsDAO;
-import fi.arcusys.koku.tiva.soa.ActionPermittedTO;
-import fi.arcusys.koku.tiva.soa.ActionRequestStatus;
-import fi.arcusys.koku.tiva.soa.ActionRequestSummary;
-import fi.arcusys.koku.tiva.soa.ActionRequestTO;
-import fi.arcusys.koku.tiva.soa.AuthorizationTemplateTO;
-import fi.arcusys.koku.tiva.soa.ConsentApprovalStatus;
-import fi.arcusys.koku.tiva.soa.ConsentCreateType;
-import fi.arcusys.koku.tiva.soa.ConsentCriteria;
-import fi.arcusys.koku.tiva.soa.ConsentExternalGivenTo;
-import fi.arcusys.koku.tiva.soa.ConsentForReplyTO;
-import fi.arcusys.koku.tiva.soa.ConsentKksExtraInfo;
-import fi.arcusys.koku.tiva.soa.ConsentQuery;
-import fi.arcusys.koku.tiva.soa.ConsentReceipientsType;
-import fi.arcusys.koku.tiva.soa.ConsentSearchCriteria;
-import fi.arcusys.koku.tiva.soa.ConsentShortSummary;
-import fi.arcusys.koku.tiva.soa.ConsentSourceInfo;
-import fi.arcusys.koku.tiva.soa.ConsentStatus;
-import fi.arcusys.koku.tiva.soa.ConsentSummary;
-import fi.arcusys.koku.tiva.soa.ConsentTO;
-import fi.arcusys.koku.tiva.soa.ConsentTemplateSummary;
-import fi.arcusys.koku.tiva.soa.ConsentTemplateTO;
-import fi.arcusys.koku.tiva.soa.KksFormField;
-import fi.arcusys.koku.tiva.soa.KksFormInstance;
 import fi.koku.services.entity.kks.v1.KksCollectionClassType;
 import fi.koku.services.entity.kks.v1.KksEntryClassType;
 import fi.koku.services.entity.kks.v1.KksEntryClassesType;
@@ -1233,7 +1211,12 @@ public class ConsentServiceFacadeImpl implements ConsentServiceFacade, Scheduled
     }
 
     @Override
-    public List<KksFormInstance> getKksFormInstances(final String kksCode, final String targetPersonUid) {
-        return kksDao.getKksFormInstances(kksCode, targetPersonUid);
+    public List<KksFormInstance> getKksFormInstances(final String kksCode, final String employeeUid) {
+        return kksDao.getKksFormInstances(kksCode, employeeUid);
+    }
+
+    @Override
+    public List<KksFormType> getKksFormTypes(final String employeeUid) {
+        return kksDao.getKksFormTypes(employeeUid);
     }
 }

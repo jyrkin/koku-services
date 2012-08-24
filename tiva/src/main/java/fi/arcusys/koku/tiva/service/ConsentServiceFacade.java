@@ -5,21 +5,7 @@ import java.util.List;
 import javax.xml.datatype.XMLGregorianCalendar;
 
 import fi.arcusys.koku.common.soa.Organization;
-import fi.arcusys.koku.tiva.soa.ActionPermittedTO;
-import fi.arcusys.koku.tiva.soa.ConsentCreateType;
-import fi.arcusys.koku.tiva.soa.ConsentCriteria;
-import fi.arcusys.koku.tiva.soa.ConsentForReplyTO;
-import fi.arcusys.koku.tiva.soa.ConsentKksExtraInfo;
-import fi.arcusys.koku.tiva.soa.ConsentQuery;
-import fi.arcusys.koku.tiva.soa.ConsentReceipientsType;
-import fi.arcusys.koku.tiva.soa.ConsentSearchCriteria;
-import fi.arcusys.koku.tiva.soa.ConsentShortSummary;
-import fi.arcusys.koku.tiva.soa.ConsentSourceInfo;
-import fi.arcusys.koku.tiva.soa.ConsentSummary;
-import fi.arcusys.koku.tiva.soa.ConsentTO;
-import fi.arcusys.koku.tiva.soa.ConsentTemplateSummary;
-import fi.arcusys.koku.tiva.soa.ConsentTemplateTO;
-import fi.arcusys.koku.tiva.soa.KksFormInstance;
+import fi.arcusys.koku.tiva.soa.*;
 
 /**
  * Service facade interface for business methods in TIVA-Suostumus functional area.
@@ -201,5 +187,7 @@ public interface ConsentServiceFacade {
      */
     int cancellationOfOutdatedConsents();
 
-    List<KksFormInstance> getKksFormInstances(final String kksCode, final String targetPersonUid);
+    List<KksFormInstance> getKksFormInstances(final String kksCode, final String employeeUid);
+
+    List<KksFormType> getKksFormTypes(final String employeeUid);
 }
