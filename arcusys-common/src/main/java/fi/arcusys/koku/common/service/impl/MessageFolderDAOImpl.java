@@ -85,14 +85,17 @@ public class MessageFolderDAOImpl extends AbstractEntityDAOImpl<Folder> implemen
 	 */
 	@Override
 	public List<MessageRef> getMessagesByUserWithRoleAndFolderType(final User user, final List<String> roleUids, final FolderType folderType, final MessageQuery query, final int startNum, final int maxNum) {
-	    Util.validateLimits(startNum, maxNum, MAX_RESULTS_COUNT);
 	    final Map<String, Object> params = getCommonQueryParams(user, roleUids, folderType);
+
+        final int maxResults = maxNum - startNum;
+
+        Util.validateLimits(startNum, maxResults, MAX_RESULTS_COUNT);
 
 		if (query == null || query.getCriteria() == null && query.getOrderBy() == null) {
 		    if (isEmpty(roleUids)) {
-                return getResultList("findMessagesByUserAndFolderType", params, startNum, maxNum);
+                return getResultList("findMessagesByUserAndFolderType", params, startNum, maxResults);
 		    } else {
-	            return getResultList("findMessagesByUserWithRoleAndFolderType", params, startNum, maxNum);
+	            return getResultList("findMessagesByUserWithRoleAndFolderType", params, startNum, maxResults);
 		    }
 		} else {
 			/*
@@ -126,7 +129,7 @@ public class MessageFolderDAOImpl extends AbstractEntityDAOImpl<Folder> implemen
 				logger.debug("Execute search query: " + queryString);
 			}
 
-			return executeQuery(queryString.toString(), params, startNum, maxNum);
+			return executeQuery(queryString.toString(), params, startNum, maxResults);
 		}
 	}
 
