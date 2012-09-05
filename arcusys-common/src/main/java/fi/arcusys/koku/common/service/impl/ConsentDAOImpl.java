@@ -16,6 +16,8 @@ import fi.arcusys.koku.common.service.datamodel.ReceipientsType;
 import fi.arcusys.koku.common.service.datamodel.User;
 import fi.arcusys.koku.common.service.dto.ConsentDTOCriteria;
 import fi.arcusys.koku.common.service.dto.ConsentExtDtoCriteria;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * DAO implementation for CRUD operations with 'Consent' Entity
@@ -25,6 +27,8 @@ import fi.arcusys.koku.common.service.dto.ConsentExtDtoCriteria;
  */
 @Stateless
 public class ConsentDAOImpl extends AbstractEntityDAOImpl<Consent> implements ConsentDAO {
+
+    private static final Logger logger = LoggerFactory.getLogger(ConsentDAOImpl.class);
 
     /**
      *
@@ -113,35 +117,48 @@ public class ConsentDAOImpl extends AbstractEntityDAOImpl<Consent> implements Co
     }
 
     /**
-     * @param dtoCriteria
+     * @param criteria
      * @return
      */
     @Override
     public List<Consent> searchConsents(ConsentExtDtoCriteria criteria) {
         final StringBuilder query = new StringBuilder();
+
         // select
         query.append("SELECT DISTINCT cn FROM Consent cn LEFT JOIN cn.givenTo givenTo_ ");
         final Map<String, Object> params = new HashMap<String, Object>();
-        // where
 
-        query.append(" WHERE 1 = 1 ");
+        boolean AND = false;
+
+        // where
+        query.append(" WHERE ");
+
         // criteria applied
-        final String templatePrefix = criteria.getTemplateNamePrefix();
-        if (templatePrefix != null && !"".equals(templatePrefix.trim())) {
-            query.append(" AND (cn.template.code IS NULL AND cn.template.title LIKE :templateNamePrefix OR cn.template.code LIKE :templateNamePrefix ) " );
-            params.put("templateNamePrefix", getPrefixLike(templatePrefix));
-        }
         final String targetPersonUid = criteria.getTargetPerson();
         if (targetPersonUid != null && !"".equals(targetPersonUid.trim())) {
-            query.append(" AND cn.targetPerson.uid = :targetPersonUid ");
+            if (AND) query.append(" AND ");
+            query.append(" cn.targetPerson.uid = :targetPersonUid ");
             params.put("targetPersonUid", targetPersonUid);
+            AND = true;
         }
+
+        final String templatePrefix = criteria.getTemplateNamePrefix();
+        if (templatePrefix != null && !"".equals(templatePrefix.trim())) {
+            if (AND) query.append(" AND ");
+            query.append(" cn.template.code LIKE :templateNamePrefix " );
+            params.put("templateNamePrefix", getPrefixLike(templatePrefix));
+            AND = true;
+        }
+
         // getGivenTo
         final List<String> givenTo = criteria.getGivenTo();
         if (givenTo != null && !givenTo.isEmpty()) {
-            query.append(" AND givenTo_.partyId IN (:givenTo) ");
+            if (AND) query.append(" AND ");
+            query.append(" givenTo_.partyId IN (:givenTo) ");
             params.put("givenTo", givenTo);
+            AND = true;
         }
+        /*
         // getInformationTargetId
         final String informationTargetId = criteria.getInformationTargetId();
         if (informationTargetId != null && !"".equals(informationTargetId.trim())) {
@@ -150,18 +167,26 @@ public class ConsentDAOImpl extends AbstractEntityDAOImpl<Consent> implements Co
         } else {
             query.append(" AND cn.informationTargetId IS NULL ");
         }
+        */
         // getFormInstanceId
         final String formInstanceId = criteria.getFormInstanceId();
         if (formInstanceId != null && !"".equals(formInstanceId.trim())) {
-            query.append(" AND (cn.formInstanceId = :formInstanceId OR cn.formInstanceId IS NULL) ");
+            if (AND) query.append(" AND ");
+            query.append(" cn.formInstanceId = :formInstanceId ");
             params.put("formInstanceId", formInstanceId);
-        } else {
-            query.append(" AND cn.formInstanceId IS NULL ");
+            AND = true;
         }
 
         // order by
         query.append(" ORDER BY cn.id DESC");
-        return executeQuery(query.toString(), params, 1, MAX_RESULTS_COUNT);
+
+        final String eql = query.toString();
+
+        final long beginTime = System.currentTimeMillis();
+        final List<Consent> ret = executeQuery(eql, params, 1, ConsentDAOImpl.MAX_RESULTS_COUNT);
+        final long elapsed = System.currentTimeMillis() - beginTime;
+
+        return ret;
     }
 
     /**

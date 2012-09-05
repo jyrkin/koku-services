@@ -1,7 +1,9 @@
 package fi.arcusys.koku.tiva.soa;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -10,6 +12,8 @@ import javax.jws.WebService;
 import fi.arcusys.koku.common.soa.Organization;
 import fi.arcusys.koku.common.soa.UsersAndGroupsService;
 import fi.arcusys.koku.tiva.service.ConsentServiceFacade;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Implementation of TIVA-to-KKS interface for accessing Consents from KKS component.
@@ -22,6 +26,8 @@ import fi.arcusys.koku.tiva.service.ConsentServiceFacade;
         endpointInterface = "fi.arcusys.koku.tiva.soa.KokuTivaToKksService",
         targetNamespace = "http://services.koku.fi/entity/tiva/v1")
 public class KokuTivaToKksServiceImpl implements KokuTivaToKksService {
+
+    private static final Logger logger = LoggerFactory.getLogger(KokuTivaToKksServiceImpl.class);
 
     @EJB
     private ConsentServiceFacade consentServiceFacade;
@@ -87,23 +93,28 @@ public class KokuTivaToKksServiceImpl implements KokuTivaToKksService {
         if (query.getTargetPerson() != null) {
             query.setTargetPerson(usersService.getUserUidByKunpoSsn(query.getTargetPerson()));
         }
+
+        final Map<String, String> ssnCache = new HashMap<String, String>();
         final List<ConsentTO> consents = consentServiceFacade.searchConsents(query);
+
         for (final ConsentTO consent : consents) {
             final ConsentExternal consentExternal = new ConsentExternal();
             consentExternal.setConsentId(consent.getConsentId());
+
             final List<String> consentProviders = new ArrayList<String>();
             for (final String userUid : consent.getReceipients()) {
-                consentProviders.add(getSsnByKunpoUid(userUid));
+                consentProviders.add(getSsnByLdapNameCached(ssnCache, userUid));
             }
+
             consentExternal.setConsentProviders(consentProviders);
-            consentExternal.setConsentRequestor(getSsnByLooraUid(consent.getRequestor()));
+            consentExternal.setConsentRequestor(getSsnByLdapNameCached(ssnCache, consent.getRequestor()));
             consentExternal.setDescription(consent.getTemplateDescription());
             consentExternal.setGivenAt(consent.getGivenAt());
             consentExternal.setGivenTo(consent.getGivenToParties());
             consentExternal.setInformationTargetId(consent.getInformationTargetId());
             consentExternal.setMetaInfo(consent.getMetaInfo());
             consentExternal.setStatus(consent.getStatus());
-            consentExternal.setTargetPerson(getSsnByKunpoUid(consent.getTargetPersonUid()));
+            consentExternal.setTargetPerson(getSsnByLdapNameCached(ssnCache, consent.getTargetPersonUid()));
             final ConsentTemplateShort template = new ConsentTemplateShort();
             template.setConsentTemplateId(consent.getTemplateId());
             template.setTemplateName(consent.getTemplateName());
@@ -125,21 +136,24 @@ public class KokuTivaToKksServiceImpl implements KokuTivaToKksService {
             consentExternal.setKksGivenTo(givenTo);
             result.add(consentExternal);
         }
+
         return result;
     }
 
     /**
-     * @param requestor
+     * @param cache
+     * @param userName
      * @return
      */
-    private String getSsnByLooraUid(String userUid) {
-//        return usersService.getSsnByLdapName(usersService.getLooraNameByUserUid(userUid));
-        return usersService.getSsnByLdapName(userUid);
-    }
+    private String getSsnByLdapNameCached(Map<String, String> cache, String userName) {
+        String ret = cache.get(userName);
 
-    protected String getSsnByKunpoUid(final String userUid) {
-//        return usersService.getSsnByLdapName(usersService.getKunpoNameByUserUid(userUid));
-        return usersService.getSsnByLdapName(userUid);
+        if (ret == null) {
+            ret = usersService.getSsnByLdapName(userName);
+            cache.put(userName, ret);
+        }
+
+        return ret;
     }
 
 }
